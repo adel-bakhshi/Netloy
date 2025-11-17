@@ -153,18 +153,18 @@ public class ConfigurationParser
         switch (netloyFiles.Length)
         {
             case 0:
-            {
-                throw new FileNotFoundException(
-                    $"No .netloy configuration file found in current directory: {currentDir}\n" +
-                    "Please create one using 'netloy --new conf' or specify path with --config-path");
-            }
+                {
+                    throw new FileNotFoundException(
+                        $"No .netloy configuration file found in current directory: {currentDir}\n" +
+                        "Please create one using 'netloy --new conf' or specify path with --config-path");
+                }
 
             case > 1:
-            {
-                Logger.LogWarning("Multiple .netloy files found in directory. Using: {0}", Path.GetFileName(netloyFiles[0]));
-                Logger.LogInfo("To use a specific file, specify it with --config-path");
-                break;
-            }
+                {
+                    Logger.LogWarning("Multiple .netloy files found in directory. Using: {0}", Path.GetFileName(netloyFiles[0]));
+                    Logger.LogInfo("To use a specific file, specify it with --config-path");
+                    break;
+                }
         }
 
         var selectedFile = netloyFiles[0];
@@ -312,13 +312,37 @@ public class ConfigurationParser
         // DEBIAN OPTIONS
         config.DebianRecommends = GetValue(nameof(config.DebianRecommends));
 
-        // WINDOWS SETUP OPTIONS
+        // WINDOWS EXE OPTIONS
         config.SetupGroupName = GetValue(nameof(config.SetupGroupName));
         config.SetupAdminInstall = GetBoolValue(nameof(config.SetupAdminInstall));
         config.SetupCommandPrompt = GetValue(nameof(config.SetupCommandPrompt));
         config.SetupMinWindowsVersion = GetValue(nameof(config.SetupMinWindowsVersion));
         config.SetupSignTool = GetValue(nameof(config.SetupSignTool));
         config.SetupUninstallScript = GetValue(nameof(config.SetupUninstallScript));
+
+        // Windows EXE - Advanced Exe Options
+        config.SetupPasswordEncryption = GetValue(nameof(config.SetupPasswordEncryption));
+        config.SetupWizardImageFile = GetValue(nameof(config.SetupWizardImageFile));
+        config.SetupWizardSmallImageFile = GetValue(nameof(config.SetupWizardSmallImageFile));
+        config.SetupWindowResizable = GetBoolValue(nameof(config.SetupWindowResizable));
+        config.SetupCloseApplications = GetBoolValue(nameof(config.SetupCloseApplications));
+        config.SetupRestartIfNeeded = GetBoolValue(nameof(config.SetupRestartIfNeeded));
+        config.SetupDirExistsWarning = GetBoolValue(nameof(config.SetupDirExistsWarning));
+        config.SetupAppendDefaultDirName = GetBoolValue(nameof(config.SetupAppendDefaultDirName));
+        config.SetupDisableProgramGroupPage = GetBoolValue(nameof(config.SetupDisableProgramGroupPage));
+        config.SetupDisableDirPage = GetBoolValue(nameof(config.SetupDisableDirPage));
+        config.SetupDisableReadyPage = GetBoolValue(nameof(config.SetupDisableReadyPage));
+        config.SetupAllowRootDirectory = GetBoolValue(nameof(config.SetupAllowRootDirectory));
+        config.SetupCompression = GetValue(nameof(config.SetupCompression));
+        config.SetupSolidCompression = GetBoolValue(nameof(config.SetupSolidCompression));
+        config.SetupUninstallDisplayName = GetValue(nameof(config.SetupUninstallDisplayName));
+        config.SetupCreateUninstallRegKey = GetBoolValue(nameof(config.SetupCreateUninstallRegKey));
+        config.SetupVersionInfoCompany = GetValue(nameof(config.SetupVersionInfoCompany));
+        config.SetupVersionInfoDescription = GetValue(nameof(config.SetupVersionInfoDescription));
+        config.AssociateFiles = GetBoolValue(nameof(config.AssociateFiles));
+        config.FileExtension = GetValue(nameof(config.FileExtension));
+        config.ContextMenuIntegration = GetBoolValue(nameof(config.ContextMenuIntegration));
+        config.ContextMenuText = GetValue(nameof(config.ContextMenuText));
 
         // CONFIGURATION OPTIONS
         config.ConfigVersion = GetValue(nameof(config.ConfigVersion));
@@ -427,6 +451,20 @@ public class ConfigurationParser
 
         ValidatePath(config, config.SetupUninstallScript, nameof(config.SetupUninstallScript), errors, isDirectory: false, required: false);
 
+        // Advance installer validation
+        ValidatePath(config, config.SetupWizardImageFile, nameof(config.SetupWizardImageFile), errors, isDirectory: false, required: false);
+        ValidatePath(config, config.SetupWizardSmallImageFile, nameof(config.SetupWizardSmallImageFile), errors, isDirectory: false, required: false);
+
+        if (!config.SetupCompression.IsStringNullOrEmpty()
+            && !config.SetupCompression.Equals("lzma2/max")
+            && !config.SetupCompression.Equals("lzma2")
+            && !config.SetupCompression.Equals("lzma")
+            && !config.SetupCompression.Equals("zip")
+            && !config.SetupCompression.Equals("none"))
+        {
+            errors.Add($"The compression value {config.SetupCompression} is invalid.");
+        }
+
         if (errors.Count == 0)
             return;
 
@@ -534,28 +572,28 @@ public class ConfigurationParser
                     throw new FileNotFoundException($"No project file found in the specified directory. Directory path: {projectPath}");
 
                 case 1:
-                {
-                    projectPath = csprojFiles[0];
-                    break;
-                }
+                    {
+                        projectPath = csprojFiles[0];
+                        break;
+                    }
 
                 case > 1:
-                {
-                    Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
-
-                    if (!_arguments.SkipAll)
                     {
-                        if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
-                            throw new OperationCanceledException("Operation canceled by user.");
-                    }
-                    else
-                    {
-                        Logger.LogInfo("Using first project file found. Project path: {0}", csprojFiles[0]);
-                    }
+                        Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
 
-                    projectPath = csprojFiles[0];
-                    break;
-                }
+                        if (!_arguments.SkipAll)
+                        {
+                            if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
+                                throw new OperationCanceledException("Operation canceled by user.");
+                        }
+                        else
+                        {
+                            Logger.LogInfo("Using first project file found. Project path: {0}", csprojFiles[0]);
+                        }
+
+                        projectPath = csprojFiles[0];
+                        break;
+                    }
             }
 
             config.DotnetProjectPath = projectPath;
@@ -589,28 +627,28 @@ public class ConfigurationParser
         switch (isDirectory)
         {
             case false when !File.Exists(value):
-            {
-                errors.Add($"{name} file not found: {value}");
-                return;
-            }
+                {
+                    errors.Add($"{name} file not found: {value}");
+                    return;
+                }
 
             case true when !Directory.Exists(value):
-            {
-                Logger.LogWarning("Directory not found: {0}", value);
-
-                if (!_arguments.SkipAll)
                 {
-                    if (!Confirm.ShowConfirm($"Directory not found: {value}. Do you want to create it?"))
-                        throw new OperationCanceledException("Operation canceled by user.");
-                }
-                else
-                {
-                    Logger.LogInfo("Creating directory: {0}", value);
-                }
+                    Logger.LogWarning("Directory not found: {0}", value);
 
-                Directory.CreateDirectory(value);
-                break;
-            }
+                    if (!_arguments.SkipAll)
+                    {
+                        if (!Confirm.ShowConfirm($"Directory not found: {value}. Do you want to create it?"))
+                            throw new OperationCanceledException("Operation canceled by user.");
+                    }
+                    else
+                    {
+                        Logger.LogInfo("Creating directory: {0}", value);
+                    }
+
+                    Directory.CreateDirectory(value);
+                    break;
+                }
         }
 
         var property = config.GetType().GetProperty(name);
@@ -668,8 +706,8 @@ public class ConfigurationParser
         // DEBIAN OPTIONS
         AppendDebianSection(sb, config, includeComments);
 
-        // WINDOWS SETUP OPTIONS
-        AppendWindowsSetupSection(sb, config, includeComments);
+        // WINDOWS EXE OPTIONS
+        AppendWindowsExeSection(sb, config, includeComments);
 
         // CONFIGURATION OPTIONS
         AppendConfigurationOptionsSection(sb, includeComments);
@@ -1144,12 +1182,11 @@ public class ConfigurationParser
         sb.AppendLine();
     }
 
-    private static void AppendWindowsSetupSection(StringBuilder sb, Configurations config, bool includeComments)
+    private static void AppendWindowsExeSection(StringBuilder sb, Configurations config, bool includeComments)
     {
         if (includeComments)
         {
-            AppendSection(sb, "WINDOWS SETUP OPTIONS");
-
+            AppendSection(sb, "WINDOWS EXE OPTIONS");
             AppendComment(sb, "Optional application group name used as the Start Menu folder and install directory under Program Files.");
             AppendComment(sb, "Specifically, it is used to define the InnoSetup DefaultGroupName and DefaultDirName parameters.");
             AppendComment(sb, "If empty (default), suitable values are used based on your application.");
@@ -1205,6 +1242,273 @@ public class ConfigurationParser
         }
 
         AppendKeyValue(sb, nameof(config.SetupUninstallScript), config.SetupUninstallScript);
+        sb.AppendLine();
+
+        // Advanced Setup Options & Task Options Combined
+        if (includeComments)
+        {
+            sb.AppendLine();
+            AppendSection(sb, "ADVANCED INSTALLER CONFIGURATION");
+            AppendComment(sb, "WARNING: The following options are for advanced users only!");
+            AppendComment(sb, "You do NOT need to modify these settings for a standard installation.");
+            AppendComment(sb, "If you are unsure what these options do, please leave them at their default values.");
+            AppendComment(sb, "Incorrect configuration may result in installation issues or unexpected behavior.");
+            sb.AppendLine();
+        }
+
+        // Security & Encryption
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional password to encrypt the installer executable. When set, users will be required to enter");
+            AppendComment(sb, "this password before the installation process can begin. This provides an additional layer of security");
+            AppendComment(sb, "to prevent unauthorized installations. Leave empty (default) for no password protection.");
+            AppendComment(sb, "Note: This does NOT encrypt the installed files, only the installer itself.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupPasswordEncryption), config.SetupPasswordEncryption);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional path to a custom wizard image file displayed on the left side of the installer wizard.");
+            AppendComment(sb, "The image should be in BMP format with dimensions of 164x314 pixels for best results.");
+            AppendComment(sb, "This allows you to brand the installer with your company logo or application artwork.");
+            AppendComment(sb, "Leave empty to use the default Inno Setup wizard image.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupWizardImageFile), config.SetupWizardImageFile);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional path to a small wizard image file displayed in the top-right corner of the installer.");
+            AppendComment(sb, "The image should be in BMP or PNG format with dimensions of 58x58 pixels for optimal display.");
+            AppendComment(sb, "Typically used for displaying your application icon or small company logo.");
+            AppendComment(sb, "Leave empty to use the default Inno Setup behavior.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupWizardSmallImageFile), config.SetupWizardSmallImageFile);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, allows users to resize the installer window to their preference.");
+            AppendComment(sb, "This can be helpful for users with different screen sizes or accessibility needs.");
+            AppendComment(sb, "Default is false to maintain a consistent installer appearance across all systems.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupWindowResizable), config.SetupWindowResizable);
+        sb.AppendLine();
+
+        // Installation Behavior
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, the installer will automatically detect and attempt to close");
+            AppendComment(sb, "any running applications that are using files being updated. This prevents 'file in use' errors");
+            AppendComment(sb, "and ensures a smooth installation. Users will be prompted to save their work before applications are closed.");
+            AppendComment(sb, "Default is true. Recommended to keep enabled for better installation reliability.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupCloseApplications), config.SetupCloseApplications);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, the installer will request a system restart if any files");
+            AppendComment(sb, "being installed are currently in use and cannot be updated without restarting.");
+            AppendComment(sb, "The user will be prompted to restart immediately or defer until later.");
+            AppendComment(sb, "Default is false. Enable only if your application requires system-level components that need restart.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupRestartIfNeeded), config.SetupRestartIfNeeded);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, displays a warning message if the installation directory");
+            AppendComment(sb, "already exists, alerting users that files may be overwritten. This helps prevent accidental");
+            AppendComment(sb, "data loss or unintended overwrites of existing installations.");
+            AppendComment(sb, "Default is true. Recommended to keep enabled for user safety.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupDirExistsWarning), config.SetupDirExistsWarning);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, automatically appends the application name to the default");
+            AppendComment(sb, "installation directory path. For example, if your app is 'MyApp', the default path becomes");
+            AppendComment(sb, "'C:\\Program Files\\MyApp' instead of just 'C:\\Program Files'.");
+            AppendComment(sb, "Default is true. Recommended to keep enabled to avoid installing directly into Program Files.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupAppendDefaultDirName), config.SetupAppendDefaultDirName);
+        sb.AppendLine();
+
+        // Installer Pages Control
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, skips the 'Select Start Menu Folder' page during installation.");
+            AppendComment(sb, "The installer will use the default Start Menu folder without prompting the user.");
+            AppendComment(sb, "Useful for simplified installations where user customization is not needed.");
+            AppendComment(sb, "Default is false (the page is shown).");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupDisableProgramGroupPage), config.SetupDisableProgramGroupPage);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, skips the 'Select Destination Location' page during installation.");
+            AppendComment(sb, "The installer will use the default installation directory without allowing user customization.");
+            AppendComment(sb, "Use this for applications that must be installed in a specific location.");
+            AppendComment(sb, "Default is false (users can choose installation directory).");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupDisableDirPage), config.SetupDisableDirPage);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, skips the 'Ready to Install' confirmation page.");
+            AppendComment(sb, "The installation will proceed immediately after the user completes configuration.");
+            AppendComment(sb, "This creates a faster, more streamlined installation experience but removes the final review step.");
+            AppendComment(sb, "Default is false (confirmation page is shown).");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupDisableReadyPage), config.SetupDisableReadyPage);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, allows installation to root directories such as 'C:\\'.");
+            AppendComment(sb, "WARNING: Installing to root directories is generally not recommended as it can clutter");
+            AppendComment(sb, "the file system and may cause conflicts with system operations.");
+            AppendComment(sb, "Default is false (installation to root directories is prevented).");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupAllowRootDirectory), config.SetupAllowRootDirectory);
+        sb.AppendLine();
+
+        // Compression Settings
+        if (includeComments)
+        {
+            AppendComment(sb, "Compression algorithm used to compress files in the installer. Available options:");
+            AppendComment(sb, "  - 'lzma2/max': Maximum compression using LZMA2 algorithm (smallest file size, slower compression)");
+            AppendComment(sb, "  - 'lzma2': Standard LZMA2 compression (balanced)");
+            AppendComment(sb, "  - 'lzma': Legacy LZMA compression");
+            AppendComment(sb, "  - 'zip': Fast compression with larger file size");
+            AppendComment(sb, "  - 'none': No compression (fastest build, largest installer)");
+            AppendComment(sb, "Default is 'lzma2/max' for optimal file size. For faster builds during development, use 'zip' or 'none'.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupCompression), config.SetupCompression);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, uses solid compression which treats all files as a single");
+            AppendComment(sb, "compressed block. This typically results in better compression ratios (smaller installer size)");
+            AppendComment(sb, "but means files must be extracted sequentially during installation.");
+            AppendComment(sb, "Default is true. Recommended for production releases to minimize download size.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupSolidCompression), config.SetupSolidCompression);
+        sb.AppendLine();
+
+        // Uninstall Configuration
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional custom display name for the uninstaller as shown in Windows 'Add or Remove Programs'.");
+            AppendComment(sb, "If empty, the AppFriendlyName value will be used automatically.");
+            AppendComment(sb, "You can customize this to differentiate multiple versions or provide additional context.");
+            AppendComment(sb, "Example: 'MyApp 2024 Edition' or 'MyApp (Commercial License)'");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupUninstallDisplayName), config.SetupUninstallDisplayName);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, creates a registry entry for the uninstaller,");
+            AppendComment(sb, "allowing the application to appear in Windows 'Add or Remove Programs' (Programs and Features).");
+            AppendComment(sb, "Disable only if you're creating a portable application or have specific deployment requirements.");
+            AppendComment(sb, "Default is true. Most applications should keep this enabled for proper Windows integration.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupCreateUninstallRegKey), config.SetupCreateUninstallRegKey);
+        sb.AppendLine();
+
+        // Version Information
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional company name embedded in the version information of the installer executable.");
+            AppendComment(sb, "This appears in the file properties when users right-click the installer and select 'Properties'.");
+            AppendComment(sb, "If empty, no company information will be embedded in the installer executable metadata.");
+            AppendComment(sb, "Example: 'Acme Corporation' or 'John Doe Software'");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupVersionInfoCompany), config.SetupVersionInfoCompany);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional description text embedded in the version information of the installer executable.");
+            AppendComment(sb, "This appears in the file properties 'Details' tab under 'File description'.");
+            AppendComment(sb, "Helps users identify the purpose of the installer file.");
+            AppendComment(sb, "Example: 'MyApp Setup' or 'MyApp Installation Package'");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupVersionInfoDescription), config.SetupVersionInfoDescription);
+        sb.AppendLine();
+
+        // File Association & Integration
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, allows your application to be associated with specific file types.");
+            AppendComment(sb, "This means files with the specified extension (see FileExtension) will open with your application");
+            AppendComment(sb, "when double-clicked. Users will see a checkbox during installation to enable this feature.");
+            AppendComment(sb, "IMPORTANT: You must also set FileExtension property when enabling this option.");
+            AppendComment(sb, "Default is false. Enable if your application handles specific document or data file types.");
+        }
+
+        AppendKeyValue(sb, nameof(config.AssociateFiles), config.AssociateFiles);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "File extension to associate with your application. Required when AssociateFiles is enabled.");
+            AppendComment(sb, "Specify the extension with or without the leading dot. Examples: '.myapp', 'myapp', '.txt'");
+            AppendComment(sb, "When set, files with this extension will display your application's icon and open with your app by default.");
+            AppendComment(sb, "NOTE: Choose a unique extension to avoid conflicts with other applications.");
+            AppendComment(sb, "Leave empty if file association is not needed or AssociateFiles is false.");
+        }
+
+        AppendKeyValue(sb, nameof(config.FileExtension), config.FileExtension);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, adds a menu item to the Windows Explorer context menu");
+            AppendComment(sb, "(right-click menu) for all files, allowing users to open any file with your application.");
+            AppendComment(sb, "Users will see a checkbox during installation to enable this integration feature.");
+            AppendComment(sb, "The menu text can be customized using the ContextMenuText property.");
+            AppendComment(sb, "Default is false. Enable if your application can process multiple file types or universal files.");
+        }
+
+        AppendKeyValue(sb, nameof(config.ContextMenuIntegration), config.ContextMenuIntegration);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional text displayed in the Windows Explorer context menu (right-click menu).");
+            AppendComment(sb, "Only used when ContextMenuIntegration is enabled.");
+            AppendComment(sb, "If empty, defaults to 'Open with [AppFriendlyName]' automatically.");
+            AppendComment(sb, "Examples: 'Edit with MyApp', 'Process with MyApp', 'Open in MyApp Editor'");
+            AppendComment(sb, "Keep it concise and clear so users understand what action will be performed.");
+        }
+
+        AppendKeyValue(sb, nameof(config.ContextMenuText), config.ContextMenuText);
         sb.AppendLine();
     }
 

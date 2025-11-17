@@ -16,6 +16,11 @@ public class FlatpackPackageBuilder : PackageBuilderBase, IPackageBuilder
         throw new NotImplementedException();
     }
 
+    public bool Validate()
+    {
+        throw new NotImplementedException();
+    }
+
     public void Clear()
     {
         throw new NotImplementedException();

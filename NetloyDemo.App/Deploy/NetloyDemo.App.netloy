@@ -1,6 +1,6 @@
 ################################################################################
 # Netloy 1.0.0 - .NET Application Packaging Tool
-# Configuration upgraded on: 2025-11-16 12:33:13
+# Configuration upgraded on: 2025-11-17 12:57:22
 ################################################################################
 
 ########################################
@@ -297,18 +297,18 @@ DebianRecommends = """
 """
 
 ########################################
-# WINDOWS SETUP OPTIONS
+# WINDOWS EXE OPTIONS
 ########################################
 
 # Optional application group name used as the Start Menu folder and install directory under Program Files.
 # Specifically, it is used to define the InnoSetup DefaultGroupName and DefaultDirName parameters.
 # If empty (default), suitable values are used based on your application.
 # See: https://jrsoftware.org/ishelp/index.php?topic=setup_defaultgroupname
-SetupGroupName = Netloy
+SetupGroupName = Netloy Test Suite
 
 # Boolean (true or false) which specifies whether the application is to be installed in administrative
 # mode, or per-user. Default is false. See: https://jrsoftware.org/ishelp/topic_admininstallmode.htm
-SetupAdminInstall = false
+SetupAdminInstall = true
 
 # Optional command prompt title. The Windows installer will NOT add your application to the path. However,
 # if your package contains a command-line utility, setting this value will ensure that a 'Command Prompt'
@@ -328,6 +328,154 @@ SetupSignTool =
 # Optional name of a script to run before uninstall with InnoSetup. The file is relative to the directory of the
 # application and must have a default file association. This binds to the `[UninstallRun]` section of InnoSetup.
 SetupUninstallScript =
+
+
+########################################
+# ADVANCED INSTALLER CONFIGURATION
+########################################
+
+# WARNING: The following options are for advanced users only!
+# You do NOT need to modify these settings for a standard installation.
+# If you are unsure what these options do, please leave them at their default values.
+# Incorrect configuration may result in installation issues or unexpected behavior.
+
+# Optional password to encrypt the installer executable. When set, users will be required to enter
+# this password before the installation process can begin. This provides an additional layer of security
+# to prevent unauthorized installations. Leave empty (default) for no password protection.
+# Note: This does NOT encrypt the installed files, only the installer itself.
+SetupPasswordEncryption = 12345
+
+# Optional path to a custom wizard image file displayed on the left side of the installer wizard.
+# The image should be in BMP format with dimensions of 164x314 pixels for best results.
+# This allows you to brand the installer with your company logo or application artwork.
+# Leave empty to use the default Inno Setup wizard image.
+SetupWizardImageFile = Images/setup-wizard-image.bmp
+
+# Optional path to a small wizard image file displayed in the top-right corner of the installer.
+# The image should be in BMP format with dimensions of 58x58 pixels for optimal display.
+# Typically used for displaying your application icon or small company logo.
+# Leave empty to use the default Inno Setup behavior.
+SetupWizardSmallImageFile = Images/setup-wizard-small-image.bmp
+
+# Boolean (true or false). When enabled, allows users to resize the installer window to their preference.
+# This can be helpful for users with different screen sizes or accessibility needs.
+# Default is false to maintain a consistent installer appearance across all systems.
+SetupWindowResizable = true
+
+# Boolean (true or false). When enabled, the installer will automatically detect and attempt to close
+# any running applications that are using files being updated. This prevents 'file in use' errors
+# and ensures a smooth installation. Users will be prompted to save their work before applications are closed.
+# Default is true. Recommended to keep enabled for better installation reliability.
+SetupCloseApplications = true
+
+# Boolean (true or false). When enabled, the installer will request a system restart if any files
+# being installed are currently in use and cannot be updated without restarting.
+# The user will be prompted to restart immediately or defer until later.
+# Default is false. Enable only if your application requires system-level components that need restart.
+SetupRestartIfNeeded = true
+
+# Boolean (true or false). When enabled, displays a warning message if the installation directory
+# already exists, alerting users that files may be overwritten. This helps prevent accidental
+# data loss or unintended overwrites of existing installations.
+# Default is true. Recommended to keep enabled for user safety.
+SetupDirExistsWarning = true
+
+# Boolean (true or false). When enabled, automatically appends the application name to the default
+# installation directory path. For example, if your app is 'MyApp', the default path becomes
+# 'C:\Program Files\MyApp' instead of just 'C:\Program Files'.
+# Default is true. Recommended to keep enabled to avoid installing directly into Program Files.
+SetupAppendDefaultDirName = true
+
+# Boolean (true or false). When enabled, skips the 'Select Start Menu Folder' page during installation.
+# The installer will use the default Start Menu folder without prompting the user.
+# Useful for simplified installations where user customization is not needed.
+# Default is false (the page is shown).
+SetupDisableProgramGroupPage = true
+
+# Boolean (true or false). When enabled, skips the 'Select Destination Location' page during installation.
+# The installer will use the default installation directory without allowing user customization.
+# Use this for applications that must be installed in a specific location.
+# Default is false (users can choose installation directory).
+SetupDisableDirPage = true
+
+# Boolean (true or false). When enabled, skips the 'Ready to Install' confirmation page.
+# The installation will proceed immediately after the user completes configuration.
+# This creates a faster, more streamlined installation experience but removes the final review step.
+# Default is false (confirmation page is shown).
+SetupDisableReadyPage = true
+
+# Boolean (true or false). When enabled, allows installation to root directories such as 'C:\'.
+# WARNING: Installing to root directories is generally not recommended as it can clutter
+# the file system and may cause conflicts with system operations.
+# Default is false (installation to root directories is prevented).
+SetupAllowRootDirectory = true
+
+# Compression algorithm used to compress files in the installer. Available options:
+#   - 'lzma2/max': Maximum compression using LZMA2 algorithm (smallest file size, slower compression)
+#   - 'lzma2': Standard LZMA2 compression (balanced)
+#   - 'lzma': Legacy LZMA compression
+#   - 'zip': Fast compression with larger file size
+#   - 'none': No compression (fastest build, largest installer)
+# Default is 'lzma2/max' for optimal file size. For faster builds during development, use 'zip' or 'none'.
+SetupCompression = lzma2/max
+
+# Boolean (true or false). When enabled, uses solid compression which treats all files as a single
+# compressed block. This typically results in better compression ratios (smaller installer size)
+# but means files must be extracted sequentially during installation.
+# Default is true. Recommended for production releases to minimize download size.
+SetupSolidCompression = true
+
+# Optional custom display name for the uninstaller as shown in Windows 'Add or Remove Programs'.
+# If empty, the AppFriendlyName value will be used automatically.
+# You can customize this to differentiate multiple versions or provide additional context.
+# Example: 'MyApp 2024 Edition' or 'MyApp (Commercial License)'
+SetupUninstallDisplayName = Uninstall Very Important Demo App
+
+# Boolean (true or false). When enabled, creates a registry entry for the uninstaller,
+# allowing the application to appear in Windows 'Add or Remove Programs' (Programs and Features).
+# Disable only if you're creating a portable application or have specific deployment requirements.
+# Default is true. Most applications should keep this enabled for proper Windows integration.
+SetupCreateUninstallRegKey = true
+
+# Optional company name embedded in the version information of the installer executable.
+# This appears in the file properties when users right-click the installer and select 'Properties'.
+# If empty, no company information will be embedded in the installer executable metadata.
+# Example: 'Acme Corporation' or 'John Doe Software'
+SetupVersionInfoCompany = Netloy Demo Software
+
+# Optional description text embedded in the version information of the installer executable.
+# This appears in the file properties 'Details' tab under 'File description'.
+# Helps users identify the purpose of the installer file.
+# Example: 'MyApp Setup' or 'MyApp Installation Package'
+SetupVersionInfoDescription = Netloy Demo Setup
+
+# Boolean (true or false). When enabled, allows your application to be associated with specific file types.
+# This means files with the specified extension (see FileExtension) will open with your application
+# when double-clicked. Users will see a checkbox during installation to enable this feature.
+# IMPORTANT: You must also set FileExtension property when enabling this option.
+# Default is false. Enable if your application handles specific document or data file types.
+AssociateFiles = true
+
+# File extension to associate with your application. Required when AssociateFiles is enabled.
+# Specify the extension with or without the leading dot. Examples: '.myapp', 'myapp', '.txt'
+# When set, files with this extension will display your application's icon and open with your app by default.
+# NOTE: Choose a unique extension to avoid conflicts with other applications.
+# Leave empty if file association is not needed or AssociateFiles is false.
+FileExtension = .netloy
+
+# Boolean (true or false). When enabled, adds a menu item to the Windows Explorer context menu
+# (right-click menu) for all files, allowing users to open any file with your application.
+# Users will see a checkbox during installation to enable this integration feature.
+# The menu text can be customized using the ContextMenuText property.
+# Default is false. Enable if your application can process multiple file types or universal files.
+ContextMenuIntegration = true
+
+# Optional text displayed in the Windows Explorer context menu (right-click menu).
+# Only used when ContextMenuIntegration is enabled.
+# If empty, defaults to 'Open with [AppFriendlyName]' automatically.
+# Examples: 'Edit with MyApp', 'Process with MyApp', 'Open in MyApp Editor'
+# Keep it concise and clear so users understand what action will be performed.
+ContextMenuText =
 
 ########################################
 # CONFIGURATION OPTIONS

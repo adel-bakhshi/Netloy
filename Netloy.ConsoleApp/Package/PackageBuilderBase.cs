@@ -53,31 +53,6 @@ public class PackageBuilderBase
         IconHelper.GenerateIconsAsync().Wait();
     }
 
-    private void GenerateGlobalMacros()
-    {
-        MacroExpander.SetMacroValue(MacroId.ConfFileDirectory, Constants.ConfigFileDirectory);
-        MacroExpander.SetMacroValue(MacroId.AppBaseName, Configurations.AppBaseName);
-        MacroExpander.SetMacroValue(MacroId.AppFriendlyName, Configurations.AppFriendlyName);
-        MacroExpander.SetMacroValue(MacroId.AppId, Configurations.AppId);
-        MacroExpander.SetMacroValue(MacroId.AppShortSummary, Configurations.AppShortSummary);
-        MacroExpander.SetMacroValue(MacroId.AppLicenseId, Configurations.AppLicenseId);
-        MacroExpander.SetMacroValue(MacroId.PublisherName, Configurations.PublisherName);
-        MacroExpander.SetMacroValue(MacroId.PublisherId, Configurations.PublisherId.IsStringNullOrEmpty() ? Configurations.AppId : Configurations.PublisherId);
-        MacroExpander.SetMacroValue(MacroId.PublisherCopyright, Configurations.PublisherCopyright);
-        MacroExpander.SetMacroValue(MacroId.PublisherLinkName, Configurations.PublisherLinkName);
-        MacroExpander.SetMacroValue(MacroId.PublisherLinkUrl, Configurations.PublisherLinkUrl);
-        MacroExpander.SetMacroValue(MacroId.PublisherEmail, Configurations.PublisherEmail);
-        MacroExpander.SetMacroValue(MacroId.DesktopNoDisplay, Configurations.DesktopNoDisplay.ToString().ToLowerInvariant());
-        MacroExpander.SetMacroValue(MacroId.DesktopIntegrate, (!Configurations.DesktopNoDisplay).ToString().ToLowerInvariant());
-        MacroExpander.SetMacroValue(MacroId.DesktopTerminal, Configurations.DesktopTerminal.ToString().ToLowerInvariant());
-        MacroExpander.SetMacroValue(MacroId.PrimeCategory, Configurations.PrimeCategory);
-        MacroExpander.SetMacroValue(MacroId.AppVersion, AppVersion);
-        MacroExpander.SetMacroValue(MacroId.PackageRelease, PackageRelease);
-        MacroExpander.SetMacroValue(MacroId.PackageType, Arguments.PackageType!.ToString()!.ToLowerInvariant());
-        MacroExpander.SetMacroValue(MacroId.DotnetRuntime, RuntimeInformation.FrameworkDescription);
-        MacroExpander.SetMacroValue(MacroId.PackageArch, Arguments.Runtime!);
-    }
-
     protected async Task PublishAsync(string outputDir)
     {
         // Check and clean build directory
@@ -107,6 +82,22 @@ public class PackageBuilderBase
         await RunPostPublishScriptAsync();
 
         Logger.LogSuccess("Publish completed successfully!");
+    }
+
+    protected string GetPackageArch()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return Arguments.Runtime?.ToLowerInvariant() switch
+            {
+                "win-x64" => "x64",
+                "win-x86" => "x86",
+                "win-arm64" => "arm64",
+                _ => throw new InvalidOperationException($"Unsupported runtime: {Arguments.Runtime}")
+            };
+        }
+
+        throw new PlatformNotSupportedException($"Couldn't get package arch. {RuntimeInformation.OSDescription} is not supported.");
     }
 
     private void PublishDotnetProject(string projectPath, string outputDir)
@@ -294,7 +285,9 @@ public class PackageBuilderBase
         var ext = Arguments.PackageType switch
         {
             PackageType.Exe => ".exe",
+            PackageType.Msi => ".msi",
             PackageType.AppBundle => ".app.zip",
+            PackageType.Dmg => ".dmg",
             PackageType.AppImage => ".AppImage",
             PackageType.Deb => ".deb",
             PackageType.Rpm => ".rpm",
@@ -386,5 +379,30 @@ public class PackageBuilderBase
         }
 
         return projectFiles[0];
+    }
+
+    private void GenerateGlobalMacros()
+    {
+        MacroExpander.SetMacroValue(MacroId.ConfFileDirectory, Constants.ConfigFileDirectory);
+        MacroExpander.SetMacroValue(MacroId.AppBaseName, Configurations.AppBaseName);
+        MacroExpander.SetMacroValue(MacroId.AppFriendlyName, Configurations.AppFriendlyName);
+        MacroExpander.SetMacroValue(MacroId.AppId, Configurations.AppId);
+        MacroExpander.SetMacroValue(MacroId.AppShortSummary, Configurations.AppShortSummary);
+        MacroExpander.SetMacroValue(MacroId.AppLicenseId, Configurations.AppLicenseId);
+        MacroExpander.SetMacroValue(MacroId.PublisherName, Configurations.PublisherName);
+        MacroExpander.SetMacroValue(MacroId.PublisherId, Configurations.PublisherId.IsStringNullOrEmpty() ? Configurations.AppId : Configurations.PublisherId);
+        MacroExpander.SetMacroValue(MacroId.PublisherCopyright, Configurations.PublisherCopyright);
+        MacroExpander.SetMacroValue(MacroId.PublisherLinkName, Configurations.PublisherLinkName);
+        MacroExpander.SetMacroValue(MacroId.PublisherLinkUrl, Configurations.PublisherLinkUrl);
+        MacroExpander.SetMacroValue(MacroId.PublisherEmail, Configurations.PublisherEmail);
+        MacroExpander.SetMacroValue(MacroId.DesktopNoDisplay, Configurations.DesktopNoDisplay.ToString().ToLowerInvariant());
+        MacroExpander.SetMacroValue(MacroId.DesktopIntegrate, (!Configurations.DesktopNoDisplay).ToString().ToLowerInvariant());
+        MacroExpander.SetMacroValue(MacroId.DesktopTerminal, Configurations.DesktopTerminal.ToString().ToLowerInvariant());
+        MacroExpander.SetMacroValue(MacroId.PrimeCategory, Configurations.PrimeCategory);
+        MacroExpander.SetMacroValue(MacroId.AppVersion, AppVersion);
+        MacroExpander.SetMacroValue(MacroId.PackageRelease, PackageRelease);
+        MacroExpander.SetMacroValue(MacroId.PackageType, Arguments.PackageType!.ToString()!.ToLowerInvariant());
+        MacroExpander.SetMacroValue(MacroId.DotnetRuntime, RuntimeInformation.FrameworkDescription);
+        MacroExpander.SetMacroValue(MacroId.PackageArch, Arguments.Runtime!);
     }
 }

@@ -90,16 +90,19 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
         if (!IsInnoSetupInstalled())
             throw new InvalidOperationException($"Inno Setup compiler (iscc) not found. Please install Inno Setup from {Constants.InnoSetupDownloadUrl}");
 
-        var ext = Path.GetExtension(Configurations.SetupWizardImageFile);
-        if (!Configurations.SetupWizardImageFile.IsStringNullOrEmpty() && (!File.Exists(Configurations.SetupWizardImageFile) || !ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase)))
-            throw new FileNotFoundException($"Setup wizard image file not found. File path: {Configurations.SetupWizardImageFile}");
+        var ext = Path.GetExtension(Configurations.ExeWizardImageFile);
+        if (!Configurations.ExeWizardImageFile.IsStringNullOrEmpty() &&
+            (!File.Exists(Configurations.ExeWizardImageFile) || !ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase)))
+            throw new FileNotFoundException($"Setup wizard image file not found. File path: {Configurations.ExeWizardImageFile}");
 
-        ext = Path.GetExtension(Configurations.SetupWizardSmallImageFile);
-        if (!Configurations.SetupWizardSmallImageFile.IsStringNullOrEmpty() && (!File.Exists(Configurations.SetupWizardSmallImageFile) || !ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase)))
-            throw new FileNotFoundException($"Setup wizard small image file not found. File path: {Configurations.SetupWizardSmallImageFile}");
+        ext = Path.GetExtension(Configurations.ExeWizardSmallImageFile);
+        if (!Configurations.ExeWizardSmallImageFile.IsStringNullOrEmpty() &&
+            (!File.Exists(Configurations.ExeWizardSmallImageFile) || !ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase)))
+            throw new FileNotFoundException($"Setup wizard small image file not found. File path: {Configurations.ExeWizardSmallImageFile}");
 
         ext = Path.GetExtension(Configurations.SetupUninstallScript);
-        if (!Configurations.SetupUninstallScript.IsStringNullOrEmpty() && (!File.Exists(Configurations.SetupUninstallScript) || !ext.Equals(".bat", StringComparison.OrdinalIgnoreCase)))
+        if (!Configurations.SetupUninstallScript.IsStringNullOrEmpty() &&
+            (!File.Exists(Configurations.SetupUninstallScript) || !ext.Equals(".bat", StringComparison.OrdinalIgnoreCase)))
             throw new FileNotFoundException($"Setup uninstall script file not found. File path: {Configurations.SetupUninstallScript}");
 
         if ((Configurations.AssociateFiles || Configurations.ContextMenuIntegration) && !Configurations.SetupAdminInstall)
@@ -192,19 +195,18 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
         sb.AppendLine($"MinVersion={Configurations.SetupMinWindowsVersion}");
         sb.AppendLine($"DefaultDirName={{autopf}}\\{(!Configurations.SetupGroupName.IsStringNullOrEmpty() ? Configurations.SetupGroupName : Configurations.AppBaseName)}");
         sb.AppendLine($"DefaultGroupName={(!Configurations.SetupGroupName.IsStringNullOrEmpty() ? Configurations.SetupGroupName : Configurations.AppFriendlyName)}");
+        sb.AppendLine("Compression=lzma2/max");
+        sb.AppendLine("SolidCompression=yes");
 
         // Security & Validation
         if (!Configurations.SetupPasswordEncryption.IsStringNullOrEmpty())
             sb.AppendLine($"Password={Configurations.SetupPasswordEncryption}");
 
-        if (!Configurations.SetupWizardImageFile.IsStringNullOrEmpty())
-            sb.AppendLine($"WizardImageFile={Configurations.SetupWizardImageFile}");
+        if (!Configurations.ExeWizardImageFile.IsStringNullOrEmpty())
+            sb.AppendLine($"WizardImageFile={Configurations.ExeWizardImageFile}");
 
-        if (!Configurations.SetupWizardSmallImageFile.IsStringNullOrEmpty())
-            sb.AppendLine($"WizardSmallImageFile={Configurations.SetupWizardSmallImageFile}");
-
-        if (Configurations.SetupWindowResizable)
-            sb.AppendLine("WindowResizable=yes");
+        if (!Configurations.ExeWizardSmallImageFile.IsStringNullOrEmpty())
+            sb.AppendLine($"WizardSmallImageFile={Configurations.ExeWizardSmallImageFile}");
 
         // Installation Management
         sb.AppendLine($"CloseApplications={(Configurations.SetupCloseApplications ? "yes" : "no")}");
@@ -227,15 +229,6 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
 
         if (Configurations.SetupDisableReadyPage)
             sb.AppendLine("DisableReadyPage=yes");
-
-        if (Configurations.SetupAllowRootDirectory)
-            sb.AppendLine("AllowRootDirectory=yes");
-
-        if (!Configurations.SetupCompression.IsStringNullOrEmpty())
-            sb.AppendLine($"Compression={Configurations.SetupCompression}");
-
-        if (Configurations.SetupSolidCompression)
-            sb.AppendLine("SolidCompression=yes");
 
         // Uninstall & Registry
         if (!Configurations.SetupUninstallDisplayName.IsStringNullOrEmpty())
@@ -326,7 +319,8 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
 
         // File Association
         if (Configurations.AssociateFiles && !Configurations.FileExtension.IsStringNullOrEmpty())
-            sb.AppendLine($"Name: \"associatefiles\"; Description: \"Associate {Configurations.FileExtension} files with {Configurations.AppFriendlyName}\"; GroupDescription: \"File associations:\"; Flags: unchecked");
+            sb.AppendLine(
+                $"Name: \"associatefiles\"; Description: \"Associate {Configurations.FileExtension} files with {Configurations.AppFriendlyName}\"; GroupDescription: \"File associations:\"; Flags: unchecked");
 
         // Context Menu
         if (Configurations.ContextMenuIntegration)
@@ -346,9 +340,11 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
             var progId = $"{Configurations.AppBaseName}File";
 
             sb.AppendLine($"Root: HKCR; Subkey: \"{ext}\"; ValueType: string; ValueName: \"\"; ValueData: \"{progId}\"; Flags: uninsdeletevalue; Tasks: associatefiles");
-            sb.AppendLine($"Root: HKCR; Subkey: \"{progId}\"; ValueType: string; ValueName: \"\"; ValueData: \"{Configurations.AppFriendlyName} File\"; Flags: uninsdeletekey; Tasks: associatefiles");
+            sb.AppendLine(
+                $"Root: HKCR; Subkey: \"{progId}\"; ValueType: string; ValueName: \"\"; ValueData: \"{Configurations.AppFriendlyName} File\"; Flags: uninsdeletekey; Tasks: associatefiles");
             sb.AppendLine($"Root: HKCR; Subkey: \"{progId}\\DefaultIcon\"; ValueType: string; ValueName: \"\"; ValueData: \"{{app}}\\{iconFileName},0\"; Tasks: associatefiles");
-            sb.AppendLine($"Root: HKCR; Subkey: \"{progId}\\shell\\open\\command\"; ValueType: string; ValueName: \"\"; ValueData: \"\"\"{{app}}\\{AppExecName}\"\" \"\"%1\"\"\"; Tasks: associatefiles");
+            sb.AppendLine(
+                $"Root: HKCR; Subkey: \"{progId}\\shell\\open\\command\"; ValueType: string; ValueName: \"\"; ValueData: \"\"\"{{app}}\\{AppExecName}\"\" \"\"%1\"\"\"; Tasks: associatefiles");
         }
 
         // Context Menu Integration
@@ -358,9 +354,12 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
                 ? $"Open with {Configurations.AppFriendlyName}"
                 : Configurations.ContextMenuText;
 
-            sb.AppendLine($"Root: HKCR; Subkey: \"*\\shell\\{Configurations.AppBaseName}\"; ValueType: string; ValueName: \"\"; ValueData: \"{menuText}\"; Flags: uninsdeletekey; Tasks: contextmenu");
-            sb.AppendLine($"Root: HKCR; Subkey: \"*\\shell\\{Configurations.AppBaseName}\\command\"; ValueType: string; ValueName: \"\"; ValueData: \"\"\"{{app}}\\{AppExecName}\"\" \"\"%1\"\"\"; Tasks: contextmenu");
-            sb.AppendLine($"Root: HKCR; Subkey: \"*\\shell\\{Configurations.AppBaseName}\"; ValueType: string; ValueName: \"Icon\"; ValueData: \"{{app}}\\{iconFileName},0\"; Tasks: contextmenu");
+            sb.AppendLine(
+                $"Root: HKCR; Subkey: \"*\\shell\\{Configurations.AppBaseName}\"; ValueType: string; ValueName: \"\"; ValueData: \"{menuText}\"; Flags: uninsdeletekey; Tasks: contextmenu");
+            sb.AppendLine(
+                $"Root: HKCR; Subkey: \"*\\shell\\{Configurations.AppBaseName}\\command\"; ValueType: string; ValueName: \"\"; ValueData: \"\"\"{{app}}\\{AppExecName}\"\" \"\"%1\"\"\"; Tasks: contextmenu");
+            sb.AppendLine(
+                $"Root: HKCR; Subkey: \"*\\shell\\{Configurations.AppBaseName}\"; ValueType: string; ValueName: \"Icon\"; ValueData: \"{{app}}\\{iconFileName},0\"; Tasks: contextmenu");
         }
 
         sb.AppendLine();
@@ -371,7 +370,8 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
         sb.AppendLine("[Icons]");
 
         // Quick Launch Icon
-        sb.AppendLine($"Name: \"{{userappdata}}\\Microsoft\\Internet Explorer\\Quick Launch\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: quicklaunchicon");
+        sb.AppendLine(
+            $"Name: \"{{userappdata}}\\Microsoft\\Internet Explorer\\Quick Launch\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: quicklaunchicon");
 
         if (!Configurations.DesktopNoDisplay)
         {
@@ -379,11 +379,13 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
             sb.AppendLine($"Name: \"{{group}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"");
 
             // Desktop Icon
-            sb.AppendLine($"Name: \"{{userdesktop}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: desktopicon");
+            sb.AppendLine(
+                $"Name: \"{{userdesktop}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: desktopicon");
         }
 
         // Startup Icon
-        sb.AppendLine($"Name: \"{{userstartup}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: startup");
+        sb.AppendLine(
+            $"Name: \"{{userstartup}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: startup");
 
         // Uninstaller Icon
         sb.AppendLine($"Name: \"{{group}}\\Uninstall {Configurations.AppFriendlyName}\"; Filename: \"{{uninstallexe}}\"");
@@ -438,17 +440,6 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
     {
         sb.AppendLine("[UninstallDelete]");
         sb.AppendLine("Type: dirifempty; Name: \"{app}\"");
-    }
-
-    private string GetPackageArch()
-    {
-        return Arguments.Runtime?.ToLowerInvariant() switch
-        {
-            "win-x64" => "x64",
-            "win-x86" => "x86",
-            "win-arm64" => "arm64",
-            _ => throw new InvalidOperationException($"Unsupported runtime: {Arguments.Runtime}")
-        };
     }
 
     private void CompileInnoSetupScript()

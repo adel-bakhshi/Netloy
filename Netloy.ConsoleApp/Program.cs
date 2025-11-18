@@ -16,9 +16,10 @@ internal class Program
         {
 #if DEBUG
             // const string command = "netloy -t exe -r win-x64 -y -o \"Cross-platform.Download.Manager.1.0.2.win-x64.exe\"";
-            const string command = "netloy -t exe -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            // const string command = "netloy -t exe -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            const string command = "netloy -t msi -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             // const string command = "netloy -n all -o \"Deploy\\out/NetloyDemoApp\" --verbose";
-            //const string command = "netloy --upgrade-config --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            // const string command = "netloy --upgrade-config --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             args = command.Split(" ");
 #endif
 

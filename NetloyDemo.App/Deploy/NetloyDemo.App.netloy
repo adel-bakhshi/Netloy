@@ -1,6 +1,6 @@
 ################################################################################
 # Netloy 1.0.0 - .NET Application Packaging Tool
-# Configuration upgraded on: 2025-11-17 12:57:22
+# Configuration upgraded on: 2025-11-18 11:39:35
 ################################################################################
 
 ########################################
@@ -297,7 +297,7 @@ DebianRecommends = """
 """
 
 ########################################
-# WINDOWS EXE OPTIONS
+# WINDOWS SETUP OPTIONS
 ########################################
 
 # Optional application group name used as the Start Menu folder and install directory under Program Files.
@@ -349,18 +349,27 @@ SetupPasswordEncryption = 12345
 # The image should be in BMP format with dimensions of 164x314 pixels for best results.
 # This allows you to brand the installer with your company logo or application artwork.
 # Leave empty to use the default Inno Setup wizard image.
-SetupWizardImageFile = Images/setup-wizard-image.bmp
+ExeWizardImageFile = Images/exe-wizard-image.bmp
 
 # Optional path to a small wizard image file displayed in the top-right corner of the installer.
-# The image should be in BMP format with dimensions of 58x58 pixels for optimal display.
+# The image should be in BMP or PNG format with dimensions of 58x58 pixels for optimal display.
 # Typically used for displaying your application icon or small company logo.
 # Leave empty to use the default Inno Setup behavior.
-SetupWizardSmallImageFile = Images/setup-wizard-small-image.bmp
+ExeWizardSmallImageFile = Images/exe-wizard-small-image.bmp
 
-# Boolean (true or false). When enabled, allows users to resize the installer window to their preference.
-# This can be helpful for users with different screen sizes or accessibility needs.
-# Default is false to maintain a consistent installer appearance across all systems.
-SetupWindowResizable = true
+# Optional path to a custom banner image file displayed at the top of the MSI installer dialog.
+# The image should be in BMP format with dimensions of 493x58 pixels for best results.
+# This horizontal banner appears across the top of most installer pages and is used for branding.
+# Leave empty to use the default WiX banner image.
+# Note: This option is only used when PackageType is 'msi' (WiX installer).
+MsiUiBanner = Images/msi-ui-banner.bmp
+
+# Optional path to a custom dialog background image file displayed on the left side of the MSI installer.
+# The image should be in BMP format with dimensions of 493x312 pixels for best results.
+# This large image appears on the welcome and completion pages of the installer.
+# Leave empty to use the default WiX dialog background image.
+# Note: This option is only used when PackageType is 'msi' (WiX installer).
+MsiUiDialog = Images/msi-ui-dialog.bmp
 
 # Boolean (true or false). When enabled, the installer will automatically detect and attempt to close
 # any running applications that are using files being updated. This prevents 'file in use' errors
@@ -403,27 +412,6 @@ SetupDisableDirPage = true
 # This creates a faster, more streamlined installation experience but removes the final review step.
 # Default is false (confirmation page is shown).
 SetupDisableReadyPage = true
-
-# Boolean (true or false). When enabled, allows installation to root directories such as 'C:\'.
-# WARNING: Installing to root directories is generally not recommended as it can clutter
-# the file system and may cause conflicts with system operations.
-# Default is false (installation to root directories is prevented).
-SetupAllowRootDirectory = true
-
-# Compression algorithm used to compress files in the installer. Available options:
-#   - 'lzma2/max': Maximum compression using LZMA2 algorithm (smallest file size, slower compression)
-#   - 'lzma2': Standard LZMA2 compression (balanced)
-#   - 'lzma': Legacy LZMA compression
-#   - 'zip': Fast compression with larger file size
-#   - 'none': No compression (fastest build, largest installer)
-# Default is 'lzma2/max' for optimal file size. For faster builds during development, use 'zip' or 'none'.
-SetupCompression = lzma2/max
-
-# Boolean (true or false). When enabled, uses solid compression which treats all files as a single
-# compressed block. This typically results in better compression ratios (smaller installer size)
-# but means files must be extracted sequentially during installation.
-# Default is true. Recommended for production releases to minimize download size.
-SetupSolidCompression = true
 
 # Optional custom display name for the uninstaller as shown in Windows 'Add or Remove Programs'.
 # If empty, the AppFriendlyName value will be used automatically.

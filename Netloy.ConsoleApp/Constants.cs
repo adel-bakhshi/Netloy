@@ -11,6 +11,7 @@ public static class Constants
     public const string ProjectUrl = "https://github.com/adel-bakhshi/Netloy";
     public const string ProjectLicense = "AGPL-3.0";
     public const string InnoSetupDownloadUrl = "https://jrsoftware.org/isdl.php";
+    public const string WixDownloadUrl = "https://docs.firegiant.com/wix/using-wix/#command-line-net-tool";
 
     public static string Copyright { get; }
     public static string Version { get; }

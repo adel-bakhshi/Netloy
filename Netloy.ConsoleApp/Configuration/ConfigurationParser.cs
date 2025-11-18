@@ -153,18 +153,18 @@ public class ConfigurationParser
         switch (netloyFiles.Length)
         {
             case 0:
-                {
-                    throw new FileNotFoundException(
-                        $"No .netloy configuration file found in current directory: {currentDir}\n" +
-                        "Please create one using 'netloy --new conf' or specify path with --config-path");
-                }
+            {
+                throw new FileNotFoundException(
+                    $"No .netloy configuration file found in current directory: {currentDir}\n" +
+                    "Please create one using 'netloy --new conf' or specify path with --config-path");
+            }
 
             case > 1:
-                {
-                    Logger.LogWarning("Multiple .netloy files found in directory. Using: {0}", Path.GetFileName(netloyFiles[0]));
-                    Logger.LogInfo("To use a specific file, specify it with --config-path");
-                    break;
-                }
+            {
+                Logger.LogWarning("Multiple .netloy files found in directory. Using: {0}", Path.GetFileName(netloyFiles[0]));
+                Logger.LogInfo("To use a specific file, specify it with --config-path");
+                break;
+            }
         }
 
         var selectedFile = netloyFiles[0];
@@ -312,7 +312,7 @@ public class ConfigurationParser
         // DEBIAN OPTIONS
         config.DebianRecommends = GetValue(nameof(config.DebianRecommends));
 
-        // WINDOWS EXE OPTIONS
+        // WINDOWS SETUP OPTIONS
         config.SetupGroupName = GetValue(nameof(config.SetupGroupName));
         config.SetupAdminInstall = GetBoolValue(nameof(config.SetupAdminInstall));
         config.SetupCommandPrompt = GetValue(nameof(config.SetupCommandPrompt));
@@ -320,11 +320,12 @@ public class ConfigurationParser
         config.SetupSignTool = GetValue(nameof(config.SetupSignTool));
         config.SetupUninstallScript = GetValue(nameof(config.SetupUninstallScript));
 
-        // Windows EXE - Advanced Exe Options
+        // Windows SETUP - ADVANCED OPTIONS
         config.SetupPasswordEncryption = GetValue(nameof(config.SetupPasswordEncryption));
-        config.SetupWizardImageFile = GetValue(nameof(config.SetupWizardImageFile));
-        config.SetupWizardSmallImageFile = GetValue(nameof(config.SetupWizardSmallImageFile));
-        config.SetupWindowResizable = GetBoolValue(nameof(config.SetupWindowResizable));
+        config.ExeWizardImageFile = GetValue(nameof(config.ExeWizardImageFile));
+        config.ExeWizardSmallImageFile = GetValue(nameof(config.ExeWizardSmallImageFile));
+        config.MsiUiBanner = GetValue(nameof(config.MsiUiBanner));
+        config.MsiUiDialog = GetValue(nameof(config.MsiUiDialog));
         config.SetupCloseApplications = GetBoolValue(nameof(config.SetupCloseApplications));
         config.SetupRestartIfNeeded = GetBoolValue(nameof(config.SetupRestartIfNeeded));
         config.SetupDirExistsWarning = GetBoolValue(nameof(config.SetupDirExistsWarning));
@@ -332,9 +333,6 @@ public class ConfigurationParser
         config.SetupDisableProgramGroupPage = GetBoolValue(nameof(config.SetupDisableProgramGroupPage));
         config.SetupDisableDirPage = GetBoolValue(nameof(config.SetupDisableDirPage));
         config.SetupDisableReadyPage = GetBoolValue(nameof(config.SetupDisableReadyPage));
-        config.SetupAllowRootDirectory = GetBoolValue(nameof(config.SetupAllowRootDirectory));
-        config.SetupCompression = GetValue(nameof(config.SetupCompression));
-        config.SetupSolidCompression = GetBoolValue(nameof(config.SetupSolidCompression));
         config.SetupUninstallDisplayName = GetValue(nameof(config.SetupUninstallDisplayName));
         config.SetupCreateUninstallRegKey = GetBoolValue(nameof(config.SetupCreateUninstallRegKey));
         config.SetupVersionInfoCompany = GetValue(nameof(config.SetupVersionInfoCompany));
@@ -452,18 +450,10 @@ public class ConfigurationParser
         ValidatePath(config, config.SetupUninstallScript, nameof(config.SetupUninstallScript), errors, isDirectory: false, required: false);
 
         // Advance installer validation
-        ValidatePath(config, config.SetupWizardImageFile, nameof(config.SetupWizardImageFile), errors, isDirectory: false, required: false);
-        ValidatePath(config, config.SetupWizardSmallImageFile, nameof(config.SetupWizardSmallImageFile), errors, isDirectory: false, required: false);
-
-        if (!config.SetupCompression.IsStringNullOrEmpty()
-            && !config.SetupCompression.Equals("lzma2/max")
-            && !config.SetupCompression.Equals("lzma2")
-            && !config.SetupCompression.Equals("lzma")
-            && !config.SetupCompression.Equals("zip")
-            && !config.SetupCompression.Equals("none"))
-        {
-            errors.Add($"The compression value {config.SetupCompression} is invalid.");
-        }
+        ValidatePath(config, config.ExeWizardImageFile, nameof(config.ExeWizardImageFile), errors, isDirectory: false, required: false);
+        ValidatePath(config, config.ExeWizardSmallImageFile, nameof(config.ExeWizardSmallImageFile), errors, isDirectory: false, required: false);
+        ValidatePath(config, config.MsiUiBanner, nameof(config.MsiUiBanner), errors, isDirectory: false, required: false);
+        ValidatePath(config, config.MsiUiDialog, nameof(config.MsiUiDialog), errors, isDirectory: false, required: false);
 
         if (errors.Count == 0)
             return;
@@ -572,28 +562,28 @@ public class ConfigurationParser
                     throw new FileNotFoundException($"No project file found in the specified directory. Directory path: {projectPath}");
 
                 case 1:
-                    {
-                        projectPath = csprojFiles[0];
-                        break;
-                    }
+                {
+                    projectPath = csprojFiles[0];
+                    break;
+                }
 
                 case > 1:
+                {
+                    Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
+
+                    if (!_arguments.SkipAll)
                     {
-                        Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
-
-                        if (!_arguments.SkipAll)
-                        {
-                            if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
-                                throw new OperationCanceledException("Operation canceled by user.");
-                        }
-                        else
-                        {
-                            Logger.LogInfo("Using first project file found. Project path: {0}", csprojFiles[0]);
-                        }
-
-                        projectPath = csprojFiles[0];
-                        break;
+                        if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
+                            throw new OperationCanceledException("Operation canceled by user.");
                     }
+                    else
+                    {
+                        Logger.LogInfo("Using first project file found. Project path: {0}", csprojFiles[0]);
+                    }
+
+                    projectPath = csprojFiles[0];
+                    break;
+                }
             }
 
             config.DotnetProjectPath = projectPath;
@@ -627,28 +617,28 @@ public class ConfigurationParser
         switch (isDirectory)
         {
             case false when !File.Exists(value):
-                {
-                    errors.Add($"{name} file not found: {value}");
-                    return;
-                }
+            {
+                errors.Add($"{name} file not found: {value}");
+                return;
+            }
 
             case true when !Directory.Exists(value):
+            {
+                Logger.LogWarning("Directory not found: {0}", value);
+
+                if (!_arguments.SkipAll)
                 {
-                    Logger.LogWarning("Directory not found: {0}", value);
-
-                    if (!_arguments.SkipAll)
-                    {
-                        if (!Confirm.ShowConfirm($"Directory not found: {value}. Do you want to create it?"))
-                            throw new OperationCanceledException("Operation canceled by user.");
-                    }
-                    else
-                    {
-                        Logger.LogInfo("Creating directory: {0}", value);
-                    }
-
-                    Directory.CreateDirectory(value);
-                    break;
+                    if (!Confirm.ShowConfirm($"Directory not found: {value}. Do you want to create it?"))
+                        throw new OperationCanceledException("Operation canceled by user.");
                 }
+                else
+                {
+                    Logger.LogInfo("Creating directory: {0}", value);
+                }
+
+                Directory.CreateDirectory(value);
+                break;
+            }
         }
 
         var property = config.GetType().GetProperty(name);
@@ -706,8 +696,8 @@ public class ConfigurationParser
         // DEBIAN OPTIONS
         AppendDebianSection(sb, config, includeComments);
 
-        // WINDOWS EXE OPTIONS
-        AppendWindowsExeSection(sb, config, includeComments);
+        // WINDOWS SETUP OPTIONS
+        AppendWindowsSetupSection(sb, config, includeComments);
 
         // CONFIGURATION OPTIONS
         AppendConfigurationOptionsSection(sb, includeComments);
@@ -1182,11 +1172,11 @@ public class ConfigurationParser
         sb.AppendLine();
     }
 
-    private static void AppendWindowsExeSection(StringBuilder sb, Configurations config, bool includeComments)
+    private static void AppendWindowsSetupSection(StringBuilder sb, Configurations config, bool includeComments)
     {
         if (includeComments)
         {
-            AppendSection(sb, "WINDOWS EXE OPTIONS");
+            AppendSection(sb, "WINDOWS SETUP OPTIONS");
             AppendComment(sb, "Optional application group name used as the Start Menu folder and install directory under Program Files.");
             AppendComment(sb, "Specifically, it is used to define the InnoSetup DefaultGroupName and DefaultDirName parameters.");
             AppendComment(sb, "If empty (default), suitable values are used based on your application.");
@@ -1276,7 +1266,7 @@ public class ConfigurationParser
             AppendComment(sb, "Leave empty to use the default Inno Setup wizard image.");
         }
 
-        AppendKeyValue(sb, nameof(config.SetupWizardImageFile), config.SetupWizardImageFile);
+        AppendKeyValue(sb, nameof(config.ExeWizardImageFile), config.ExeWizardImageFile);
         sb.AppendLine();
 
         if (includeComments)
@@ -1287,17 +1277,31 @@ public class ConfigurationParser
             AppendComment(sb, "Leave empty to use the default Inno Setup behavior.");
         }
 
-        AppendKeyValue(sb, nameof(config.SetupWizardSmallImageFile), config.SetupWizardSmallImageFile);
+        AppendKeyValue(sb, nameof(config.ExeWizardSmallImageFile), config.ExeWizardSmallImageFile);
         sb.AppendLine();
 
         if (includeComments)
         {
-            AppendComment(sb, "Boolean (true or false). When enabled, allows users to resize the installer window to their preference.");
-            AppendComment(sb, "This can be helpful for users with different screen sizes or accessibility needs.");
-            AppendComment(sb, "Default is false to maintain a consistent installer appearance across all systems.");
+            AppendComment(sb, "Optional path to a custom banner image file displayed at the top of the MSI installer dialog.");
+            AppendComment(sb, "The image should be in BMP format with dimensions of 493x58 pixels for best results.");
+            AppendComment(sb, "This horizontal banner appears across the top of most installer pages and is used for branding.");
+            AppendComment(sb, "Leave empty to use the default WiX banner image.");
+            AppendComment(sb, "Note: This option is only used when PackageType is 'msi' (WiX installer).");
         }
 
-        AppendKeyValue(sb, nameof(config.SetupWindowResizable), config.SetupWindowResizable);
+        AppendKeyValue(sb, nameof(config.MsiUiBanner), config.MsiUiBanner);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional path to a custom dialog background image file displayed on the left side of the MSI installer.");
+            AppendComment(sb, "The image should be in BMP format with dimensions of 493x312 pixels for best results.");
+            AppendComment(sb, "This large image appears on the welcome and completion pages of the installer.");
+            AppendComment(sb, "Leave empty to use the default WiX dialog background image.");
+            AppendComment(sb, "Note: This option is only used when PackageType is 'msi' (WiX installer).");
+        }
+
+        AppendKeyValue(sb, nameof(config.MsiUiDialog), config.MsiUiDialog);
         sb.AppendLine();
 
         // Installation Behavior
@@ -1377,43 +1381,6 @@ public class ConfigurationParser
         }
 
         AppendKeyValue(sb, nameof(config.SetupDisableReadyPage), config.SetupDisableReadyPage);
-        sb.AppendLine();
-
-        if (includeComments)
-        {
-            AppendComment(sb, "Boolean (true or false). When enabled, allows installation to root directories such as 'C:\\'.");
-            AppendComment(sb, "WARNING: Installing to root directories is generally not recommended as it can clutter");
-            AppendComment(sb, "the file system and may cause conflicts with system operations.");
-            AppendComment(sb, "Default is false (installation to root directories is prevented).");
-        }
-
-        AppendKeyValue(sb, nameof(config.SetupAllowRootDirectory), config.SetupAllowRootDirectory);
-        sb.AppendLine();
-
-        // Compression Settings
-        if (includeComments)
-        {
-            AppendComment(sb, "Compression algorithm used to compress files in the installer. Available options:");
-            AppendComment(sb, "  - 'lzma2/max': Maximum compression using LZMA2 algorithm (smallest file size, slower compression)");
-            AppendComment(sb, "  - 'lzma2': Standard LZMA2 compression (balanced)");
-            AppendComment(sb, "  - 'lzma': Legacy LZMA compression");
-            AppendComment(sb, "  - 'zip': Fast compression with larger file size");
-            AppendComment(sb, "  - 'none': No compression (fastest build, largest installer)");
-            AppendComment(sb, "Default is 'lzma2/max' for optimal file size. For faster builds during development, use 'zip' or 'none'.");
-        }
-
-        AppendKeyValue(sb, nameof(config.SetupCompression), config.SetupCompression);
-        sb.AppendLine();
-
-        if (includeComments)
-        {
-            AppendComment(sb, "Boolean (true or false). When enabled, uses solid compression which treats all files as a single");
-            AppendComment(sb, "compressed block. This typically results in better compression ratios (smaller installer size)");
-            AppendComment(sb, "but means files must be extracted sequentially during installation.");
-            AppendComment(sb, "Default is true. Recommended for production releases to minimize download size.");
-        }
-
-        AppendKeyValue(sb, nameof(config.SetupSolidCompression), config.SetupSolidCompression);
         sb.AppendLine();
 
         // Uninstall Configuration

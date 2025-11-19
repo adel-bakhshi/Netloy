@@ -5,17 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ae53800c-27fc-467d-92a5-c69bc931df4e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Configuration/ConfigurationParser.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Configuration/ConfigurationParser.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Configuration/Configurations.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Configuration/Configurations.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Constants.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Constants.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageBuilderBase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageBuilderBase.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageBuilderFactory.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageBuilderFactory.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageType.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageType.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Windows/ExePackageBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Windows/ExePackageBuilder.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NetloyDemo.App/Deploy/Images/setup-wizard-image.bmp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/NetloyDemo.App/Deploy/Images/setup-wizard-small-image.bmp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/NetloyDemo.App/Deploy/NetloyDemo.App.netloy" beforeDir="false" afterPath="$PROJECT_DIR$/NetloyDemo.App/Deploy/NetloyDemo.App.netloy" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -129,6 +120,7 @@
       <workItem from="1763440917731" duration="279000" />
       <workItem from="1763441440710" duration="10165000" />
       <workItem from="1763455596071" duration="7295000" />
+      <workItem from="1763526201159" duration="71000" />
     </task>
     <servers />
   </component>
@@ -197,12 +189,12 @@
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Windows/MsiPackageBuilder.cs</url>
           <line>577</line>
-          <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Windows\MsiPackageBuilder.cs" containingFunctionPresentation="Method 'CompileWixSource'">
+          <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Windows\MsiPackageBuilder.cs" containingFunctionPresentation="Method 'GenerateUpgradeCode'">
             <startOffsets>
-              <option value="22813" />
+              <option value="22768" />
             </startOffsets>
             <endOffsets>
-              <option value="22814" />
+              <option value="22841" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="14" />

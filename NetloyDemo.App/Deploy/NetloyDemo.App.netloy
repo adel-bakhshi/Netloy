@@ -1,6 +1,6 @@
 ################################################################################
 # Netloy 1.0.0 - .NET Application Packaging Tool
-# Configuration upgraded on: 2025-11-18 11:39:35
+# Configuration upgraded on: 2025-11-19 09:14:17
 ################################################################################
 
 ########################################
@@ -383,59 +383,23 @@ SetupCloseApplications = true
 # Default is false. Enable only if your application requires system-level components that need restart.
 SetupRestartIfNeeded = true
 
-# Boolean (true or false). When enabled, displays a warning message if the installation directory
-# already exists, alerting users that files may be overwritten. This helps prevent accidental
-# data loss or unintended overwrites of existing installations.
-# Default is true. Recommended to keep enabled for user safety.
-SetupDirExistsWarning = true
-
-# Boolean (true or false). When enabled, automatically appends the application name to the default
-# installation directory path. For example, if your app is 'MyApp', the default path becomes
-# 'C:\Program Files\MyApp' instead of just 'C:\Program Files'.
-# Default is true. Recommended to keep enabled to avoid installing directly into Program Files.
-SetupAppendDefaultDirName = true
-
-# Boolean (true or false). When enabled, skips the 'Select Start Menu Folder' page during installation.
-# The installer will use the default Start Menu folder without prompting the user.
-# Useful for simplified installations where user customization is not needed.
-# Default is false (the page is shown).
-SetupDisableProgramGroupPage = true
-
-# Boolean (true or false). When enabled, skips the 'Select Destination Location' page during installation.
-# The installer will use the default installation directory without allowing user customization.
-# Use this for applications that must be installed in a specific location.
-# Default is false (users can choose installation directory).
-SetupDisableDirPage = true
-
-# Boolean (true or false). When enabled, skips the 'Ready to Install' confirmation page.
-# The installation will proceed immediately after the user completes configuration.
-# This creates a faster, more streamlined installation experience but removes the final review step.
-# Default is false (confirmation page is shown).
-SetupDisableReadyPage = true
-
 # Optional custom display name for the uninstaller as shown in Windows 'Add or Remove Programs'.
 # If empty, the AppFriendlyName value will be used automatically.
 # You can customize this to differentiate multiple versions or provide additional context.
 # Example: 'MyApp 2024 Edition' or 'MyApp (Commercial License)'
 SetupUninstallDisplayName = Uninstall Very Important Demo App
 
-# Boolean (true or false). When enabled, creates a registry entry for the uninstaller,
-# allowing the application to appear in Windows 'Add or Remove Programs' (Programs and Features).
-# Disable only if you're creating a portable application or have specific deployment requirements.
-# Default is true. Most applications should keep this enabled for proper Windows integration.
-SetupCreateUninstallRegKey = true
-
 # Optional company name embedded in the version information of the installer executable.
 # This appears in the file properties when users right-click the installer and select 'Properties'.
 # If empty, no company information will be embedded in the installer executable metadata.
 # Example: 'Acme Corporation' or 'John Doe Software'
-SetupVersionInfoCompany = Netloy Demo Software
+ExeVersionInfoCompany = Netloy Demo Software
 
 # Optional description text embedded in the version information of the installer executable.
 # This appears in the file properties 'Details' tab under 'File description'.
 # Helps users identify the purpose of the installer file.
 # Example: 'MyApp Setup' or 'MyApp Installation Package'
-SetupVersionInfoDescription = Netloy Demo Setup
+ExeVersionInfoDescription = Netloy Demo Setup
 
 # Boolean (true or false). When enabled, allows your application to be associated with specific file types.
 # This means files with the specified extension (see FileExtension) will open with your application
@@ -464,6 +428,11 @@ ContextMenuIntegration = true
 # Examples: 'Edit with MyApp', 'Process with MyApp', 'Open in MyApp Editor'
 # Keep it concise and clear so users understand what action will be performed.
 ContextMenuText =
+
+# Boolean (true or false). When enabled, adds a 'Start Menu' shortcut for your application.
+# Users will see a checkbox during installation to enable this feature.
+# Default is false. Enable if you want to provide a convenient shortcut for users to launch your app.
+SetupStartOnWindowsStartup = true
 
 ########################################
 # CONFIGURATION OPTIONS

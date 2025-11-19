@@ -45,7 +45,7 @@ public class PackageBuilderFactory
         return _arguments.PackageType switch
         {
             PackageType.Exe => new ExePackageBuilder(_arguments, _configurations),
-            PackageType.Msi => new MsiPackageBuilder(_arguments, _configurations),
+            PackageType.Msi => new MsiV3PackageBuilder(_arguments, _configurations),
             PackageType.AppBundle => new AppBundlePackageBuilder(_arguments, _configurations),
             PackageType.Dmg => new DmgPackageBuilder(_arguments, _configurations),
             PackageType.AppImage => new AppImagePackageBuilder(_arguments, _configurations),
@@ -53,7 +53,7 @@ public class PackageBuilderFactory
             PackageType.Rpm => new RpmPackageBuilder(_arguments, _configurations),
             PackageType.Flatpack => new FlatpackPackageBuilder(_arguments, _configurations),
             PackageType.Zip => new ZipPackageBuilder(_arguments, _configurations),
-            _ => throw new ArgumentOutOfRangeException(nameof(_arguments.PackageType), _arguments.PackageType, null)
+            _ => throw new InvalidOperationException($"Invalid package type {_arguments.PackageType}")
         };
     }
 

@@ -214,35 +214,16 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
         if (Configurations.SetupRestartIfNeeded)
             sb.AppendLine("RestartIfNeededByRun=yes");
 
-        if (!Configurations.SetupDirExistsWarning)
-            sb.AppendLine("DirExistsWarning=no");
-
-        if (!Configurations.SetupAppendDefaultDirName)
-            sb.AppendLine("AppendDefaultDirName=no");
-
-        // Advanced Features
-        if (Configurations.SetupDisableProgramGroupPage)
-            sb.AppendLine("DisableProgramGroupPage=yes");
-
-        if (Configurations.SetupDisableDirPage)
-            sb.AppendLine("DisableDirPage=yes");
-
-        if (Configurations.SetupDisableReadyPage)
-            sb.AppendLine("DisableReadyPage=yes");
-
         // Uninstall & Registry
         if (!Configurations.SetupUninstallDisplayName.IsStringNullOrEmpty())
             sb.AppendLine($"UninstallDisplayName={Configurations.SetupUninstallDisplayName}");
 
-        if (!Configurations.SetupCreateUninstallRegKey)
-            sb.AppendLine("CreateUninstallRegKey=no");
-
         // Version Info
-        if (!Configurations.SetupVersionInfoCompany.IsStringNullOrEmpty())
-            sb.AppendLine($"VersionInfoCompany={Configurations.SetupVersionInfoCompany}");
+        if (!Configurations.ExeVersionInfoCompany.IsStringNullOrEmpty())
+            sb.AppendLine($"VersionInfoCompany={Configurations.ExeVersionInfoCompany}");
 
-        if (!Configurations.SetupVersionInfoDescription.IsStringNullOrEmpty())
-            sb.AppendLine($"VersionInfoDescription={Configurations.SetupVersionInfoDescription}");
+        if (!Configurations.ExeVersionInfoDescription.IsStringNullOrEmpty())
+            sb.AppendLine($"VersionInfoDescription={Configurations.ExeVersionInfoDescription}");
 
         // File Association
         if (Configurations.AssociateFiles && !Configurations.FileExtension.IsStringNullOrEmpty())
@@ -315,12 +296,12 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
         sb.AppendLine("Name: \"quicklaunchicon\"; Description: \"Create a &Quick Launch icon\"; GroupDescription: \"Additional icons:\"; Flags: unchecked");
 
         // Startup Task
-        sb.AppendLine($"Name: \"startup\"; Description: \"Run {Configurations.AppFriendlyName} at Windows startup\"; GroupDescription: \"Additional options:\"; Flags: unchecked");
+        if (Configurations.SetupStartOnWindowsStartup)
+            sb.AppendLine($"Name: \"startup\"; Description: \"Run {Configurations.AppFriendlyName} at Windows startup\"; GroupDescription: \"Additional options:\"; Flags: unchecked");
 
         // File Association
         if (Configurations.AssociateFiles && !Configurations.FileExtension.IsStringNullOrEmpty())
-            sb.AppendLine(
-                $"Name: \"associatefiles\"; Description: \"Associate {Configurations.FileExtension} files with {Configurations.AppFriendlyName}\"; GroupDescription: \"File associations:\"; Flags: unchecked");
+            sb.AppendLine($"Name: \"associatefiles\"; Description: \"Associate {Configurations.FileExtension} files with {Configurations.AppFriendlyName}\"; GroupDescription: \"File associations:\"; Flags: unchecked");
 
         // Context Menu
         if (Configurations.ContextMenuIntegration)

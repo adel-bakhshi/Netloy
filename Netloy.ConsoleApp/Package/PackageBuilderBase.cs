@@ -16,6 +16,7 @@ public class PackageBuilderBase
 
     protected Arguments Arguments { get; }
     protected Configurations Configurations { get; }
+    protected string NetloyTempPath { get; }
     protected string RootDirectory { get; }
     protected string AppVersion { get; }
     protected string PackageRelease { get; }
@@ -35,7 +36,8 @@ public class PackageBuilderBase
     {
         Arguments = arguments;
         Configurations = configurations;
-        RootDirectory = Path.Combine(Path.GetTempPath(), "netloy", Configurations.AppBaseName, Arguments.PackageType!.Value.ToString().ToLowerInvariant());
+        NetloyTempPath = Path.Combine(Path.GetTempPath(), "netloy");
+        RootDirectory = Path.Combine(NetloyTempPath, Configurations.AppBaseName, Arguments.PackageType!.Value.ToString().ToLowerInvariant());
         AppVersion = Arguments.AppVersion ?? GetAppVersion(Configurations.AppVersionRelease);
         PackageRelease = GetPackageRelease(Configurations.AppVersionRelease);
         OutputDirectory = GetOutputDirectory();

@@ -328,19 +328,14 @@ public class ConfigurationParser
         config.MsiUiDialog = GetValue(nameof(config.MsiUiDialog));
         config.SetupCloseApplications = GetBoolValue(nameof(config.SetupCloseApplications));
         config.SetupRestartIfNeeded = GetBoolValue(nameof(config.SetupRestartIfNeeded));
-        config.SetupDirExistsWarning = GetBoolValue(nameof(config.SetupDirExistsWarning));
-        config.SetupAppendDefaultDirName = GetBoolValue(nameof(config.SetupAppendDefaultDirName));
-        config.SetupDisableProgramGroupPage = GetBoolValue(nameof(config.SetupDisableProgramGroupPage));
-        config.SetupDisableDirPage = GetBoolValue(nameof(config.SetupDisableDirPage));
-        config.SetupDisableReadyPage = GetBoolValue(nameof(config.SetupDisableReadyPage));
         config.SetupUninstallDisplayName = GetValue(nameof(config.SetupUninstallDisplayName));
-        config.SetupCreateUninstallRegKey = GetBoolValue(nameof(config.SetupCreateUninstallRegKey));
-        config.SetupVersionInfoCompany = GetValue(nameof(config.SetupVersionInfoCompany));
-        config.SetupVersionInfoDescription = GetValue(nameof(config.SetupVersionInfoDescription));
+        config.ExeVersionInfoCompany = GetValue(nameof(config.ExeVersionInfoCompany));
+        config.ExeVersionInfoDescription = GetValue(nameof(config.ExeVersionInfoDescription));
         config.AssociateFiles = GetBoolValue(nameof(config.AssociateFiles));
         config.FileExtension = GetValue(nameof(config.FileExtension));
         config.ContextMenuIntegration = GetBoolValue(nameof(config.ContextMenuIntegration));
         config.ContextMenuText = GetValue(nameof(config.ContextMenuText));
+        config.SetupStartOnWindowsStartup = GetBoolValue(nameof(config.SetupStartOnWindowsStartup));
 
         // CONFIGURATION OPTIONS
         config.ConfigVersion = GetValue(nameof(config.ConfigVersion));
@@ -1327,62 +1322,6 @@ public class ConfigurationParser
         AppendKeyValue(sb, nameof(config.SetupRestartIfNeeded), config.SetupRestartIfNeeded);
         sb.AppendLine();
 
-        if (includeComments)
-        {
-            AppendComment(sb, "Boolean (true or false). When enabled, displays a warning message if the installation directory");
-            AppendComment(sb, "already exists, alerting users that files may be overwritten. This helps prevent accidental");
-            AppendComment(sb, "data loss or unintended overwrites of existing installations.");
-            AppendComment(sb, "Default is true. Recommended to keep enabled for user safety.");
-        }
-
-        AppendKeyValue(sb, nameof(config.SetupDirExistsWarning), config.SetupDirExistsWarning);
-        sb.AppendLine();
-
-        if (includeComments)
-        {
-            AppendComment(sb, "Boolean (true or false). When enabled, automatically appends the application name to the default");
-            AppendComment(sb, "installation directory path. For example, if your app is 'MyApp', the default path becomes");
-            AppendComment(sb, "'C:\\Program Files\\MyApp' instead of just 'C:\\Program Files'.");
-            AppendComment(sb, "Default is true. Recommended to keep enabled to avoid installing directly into Program Files.");
-        }
-
-        AppendKeyValue(sb, nameof(config.SetupAppendDefaultDirName), config.SetupAppendDefaultDirName);
-        sb.AppendLine();
-
-        // Installer Pages Control
-        if (includeComments)
-        {
-            AppendComment(sb, "Boolean (true or false). When enabled, skips the 'Select Start Menu Folder' page during installation.");
-            AppendComment(sb, "The installer will use the default Start Menu folder without prompting the user.");
-            AppendComment(sb, "Useful for simplified installations where user customization is not needed.");
-            AppendComment(sb, "Default is false (the page is shown).");
-        }
-
-        AppendKeyValue(sb, nameof(config.SetupDisableProgramGroupPage), config.SetupDisableProgramGroupPage);
-        sb.AppendLine();
-
-        if (includeComments)
-        {
-            AppendComment(sb, "Boolean (true or false). When enabled, skips the 'Select Destination Location' page during installation.");
-            AppendComment(sb, "The installer will use the default installation directory without allowing user customization.");
-            AppendComment(sb, "Use this for applications that must be installed in a specific location.");
-            AppendComment(sb, "Default is false (users can choose installation directory).");
-        }
-
-        AppendKeyValue(sb, nameof(config.SetupDisableDirPage), config.SetupDisableDirPage);
-        sb.AppendLine();
-
-        if (includeComments)
-        {
-            AppendComment(sb, "Boolean (true or false). When enabled, skips the 'Ready to Install' confirmation page.");
-            AppendComment(sb, "The installation will proceed immediately after the user completes configuration.");
-            AppendComment(sb, "This creates a faster, more streamlined installation experience but removes the final review step.");
-            AppendComment(sb, "Default is false (confirmation page is shown).");
-        }
-
-        AppendKeyValue(sb, nameof(config.SetupDisableReadyPage), config.SetupDisableReadyPage);
-        sb.AppendLine();
-
         // Uninstall Configuration
         if (includeComments)
         {
@@ -1395,17 +1334,6 @@ public class ConfigurationParser
         AppendKeyValue(sb, nameof(config.SetupUninstallDisplayName), config.SetupUninstallDisplayName);
         sb.AppendLine();
 
-        if (includeComments)
-        {
-            AppendComment(sb, "Boolean (true or false). When enabled, creates a registry entry for the uninstaller,");
-            AppendComment(sb, "allowing the application to appear in Windows 'Add or Remove Programs' (Programs and Features).");
-            AppendComment(sb, "Disable only if you're creating a portable application or have specific deployment requirements.");
-            AppendComment(sb, "Default is true. Most applications should keep this enabled for proper Windows integration.");
-        }
-
-        AppendKeyValue(sb, nameof(config.SetupCreateUninstallRegKey), config.SetupCreateUninstallRegKey);
-        sb.AppendLine();
-
         // Version Information
         if (includeComments)
         {
@@ -1415,7 +1343,7 @@ public class ConfigurationParser
             AppendComment(sb, "Example: 'Acme Corporation' or 'John Doe Software'");
         }
 
-        AppendKeyValue(sb, nameof(config.SetupVersionInfoCompany), config.SetupVersionInfoCompany);
+        AppendKeyValue(sb, nameof(config.ExeVersionInfoCompany), config.ExeVersionInfoCompany);
         sb.AppendLine();
 
         if (includeComments)
@@ -1426,7 +1354,7 @@ public class ConfigurationParser
             AppendComment(sb, "Example: 'MyApp Setup' or 'MyApp Installation Package'");
         }
 
-        AppendKeyValue(sb, nameof(config.SetupVersionInfoDescription), config.SetupVersionInfoDescription);
+        AppendKeyValue(sb, nameof(config.ExeVersionInfoDescription), config.ExeVersionInfoDescription);
         sb.AppendLine();
 
         // File Association & Integration
@@ -1476,6 +1404,16 @@ public class ConfigurationParser
         }
 
         AppendKeyValue(sb, nameof(config.ContextMenuText), config.ContextMenuText);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Boolean (true or false). When enabled, adds a 'Start Menu' shortcut for your application.");
+            AppendComment(sb, "Users will see a checkbox during installation to enable this feature.");
+            AppendComment(sb, "Default is false. Enable if you want to provide a convenient shortcut for users to launch your app.");
+        }
+
+        AppendKeyValue(sb, nameof(config.SetupStartOnWindowsStartup), config.SetupStartOnWindowsStartup);
         sb.AppendLine();
     }
 

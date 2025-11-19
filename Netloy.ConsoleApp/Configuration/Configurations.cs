@@ -66,19 +66,14 @@ public class Configurations
     public string MsiUiDialog { get; set; } = string.Empty;
     public bool SetupCloseApplications { get; set; } = true;
     public bool SetupRestartIfNeeded { get; set; }
-    public bool SetupDirExistsWarning { get; set; } = true;
-    public bool SetupAppendDefaultDirName { get; set; } = true;
-    public bool SetupDisableProgramGroupPage { get; set; }
-    public bool SetupDisableDirPage { get; set; }
-    public bool SetupDisableReadyPage { get; set; }
     public string SetupUninstallDisplayName { get; set; } = string.Empty;
-    public bool SetupCreateUninstallRegKey { get; set; } = true;
-    public string SetupVersionInfoCompany { get; set; } = string.Empty;
-    public string SetupVersionInfoDescription { get; set; } = string.Empty;
+    public string ExeVersionInfoCompany { get; set; } = string.Empty;
+    public string ExeVersionInfoDescription { get; set; } = string.Empty;
     public bool AssociateFiles { get; set; }
     public string FileExtension { get; set; } = string.Empty;
     public bool ContextMenuIntegration { get; set; }
     public string ContextMenuText { get; set; } = string.Empty;
+    public bool SetupStartOnWindowsStartup { get; set; }
 
     public string ConfigVersion { get; set; } = string.Empty;
 

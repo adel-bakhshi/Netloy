@@ -294,7 +294,7 @@ public class PackageBuilderBase
             PackageType.Deb => ".deb",
             PackageType.Rpm => ".rpm",
             PackageType.Flatpack => ".flatpak",
-            PackageType.Zip => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".zip" : ".tar.gz",
+            PackageType.Portable => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".zip" : ".tar.gz",
             _ => throw new InvalidOperationException("Invalid package type.")
         };
 

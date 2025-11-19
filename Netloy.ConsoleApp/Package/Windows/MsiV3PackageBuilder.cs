@@ -931,11 +931,10 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
     {
         processInfo.Environment.Clear();
 
-        var requiredVars = new[] { "SYSTEMROOT", "TMP", "TEMP" };
-        foreach (var varName in requiredVars)
+        foreach (var varName in new[] { "SYSTEMROOT", "TMP", "TEMP" })
         {
             var value = Environment.GetEnvironmentVariable(varName);
-            if (!string.IsNullOrEmpty(value))
+            if (!value.IsStringNullOrEmpty())
                 processInfo.Environment[varName] = value;
         }
 

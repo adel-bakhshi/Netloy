@@ -10,5 +10,5 @@ public enum PackageType : byte
     Deb,
     Rpm,
     Flatpack,
-    Zip,
+    Portable,
 }

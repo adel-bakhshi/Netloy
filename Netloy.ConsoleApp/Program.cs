@@ -17,9 +17,10 @@ internal class Program
 #if DEBUG
             // const string command = "netloy -t exe -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             //const string command = "netloy -t msi -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            const string command = "netloy -t portable -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            // const string command = "netloy -n all -o \"Deploy\\out/NetloyDemoApp\" --verbose";
-            //const string command = "netloy --upgrade-config --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            // const string command = "netloy -t portable -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            const string command = "netloy -t app -r osx-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            // const string command = "netloy -n all -o ../../../../NetloyDemo.App/Deploy/ --verbose";
+            // const string command = "netloy --upgrade-config --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             args = command.Split(" ");
 #endif
 
@@ -119,7 +120,7 @@ internal class Program
             }
 
             var currentRuntime = RuntimeInformation.RuntimeIdentifier;
-            Logger.LogError("Can't create {0} package in os {0}", arguments.PackageType?.ToString().ToUpperInvariant() ?? "UNKNOWN", currentRuntime);
+            Logger.LogError("Can't create {0} package in os {1}", arguments.PackageType?.ToString().ToUpperInvariant() ?? "UNKNOWN", currentRuntime);
             return 1;
         }
         catch (Exception ex)

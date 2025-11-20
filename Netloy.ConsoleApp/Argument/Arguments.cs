@@ -53,5 +53,18 @@ public class Arguments
     [Option("config-path")]
     public string? ConfigPath { get; set; }
 
+    [Option("signing-identity")]
+    public string? MacOsSigningIdentity { get; set; }
+
+    [Option("apple-id")]
+    public string? AppleId { get; set; }
+
+    [Option("apple-team-id")]
+    public string? AppleTeamId { get; set; }
+
+    [Option("apple-password")]
+    public string? ApplePassword { get; set; }
+
+
     public bool ShowHelp { get; set; }
 }

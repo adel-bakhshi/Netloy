@@ -67,12 +67,16 @@ public class MacroExpander
 
         if (id == MacroId.PrimeCategory)
         {
-            return (_arguments.PackageType is PackageType.AppBundle or PackageType.Dmg) ? GetMacOSCategoryType(value) : value;
+            // return _arguments.PackageType is PackageType.AppBundle or PackageType.Dmg ? GetMacOsCategoryType(value) : value;
+            return _arguments.PackageType switch
+            {
+                PackageType.App or PackageType.Dmg => GetMacOsCategoryType(value),
+                PackageType.AppImage or PackageType.Flatpack or PackageType.Rpm or PackageType.Deb => GetLinuxCategoryType(value),
+                _ => value
+            };
         }
-        else
-        {
-            return value.IsStringNullOrEmpty() ? string.Empty : value;
-        }
+
+        return value.IsStringNullOrEmpty() ? string.Empty : value;
     }
 
     public string ExpandMacros(string input)
@@ -87,7 +91,7 @@ public class MacroExpander
         return input;
     }
 
-    private static string GetMacOSCategoryType(string category)
+    private static string GetMacOsCategoryType(string category)
     {
         // Map common categories to macOS application category types
         return category.ToLowerInvariant() switch
@@ -97,11 +101,153 @@ public class MacroExpander
             "network" => "public.app-category.networking",
             "utility" => "public.app-category.utilities",
             "game" => "public.app-category.games",
-            "office" => "public.app-category.productivity",
-            "audiovideo" => "public.app-category.music",
+            "office" or "productivity" => "public.app-category.productivity",
+            "audiovideo" or "audio" or "video" or "music" => "public.app-category.music",
             "education" => "public.app-category.education",
             "finance" => "public.app-category.finance",
+            "business" => "public.app-category.business",
+            "entertainment" => "public.app-category.entertainment",
+            "health" => "public.app-category.healthcare-fitness",
+            "lifestyle" => "public.app-category.lifestyle",
+            "news" => "public.app-category.news",
+            "photo" => "public.app-category.photography",
+            "reference" => "public.app-category.reference",
+            "social" => "public.app-category.social-networking",
+            "sports" => "public.app-category.sports",
+            "travel" => "public.app-category.travel",
+            "weather" => "public.app-category.weather",
             _ => "public.app-category.utilities"
+        };
+    }
+
+    private static string GetLinuxCategoryType(string category)
+    {
+        // Map common categories to freedesktop.org registered categories
+        // Reference: https://specifications.freedesktop.org/menu-spec/latest/apa.html
+        return category.ToLowerInvariant() switch
+        {
+            // Main Categories
+            "development" => "Development",
+            "graphics" => "Graphics",
+            "network" => "Network",
+            "utility" => "Utility",
+            "game" => "Game",
+            "office" or "productivity" => "Office",
+            "audiovideo" or "audio" or "video" or "music" => "AudioVideo",
+            "education" => "Education",
+            "science" => "Science",
+            "settings" => "Settings",
+            "system" => "System",
+
+            // Additional Categories (mapped to their most appropriate main category)
+            "building" => "Development",
+            "debugger" => "Development",
+            "ide" => "Development",
+            "profiling" => "Development",
+            "translation" => "Development",
+            "webdevelopment" => "Development",
+
+            "2dgraphics" => "Graphics",
+            "3dgraphics" => "Graphics",
+            "scanning" => "Graphics",
+            "photography" => "Graphics",
+            "rastergraphics" => "Graphics",
+            "vectorgraphics" => "Graphics",
+            "viewer" => "Graphics",
+            "photo" => "Graphics",
+
+            "biology" => "Science",
+            "chemistry" => "Science",
+            "math" => "Science",
+            "astronomy" => "Science",
+            "physics" => "Science",
+
+            "engineering" => "Science",
+            "electronics" => "Science",
+            "geography" => "Science",
+            "geology" => "Science",
+
+            "audiovideoediting" => "AudioVideo",
+            "player" => "AudioVideo",
+            "recorder" => "AudioVideo",
+            "discburning" => "AudioVideo",
+
+            "email" => "Network",
+            "instantmessaging" => "Network",
+            "chat" => "Network",
+            "irc" => "Network",
+            "telephony" => "Network",
+            "webbrowser" => "Network",
+            "p2p" => "Network",
+            "filetransfer" => "Network",
+            "dialup" => "Network",
+
+            "calendar" => "Office",
+            "contactmanagement" => "Office",
+            "database" => "Office",
+            "dictionary" => "Office",
+            "chart" => "Office",
+            "finance" => "Office",
+            "flowchart" => "Office",
+            "pda" => "Office",
+            "projectmanagement" => "Office",
+            "presentation" => "Office",
+            "spreadsheet" => "Office",
+            "wordprocessor" => "Office",
+            "publishing" => "Office",
+
+            "boardgame" => "Game",
+            "cardgame" => "Game",
+            "arcadegame" => "Game",
+            "actiongame" => "Game",
+            "adventuregame" => "Game",
+            "simulation" => "Game",
+            "sportsgame" => "Game",
+            "strategygame" => "Game",
+            "roleplaying" => "Game",
+
+            "archiving" => "Utility",
+            "compression" => "Utility",
+            "filetools" => "Utility",
+            "calculator" => "Utility",
+            "clock" => "Utility",
+            "texteditor" => "Utility",
+
+            "accessibility" => "Settings",
+            "desktopsettings" => "Settings",
+            "hardwaresettings" => "Settings",
+            "packagesettings" => "Settings",
+            "security" => "Settings",
+
+            "emulator" => "System",
+            "filesystem" => "System",
+            "monitor" => "System",
+            "terminalemulator" => "System",
+
+            "languages" => "Education",
+            "kids" => "Education",
+
+            // Social and Communication
+            "social" => "Network",
+            "news" => "Network",
+
+            // Entertainment
+            "entertainment" => "AudioVideo",
+            "tv" => "AudioVideo",
+
+            // Health and Lifestyle
+            "health" => "Education",
+            "lifestyle" => "Utility",
+            "sports" => "Game",
+            "travel" => "Utility",
+            "weather" => "Utility",
+
+            // Business
+            "business" => "Office",
+            "reference" => "Office",
+
+            // Default fallback
+            _ => "Utility"
         };
     }
 }

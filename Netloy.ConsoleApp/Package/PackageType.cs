@@ -4,7 +4,7 @@ public enum PackageType : byte
 {
     Exe,
     Msi,
-    AppBundle,
+    App,
     Dmg,
     AppImage,
     Deb,

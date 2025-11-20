@@ -75,6 +75,9 @@ public class MsiPackageBuilder : PackageBuilderBase, IPackageBuilder
         var icoIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
         if (icoIcon.IsStringNullOrEmpty() || !File.Exists(icoIcon))
             errors.Add($"Couldn't find icon file. Icon path: The ico file is required for building {Arguments.PackageType.ToString()?.ToUpperInvariant()} package.");
+        
+        if (!Configurations.MsiUpgradeCode.IsStringNullOrEmpty() && !Guid.TryParse(Configurations.MsiUpgradeCode, out _))
+            errors.Add($"Invalid MsiUpgradeCode: {Configurations.MsiUpgradeCode}. Must be a valid GUID.");
 
         if (errors.Count > 0)
         {

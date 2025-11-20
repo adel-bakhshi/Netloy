@@ -55,7 +55,6 @@ public class Configurations
 
     public string MacOsInfoPlist { get; set; } = string.Empty;
     public string MacOsEntitlements { get; set; } = string.Empty;
-    public string MacOsMinimumSystemVersion { get; set; } = "10.13";
 
     public string SetupGroupName { get; set; } = string.Empty;
     public bool SetupAdminInstall { get; set; }

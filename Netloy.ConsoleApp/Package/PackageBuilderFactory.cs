@@ -33,7 +33,7 @@ public class PackageBuilderFactory
         return _arguments.PackageType switch
         {
             PackageType.Exe or PackageType.Msi => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsWindowsRuntimeValid(),
-            PackageType.AppBundle or PackageType.Dmg => RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && IsMacOsRuntimeValid(),
+            PackageType.App or PackageType.Dmg => RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && IsMacOsRuntimeValid(),
             PackageType.AppImage or PackageType.Deb or PackageType.Rpm or PackageType.Flatpack => RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && IsLinuxRuntimeValid(),
             PackageType.Portable => IsPortableRuntimeValid(),
             _ => false
@@ -46,7 +46,7 @@ public class PackageBuilderFactory
         {
             PackageType.Exe => new ExePackageBuilder(_arguments, _configurations),
             PackageType.Msi => new MsiV3PackageBuilder(_arguments, _configurations),
-            PackageType.AppBundle => new AppBundlePackageBuilder(_arguments, _configurations),
+            PackageType.App => new AppPackageBuilder(_arguments, _configurations),
             PackageType.Dmg => new DmgPackageBuilder(_arguments, _configurations),
             PackageType.AppImage => new AppImagePackageBuilder(_arguments, _configurations),
             PackageType.Deb => new DebPackageBuilder(_arguments, _configurations),

@@ -60,17 +60,21 @@ public class PackageBuilderBase
         // Check and clean build directory
         if (Directory.Exists(outputDir))
         {
-            if (!Arguments.SkipAll)
+            var files = Directory.GetFiles(outputDir);
+            if (files.Length > 0)
             {
-                if (!Confirm.ShowConfirm($"Build directory already exists. Directory path: {outputDir}. Do you want to delete it?"))
-                    throw new OperationCanceledException("Operation canceled by user.");
-            }
-            else
-            {
-                Logger.LogInfo("Build directory already exists. Directory path: {0}. Deleting it...", outputDir);
-            }
+                if (!Arguments.SkipAll)
+                {
+                    if (!Confirm.ShowConfirm($"Build directory already exists. Directory path: {outputDir}. Do you want to delete it?"))
+                        throw new OperationCanceledException("Operation canceled by user.");
+                }
+                else
+                {
+                    Logger.LogInfo("Build directory already exists. Directory path: {0}. Deleting it...", outputDir);
+                }
 
-            Directory.Delete(outputDir, true);
+                Directory.Delete(outputDir, true);
+            }
         }
 
         // Set primary icon in macros
@@ -80,9 +84,9 @@ public class PackageBuilderBase
         MacroExpander.SetMacroValue(MacroId.PublishOutputDirectory, outputDir);
 
         if (Arguments.CleanProject)
-            CleanDotnetProject(DotnetProjectPath);
+            await CleanDotnetProjectAsync(DotnetProjectPath);
 
-        PublishDotnetProject(DotnetProjectPath, outputDir);
+        await PublishDotnetProjectAsync(DotnetProjectPath, outputDir);
 
         await RunPostPublishScriptAsync();
 
@@ -114,11 +118,11 @@ public class PackageBuilderBase
         if (!File.Exists(primaryIcon))
             Logger.LogWarning("Primary icon file not found. File path: {0}", primaryIcon);
 
-        MacroExpander.SetMacroValue(MacroId.PrimaryIconFileName, Path.GetFileNameWithoutExtension(primaryIcon) ?? string.Empty);
+        MacroExpander.SetMacroValue(MacroId.PrimaryIconFileName, Path.GetFileName(primaryIcon) ?? string.Empty);
         MacroExpander.SetMacroValue(MacroId.PrimaryIconFilePath, primaryIcon ?? string.Empty);
     }
 
-    private void PublishDotnetProject(string projectPath, string outputDir)
+    private async Task PublishDotnetProjectAsync(string projectPath, string outputDir)
     {
         // Build the project with dotnet publish
         Logger.LogInfo("Building .NET project...");
@@ -133,7 +137,7 @@ public class PackageBuilderBase
         Logger.LogInfo("Running: dotnet {0}", publishArgs);
 
         // Execute dotnet publish
-        var exitCode = ExecuteDotnetCommand(publishArgs);
+        var exitCode = await ExecuteDotnetCommandAsync(publishArgs);
         if (exitCode != 0)
             throw new InvalidOperationException($"dotnet publish failed with exit code {exitCode}");
 
@@ -156,11 +160,19 @@ public class PackageBuilderBase
             var customArgs = MacroExpander.ExpandMacros(Configurations.DotnetPublishArgs);
             sb.Append($" {customArgs}");
         }
+        
+        // Add UseAppHost argument if not present and package type is App or Dmg
+        // For more info visit https://docs.microsoft.com/en-us/dotnet/core/install/macos-notarization-issues
+        if (!Configurations.DotnetPostPublishArguments.Contains("UseAppHost", StringComparison.OrdinalIgnoreCase)
+            && Arguments.PackageType is PackageType.App or PackageType.Dmg)
+        {
+            sb.Append(" -p:UseAppHost=true");
+        }
 
         return sb.ToString();
     }
 
-    private void CleanDotnetProject(string projectPath)
+    private async Task CleanDotnetProjectAsync(string projectPath)
     {
         Logger.LogInfo("Cleaning .NET project...");
 
@@ -168,7 +180,7 @@ public class PackageBuilderBase
         Logger.LogInfo("Running: dotnet {0}", cleanArgs);
 
         // Execute dotnet clean
-        var exitCode = ExecuteDotnetCommand(cleanArgs);
+        var exitCode = await ExecuteDotnetCommandAsync(cleanArgs);
         if (exitCode != 0)
             throw new InvalidOperationException($"dotnet clean failed with exit code {exitCode}");
 
@@ -185,7 +197,7 @@ public class PackageBuilderBase
         return sb.ToString();
     }
 
-    private int ExecuteDotnetCommand(string arguments)
+    private async Task<int> ExecuteDotnetCommandAsync(string arguments)
     {
         var processInfo = new ProcessStartInfo
         {
@@ -198,10 +210,10 @@ public class PackageBuilderBase
         };
 
         using var process = Process.Start(processInfo) ?? throw new InvalidOperationException("Failed to start dotnet process.");
-        var output = process.StandardOutput.ReadToEnd();
-        var error = process.StandardError.ReadToEnd();
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
 
-        process.WaitForExit();
+        await process.WaitForExitAsync();
 
         // Log output if verbose mode is enabled
         if (Arguments.Verbose && !output.IsStringNullOrEmpty())
@@ -249,7 +261,7 @@ public class PackageBuilderBase
             ? string.Empty
             : MacroExpander.ExpandMacros(Configurations.DotnetPostPublishArguments);
 
-        var exitCode = ScriptRunner.RunScript(scriptPath, arguments);
+        var exitCode = await ScriptRunner.RunScriptAsync(scriptPath, arguments);
         if (exitCode != 0)
             throw new InvalidOperationException($"Post publish script failed with exit code {exitCode}");
     }
@@ -304,7 +316,7 @@ public class PackageBuilderBase
         {
             PackageType.Exe => ".exe",
             PackageType.Msi => ".msi",
-            PackageType.AppBundle => ".app.zip",
+            PackageType.App => ".app.zip",
             PackageType.Dmg => ".dmg",
             PackageType.AppImage => ".AppImage",
             PackageType.Deb => ".deb",
@@ -379,21 +391,21 @@ public class PackageBuilderBase
                 throw new FileNotFoundException("No project file found in the specified directory.");
 
             case > 1:
+            {
+                Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
+
+                if (!Arguments.SkipAll)
                 {
-                    Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
-
-                    if (!Arguments.SkipAll)
-                    {
-                        if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
-                            throw new OperationCanceledException("Operation canceled by user.");
-                    }
-                    else
-                    {
-                        Logger.LogInfo("Using first project file found. Project path: {0}", projectFiles[0]);
-                    }
-
-                    break;
+                    if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
+                        throw new OperationCanceledException("Operation canceled by user.");
                 }
+                else
+                {
+                    Logger.LogInfo("Using first project file found. Project path: {0}", projectFiles[0]);
+                }
+
+                break;
+            }
         }
 
         return projectFiles[0];

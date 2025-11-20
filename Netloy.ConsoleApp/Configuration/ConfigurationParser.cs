@@ -56,11 +56,18 @@ public class ConfigurationParser
     {
         if (File.Exists(filePath))
         {
-            Logger.LogWarning("Configuration file already exists: {0}", filePath);
-            if (!Confirm.ShowConfirm("Overwrite?"))
+            if (!_arguments.SkipAll)
             {
-                Logger.LogInfo("Operation cancelled");
-                return;
+                Logger.LogWarning("Configuration file already exists: {0}", filePath);
+                if (!Confirm.ShowConfirm("Overwrite?"))
+                {
+                    Logger.LogInfo("Operation cancelled");
+                    return;
+                }
+            }
+            else
+            {
+                Logger.LogInfo("Overwriting existing configuration file: {0}", filePath);
             }
         }
 
@@ -311,6 +318,10 @@ public class ConfigurationParser
 
         // DEBIAN OPTIONS
         config.DebianRecommends = GetValue(nameof(config.DebianRecommends));
+        
+        // MACOS OPTIONS
+        config.MacOsInfoPlist = GetValue(nameof(config.MacOsInfoPlist));
+        config.MacOsEntitlements = GetValue(nameof(config.MacOsEntitlements));
 
         // WINDOWS SETUP OPTIONS
         config.SetupGroupName = GetValue(nameof(config.SetupGroupName));
@@ -1201,23 +1212,6 @@ public class ConfigurationParser
 
         AppendKeyValue(sb, nameof(config.MacOsEntitlements), config.MacOsEntitlements);
         sb.AppendLine();
-
-        if (includeComments)
-        {
-            AppendComment(sb, "Optional minimum macOS system version required to run your application. This value is used");
-            AppendComment(sb, "to populate the LSMinimumSystemVersion key in Info.plist. Common values:");
-            AppendComment(sb, "  - 10.13 (High Sierra)");
-            AppendComment(sb, "  - 10.14 (Mojave)");
-            AppendComment(sb, "  - 10.15 (Catalina)");
-            AppendComment(sb, "  - 11.0 (Big Sur)");
-            AppendComment(sb, "  - 12.0 (Monterey)");
-            AppendComment(sb, "  - 13.0 (Ventura)");
-            AppendComment(sb, "  - 14.0 (Sonoma)");
-            AppendComment(sb, "If empty, defaults to 10.13 for maximum compatibility.");
-        }
-
-        AppendKeyValue(sb, nameof(config.MacOsMinimumSystemVersion), config.MacOsMinimumSystemVersion);
-        sb.AppendLine();
     }
 
     private static void AppendWindowsSetupSection(StringBuilder sb, Configurations config, bool includeComments)
@@ -1297,7 +1291,6 @@ public class ConfigurationParser
         // Advanced Setup Options & Task Options Combined
         if (includeComments)
         {
-            sb.AppendLine();
             AppendSection(sb, "ADVANCED INSTALLER CONFIGURATION");
             AppendComment(sb, "WARNING: The following options are for advanced users only!");
             AppendComment(sb, "You do NOT need to modify these settings for a standard installation.");

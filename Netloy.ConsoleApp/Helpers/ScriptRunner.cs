@@ -7,7 +7,7 @@ namespace Netloy.ConsoleApp.Helpers;
 
 public static class ScriptRunner
 {
-    public static int RunScript(string scriptPath, string arguments = "")
+    public static async Task<int> RunScriptAsync(string scriptPath, string arguments = "")
     {
         ProcessStartInfo processInfo;
 
@@ -53,10 +53,10 @@ public static class ScriptRunner
             return -1;
 
         // Get output
-        var output = process.StandardOutput.ReadToEnd();
-        var error = process.StandardError.ReadToEnd();
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
 
-        process.WaitForExit();
+        await process.WaitForExitAsync();
 
         Logger.LogInfo("Output: \n{0}", forceLog: true, output);
         if (!error.IsStringNullOrEmpty())

@@ -1,6 +1,6 @@
 ################################################################################
 # Netloy 1.0.0 - .NET Application Packaging Tool
-# Configuration upgraded on: 2025-11-19 09:14:17
+# Configuration upgraded on: 2025-11-20 12:59:46
 ################################################################################
 
 ########################################
@@ -297,6 +297,25 @@ DebianRecommends = """
 """
 
 ########################################
+# MACOS OPTIONS
+########################################
+
+# Optional path to a custom Info.plist file for macOS App Bundle. If provided, this file will be
+# used instead of generating a default one. The file content may use macro variables which will be
+# automatically replaced with actual values during build. Use 'netloy --help macro' for reference.
+# If empty, a default Info.plist will be generated based on your application configuration.
+# Note: Netloy can generate you a template Info.plist file. Use 'netloy --new plist' to create one.
+MacOsInfoPlist = NetloyDemo.App.plist
+
+# Optional path to a custom Entitlements file for macOS App Bundle. Entitlements define the
+# capabilities and permissions your application needs to access system resources. The file content
+# may use macro variables which will be automatically replaced with actual values during build.
+# If empty, a default entitlements file will be generated with basic permissions.
+# Note: Netloy can generate you a template Entitlements file. Use 'netloy --new entitle' to create one.
+# See: https://developer.apple.com/documentation/bundleresources/entitlements
+MacOsEntitlements = NetloyDemo.App.entitlements
+
+########################################
 # WINDOWS SETUP OPTIONS
 ########################################
 
@@ -325,10 +344,16 @@ SetupMinWindowsVersion = 10
 # See: https://jrsoftware.org/ishelp/topic_setup_signtool.htm
 SetupSignTool =
 
+# A unique GUID that identifies this product across all versions.
+# CRITICAL: This code MUST remain constant for all versions of your application.
+# If not provided, it will be auto-generated from the [AppId].
+# WARNING: Changing this code will prevent upgrades from working correctly!
+# Example: "12345678-1234-1234-1234-123456789ABC"
+MsiUpgradeCode =
+
 # Optional name of a script to run before uninstall with InnoSetup. The file is relative to the directory of the
 # application and must have a default file association. This binds to the `[UninstallRun]` section of InnoSetup.
 SetupUninstallScript =
-
 
 ########################################
 # ADVANCED INSTALLER CONFIGURATION

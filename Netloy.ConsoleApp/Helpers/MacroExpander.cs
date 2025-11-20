@@ -1,16 +1,22 @@
-﻿namespace Netloy.ConsoleApp.Helpers;
+﻿using Netloy.ConsoleApp.Argument;
+using Netloy.ConsoleApp.Extensions;
+using Netloy.ConsoleApp.Package;
+
+namespace Netloy.ConsoleApp.Helpers;
 
 public class MacroExpander
 {
     #region Private Fields
 
     private readonly Dictionary<MacroId, string> _macros;
+    private readonly Arguments _arguments;
 
     #endregion
 
-    public MacroExpander()
+    public MacroExpander(Arguments arguments)
     {
         _macros = [];
+        _arguments = arguments;
     }
 
     public static string GetMacroVariable(MacroId id)
@@ -23,6 +29,7 @@ public class MacroExpander
             MacroId.AppId => "${APP_ID}",
             MacroId.AppShortSummary => "${APP_SHORT_SUMMARY}",
             MacroId.AppLicenseId => "${APP_LICENSE_ID}",
+            MacroId.AppExecName => "${APP_EXEC_NAME}",
             MacroId.PublisherName => "${PUBLISHER_NAME}",
             MacroId.PublisherId => "${PUBLISHER_ID}",
             MacroId.PublisherCopyright => "${PUBLISHER_COPYRIGHT}",
@@ -41,6 +48,8 @@ public class MacroExpander
             MacroId.PublishOutputDirectory => "${PUBLISH_OUTPUT_DIRECTORY}",
             MacroId.AppStreamDescriptionXml => "${APPSTREAM_DESCRIPTION_XML}",
             MacroId.AppStreamChangelogXml => "${APPSTREAM_CHANGELOG_XML}",
+            MacroId.PrimaryIconFileName => "${PRIMARY_ICON_FILE_NAME}",
+            MacroId.PrimaryIconFilePath => "${PRIMARY_ICON_FILE_PATH}",
             _ => throw new ArgumentException("Unknown macro " + id)
         };
     }
@@ -53,7 +62,17 @@ public class MacroExpander
 
     public string GetMacroValue(MacroId id)
     {
-        return !_macros.TryGetValue(id, out var value) ? string.Empty : value;
+        if (!_macros.TryGetValue(id, out var value))
+            return string.Empty;
+
+        if (id == MacroId.PrimeCategory)
+        {
+            return (_arguments.PackageType is PackageType.AppBundle or PackageType.Dmg) ? GetMacOSCategoryType(value) : value;
+        }
+        else
+        {
+            return value.IsStringNullOrEmpty() ? string.Empty : value;
+        }
     }
 
     public string ExpandMacros(string input)
@@ -66,5 +85,23 @@ public class MacroExpander
         }
 
         return input;
+    }
+
+    private static string GetMacOSCategoryType(string category)
+    {
+        // Map common categories to macOS application category types
+        return category.ToLowerInvariant() switch
+        {
+            "development" => "public.app-category.developer-tools",
+            "graphics" => "public.app-category.graphics-design",
+            "network" => "public.app-category.networking",
+            "utility" => "public.app-category.utilities",
+            "game" => "public.app-category.games",
+            "office" => "public.app-category.productivity",
+            "audiovideo" => "public.app-category.music",
+            "education" => "public.app-category.education",
+            "finance" => "public.app-category.finance",
+            _ => "public.app-category.utilities"
+        };
     }
 }

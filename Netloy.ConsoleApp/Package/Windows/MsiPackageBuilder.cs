@@ -4,6 +4,7 @@ using System.Xml.Linq;
 using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
+using Netloy.ConsoleApp.Helpers;
 using Netloy.ConsoleApp.NetloyLogger;
 
 namespace Netloy.ConsoleApp.Package.Windows;
@@ -31,51 +32,55 @@ public class MsiPackageBuilder : PackageBuilderBase, IPackageBuilder
 
     public async Task BuildAsync()
     {
-        try
-        {
-            Logger.LogInfo("Starting Windows MSI package build...", forceLog: true);
+        Logger.LogInfo("Starting Windows MSI package build...", forceLog: true);
 
-            // Publish project
-            PublishOutputDir = Path.Combine(RootDirectory, "publish");
-            await PublishAsync(PublishOutputDir);
+        // Publish project
+        PublishOutputDir = Path.Combine(RootDirectory, "publish");
+        await PublishAsync(PublishOutputDir, ".ico");
 
-            // Generate WiX source file
-            Logger.LogInfo("Generating WiX source file...");
-            var wixContent = GenerateWixSource();
+        // Generate WiX source file
+        Logger.LogInfo("Generating WiX source file...");
+        var wixContent = GenerateWixSource();
 
-            // Save WiX source to file
-            await File.WriteAllTextAsync(WixSourcePath, wixContent, Encoding.UTF8);
-            Logger.LogInfo("WiX source saved to: {0}", WixSourcePath);
+        // Save WiX source to file
+        await File.WriteAllTextAsync(WixSourcePath, wixContent, Encoding.UTF8);
+        Logger.LogInfo("WiX source saved to: {0}", WixSourcePath);
 
-            // Build MSI with WiX
-            Logger.LogInfo("Building MSI with WiX Toolset...");
-            CompileWixSource();
+        // Build MSI with WiX
+        Logger.LogInfo("Building MSI with WiX Toolset...");
+        CompileWixSource();
 
-            Logger.LogSuccess("Windows MSI package build completed successfully!");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogException(ex);
-            throw;
-        }
+        Logger.LogSuccess("Windows MSI package build completed successfully!");
     }
 
     public bool Validate()
     {
+        var errors = new List<string>();
+
         // Check if WiX is installed
         if (!IsWixInstalled())
-            throw new InvalidOperationException($"WiX Toolset (wix.exe) not found. Please install WiX Toolset v4+ from {Constants.WixDownloadUrl}");
+            errors.Add($"WiX Toolset (wix.exe) not found. Please install WiX Toolset v4+ from {Constants.WixDownloadUrl}");
 
         // Validate wizard images
         if (!Configurations.MsiUiBanner.IsStringNullOrEmpty() && !File.Exists(Configurations.MsiUiBanner))
-            throw new FileNotFoundException($"MSI UI banner file not found: {Configurations.MsiUiBanner}");
+            errors.Add($"MSI UI banner file not found: {Configurations.MsiUiBanner}");
 
         if (!Configurations.MsiUiDialog.IsStringNullOrEmpty() && !File.Exists(Configurations.MsiUiDialog))
-            throw new FileNotFoundException($"MSI UI dialog file not found: {Configurations.MsiUiDialog}");
+            errors.Add($"MSI UI dialog file not found: {Configurations.MsiUiDialog}");
 
         // File association and context menu require admin
         if ((Configurations.AssociateFiles || Configurations.ContextMenuIntegration) && !Configurations.SetupAdminInstall)
-            throw new InvalidOperationException($"You must set {nameof(Configurations.SetupAdminInstall)} to true if you want to associate files or add context menu items.");
+            errors.Add($"You must set {nameof(Configurations.SetupAdminInstall)} to true if you want to associate files or add context menu items.");
+
+        var icoIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
+        if (icoIcon.IsStringNullOrEmpty() || !File.Exists(icoIcon))
+            errors.Add($"Couldn't find icon file. Icon path: The ico file is required for building {Arguments.PackageType.ToString()?.ToUpperInvariant()} package.");
+
+        if (errors.Count > 0)
+        {
+            var errorMessage = $"The following errors were found:\n\n{string.Join("\n", errors)}";
+            throw new InvalidOperationException(errorMessage);
+        }
 
         return true;
     }
@@ -121,11 +126,7 @@ public class MsiPackageBuilder : PackageBuilderBase, IPackageBuilder
     private string GenerateWixSource()
     {
         // Get primary icon
-        var primaryIcon = Configurations.IconsCollection.Find(ico =>
-            Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
-
-        if (primaryIcon.IsStringNullOrEmpty())
-            throw new FileNotFoundException("Couldn't find icon file.");
+        var primaryIcon = MacroExpander.GetMacroValue(MacroId.PrimaryIconFilePath);
 
         // Create WiX XML document
         var doc = new XDocument(

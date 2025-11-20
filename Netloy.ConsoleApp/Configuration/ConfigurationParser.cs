@@ -318,6 +318,7 @@ public class ConfigurationParser
         config.SetupCommandPrompt = GetValue(nameof(config.SetupCommandPrompt));
         config.SetupMinWindowsVersion = GetValue(nameof(config.SetupMinWindowsVersion));
         config.SetupSignTool = GetValue(nameof(config.SetupSignTool));
+        config.MsiUpgradeCode = GetValue(nameof(config.MsiUpgradeCode));
         config.SetupUninstallScript = GetValue(nameof(config.SetupUninstallScript));
 
         // Windows SETUP - ADVANCED OPTIONS
@@ -426,6 +427,9 @@ public class ConfigurationParser
             errors.Add($"{nameof(config.PackageName)} is required");
 
         ValidatePath(config, config.OutputDirectory, nameof(config.OutputDirectory), errors, isDirectory: true, required: true);
+
+        ValidatePath(config, config.MacOsInfoPlist, nameof(config.MacOsInfoPlist), errors, isDirectory: false, required: false);
+        ValidatePath(config, config.MacOsEntitlements, nameof(config.MacOsEntitlements), errors, isDirectory: false, required: false);
 
         if (!double.TryParse(config.SetupMinWindowsVersion, out _))
         {
@@ -690,6 +694,9 @@ public class ConfigurationParser
 
         // DEBIAN OPTIONS
         AppendDebianSection(sb, config, includeComments);
+
+        // MACOS OPTIONS
+        AppendMacOsSection(sb, config, includeComments);
 
         // WINDOWS SETUP OPTIONS
         AppendWindowsSetupSection(sb, config, includeComments);
@@ -1167,6 +1174,52 @@ public class ConfigurationParser
         sb.AppendLine();
     }
 
+    private static void AppendMacOsSection(StringBuilder sb, Configurations config, bool includeComments)
+    {
+        if (includeComments)
+        {
+            AppendSection(sb, "MACOS OPTIONS");
+            AppendComment(sb, "Optional path to a custom Info.plist file for macOS App Bundle. If provided, this file will be");
+            AppendComment(sb, "used instead of generating a default one. The file content may use macro variables which will be");
+            AppendComment(sb, "automatically replaced with actual values during build. Use 'netloy --help macro' for reference.");
+            AppendComment(sb, "If empty, a default Info.plist will be generated based on your application configuration.");
+            AppendComment(sb, "Note: Netloy can generate you a template Info.plist file. Use 'netloy --new plist' to create one.");
+        }
+
+        AppendKeyValue(sb, nameof(config.MacOsInfoPlist), config.MacOsInfoPlist);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional path to a custom Entitlements file for macOS App Bundle. Entitlements define the");
+            AppendComment(sb, "capabilities and permissions your application needs to access system resources. The file content");
+            AppendComment(sb, "may use macro variables which will be automatically replaced with actual values during build.");
+            AppendComment(sb, "If empty, a default entitlements file will be generated with basic permissions.");
+            AppendComment(sb, "Note: Netloy can generate you a template Entitlements file. Use 'netloy --new entitle' to create one.");
+            AppendComment(sb, "See: https://developer.apple.com/documentation/bundleresources/entitlements");
+        }
+
+        AppendKeyValue(sb, nameof(config.MacOsEntitlements), config.MacOsEntitlements);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional minimum macOS system version required to run your application. This value is used");
+            AppendComment(sb, "to populate the LSMinimumSystemVersion key in Info.plist. Common values:");
+            AppendComment(sb, "  - 10.13 (High Sierra)");
+            AppendComment(sb, "  - 10.14 (Mojave)");
+            AppendComment(sb, "  - 10.15 (Catalina)");
+            AppendComment(sb, "  - 11.0 (Big Sur)");
+            AppendComment(sb, "  - 12.0 (Monterey)");
+            AppendComment(sb, "  - 13.0 (Ventura)");
+            AppendComment(sb, "  - 14.0 (Sonoma)");
+            AppendComment(sb, "If empty, defaults to 10.13 for maximum compatibility.");
+        }
+
+        AppendKeyValue(sb, nameof(config.MacOsMinimumSystemVersion), config.MacOsMinimumSystemVersion);
+        sb.AppendLine();
+    }
+
     private static void AppendWindowsSetupSection(StringBuilder sb, Configurations config, bool includeComments)
     {
         if (includeComments)
@@ -1218,6 +1271,18 @@ public class ConfigurationParser
         }
 
         AppendKeyValue(sb, nameof(config.SetupSignTool), config.SetupSignTool);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "A unique GUID that identifies this product across all versions.");
+            AppendComment(sb, "CRITICAL: This code MUST remain constant for all versions of your application.");
+            AppendComment(sb, "If not provided, it will be auto-generated from the [AppId].");
+            AppendComment(sb, "WARNING: Changing this code will prevent upgrades from working correctly!");
+            AppendComment(sb, "Example: \"12345678-1234-1234-1234-123456789ABC\"");
+        }
+
+        AppendKeyValue(sb, nameof(config.MsiUpgradeCode), config.MsiUpgradeCode);
         sb.AppendLine();
 
         if (includeComments)

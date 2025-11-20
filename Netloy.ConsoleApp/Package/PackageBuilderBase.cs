@@ -48,14 +48,14 @@ public class PackageBuilderBase
         AppExecName = GetAppExecName();
         DotnetProjectPath = GetProjectPath();
         IconHelper = new IconHelper(Configurations, IconsDirectory);
-        MacroExpander = new MacroExpander();
+        MacroExpander = new MacroExpander(Arguments);
 
         GenerateGlobalMacros();
         CreateDirectories();
         IconHelper.GenerateIconsAsync().Wait();
     }
 
-    protected async Task PublishAsync(string outputDir)
+    protected async Task PublishAsync(string outputDir, string primaryIconExt)
     {
         // Check and clean build directory
         if (Directory.Exists(outputDir))
@@ -72,6 +72,9 @@ public class PackageBuilderBase
 
             Directory.Delete(outputDir, true);
         }
+
+        // Set primary icon in macros
+        SetPrimaryIconInMacros(primaryIconExt);
 
         Directory.CreateDirectory(outputDir);
         MacroExpander.SetMacroValue(MacroId.PublishOutputDirectory, outputDir);
@@ -100,6 +103,19 @@ public class PackageBuilderBase
         }
 
         throw new PlatformNotSupportedException($"Couldn't get package arch. {RuntimeInformation.OSDescription} is not supported.");
+    }
+
+    private void SetPrimaryIconInMacros(string ext)
+    {
+        var primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(ext, StringComparison.OrdinalIgnoreCase));
+        if (primaryIcon.IsStringNullOrEmpty())
+            return;
+
+        if (!File.Exists(primaryIcon))
+            Logger.LogWarning("Primary icon file not found. File path: {0}", primaryIcon);
+
+        MacroExpander.SetMacroValue(MacroId.PrimaryIconFileName, Path.GetFileNameWithoutExtension(primaryIcon) ?? string.Empty);
+        MacroExpander.SetMacroValue(MacroId.PrimaryIconFilePath, primaryIcon ?? string.Empty);
     }
 
     private void PublishDotnetProject(string projectPath, string outputDir)
@@ -363,21 +379,21 @@ public class PackageBuilderBase
                 throw new FileNotFoundException("No project file found in the specified directory.");
 
             case > 1:
-            {
-                Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
-
-                if (!Arguments.SkipAll)
                 {
-                    if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
-                        throw new OperationCanceledException("Operation canceled by user.");
-                }
-                else
-                {
-                    Logger.LogInfo("Using first project file found. Project path: {0}", projectFiles[0]);
-                }
+                    Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
 
-                break;
-            }
+                    if (!Arguments.SkipAll)
+                    {
+                        if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
+                            throw new OperationCanceledException("Operation canceled by user.");
+                    }
+                    else
+                    {
+                        Logger.LogInfo("Using first project file found. Project path: {0}", projectFiles[0]);
+                    }
+
+                    break;
+                }
         }
 
         return projectFiles[0];
@@ -391,6 +407,7 @@ public class PackageBuilderBase
         MacroExpander.SetMacroValue(MacroId.AppId, Configurations.AppId);
         MacroExpander.SetMacroValue(MacroId.AppShortSummary, Configurations.AppShortSummary);
         MacroExpander.SetMacroValue(MacroId.AppLicenseId, Configurations.AppLicenseId);
+        MacroExpander.SetMacroValue(MacroId.AppExecName, AppExecName);
         MacroExpander.SetMacroValue(MacroId.PublisherName, Configurations.PublisherName);
         MacroExpander.SetMacroValue(MacroId.PublisherId, Configurations.PublisherId.IsStringNullOrEmpty() ? Configurations.AppId : Configurations.PublisherId);
         MacroExpander.SetMacroValue(MacroId.PublisherCopyright, Configurations.PublisherCopyright);

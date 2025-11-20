@@ -22,7 +22,7 @@ public class PortablePackageBuilder : PackageBuilderBase, IPackageBuilder
     {
         Logger.LogInfo("Starting Portable package build...");
 
-        await PublishAsync(PublishOutputDir);
+        await PublishAsync(PublishOutputDir, primaryIconExt: "");
 
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             await SetExecutePermissionsAsync();

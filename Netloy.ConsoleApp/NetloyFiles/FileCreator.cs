@@ -292,6 +292,12 @@ public class FileCreator
         sb.AppendLine("    <string>${APP_VERSION}</string>");
         sb.AppendLine("    <key>CFBundleShortVersionString</key>");
         sb.AppendLine("    <string>${APP_VERSION}</string>");
+        sb.AppendLine("    <key>CFBundleDevelopmentRegion</key>");
+        sb.AppendLine("    <string>English</string>");
+        sb.AppendLine("    <key>CFBundleInfoDictionaryVersion</key>");
+        sb.AppendLine("    <string>6.0</string>");
+        sb.AppendLine("    <key>LSMinimumSystemVersion</key>");
+        sb.AppendLine("    <string>10.13</string>");
         sb.AppendLine("    ");
 
         // Bundle Configuration
@@ -299,19 +305,39 @@ public class FileCreator
         sb.AppendLine("    <key>CFBundlePackageType</key>");
         sb.AppendLine("    <string>APPL</string>");
         sb.AppendLine("    <key>CFBundleExecutable</key>");
-        sb.AppendLine("    <string>${APP_BASE_NAME}</string>");
+        sb.AppendLine("    <string>${APP_EXEC_NAME}</string>");
         sb.AppendLine("    ");
 
         // App Icon
         sb.AppendLine("    <!-- App Icon -->");
         sb.AppendLine("    <key>CFBundleIconFile</key>");
-        sb.AppendLine("    <string>AppIcon</string>");
+        sb.AppendLine("    <string>${PRIMARY_ICON_FILE_NAME}</string>");
         sb.AppendLine("    ");
 
         // High Resolution Support
         sb.AppendLine("    <!-- High Resolution Support -->");
         sb.AppendLine("    <key>NSHighResolutionCapable</key>");
         sb.AppendLine("    <true/>");
+        sb.AppendLine("    ");
+
+        sb.AppendLine("    <!-- Carbon -->");
+        sb.AppendLine("    <key>LSRequiresCarbon</key>");
+        sb.AppendLine("    <true/>");
+        sb.AppendLine("    ");
+
+        sb.AppendLine("    <!-- Resource File Map -->");
+        sb.AppendLine("    <key>CSResourcesFileMapped</key>");
+        sb.AppendLine("    <true/>");
+        sb.AppendLine("    ");
+
+        sb.AppendLine("    <!-- Copy Right -->");
+        sb.AppendLine("    <key>NSHumanReadableCopyright</key>");
+        sb.AppendLine("    <string>${PUBLISHER_COPYRIGHT}</string>");
+        sb.AppendLine("    ");
+
+        sb.AppendLine("    <!-- Category -->");
+        sb.AppendLine("    <key>LSApplicationCategoryType</key>");
+        sb.AppendLine("    <string>${PRIME_CATEGORY}</string>");
         sb.AppendLine("    ");
 
         // UI Mode

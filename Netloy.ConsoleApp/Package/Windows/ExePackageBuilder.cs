@@ -3,6 +3,7 @@ using System.Text;
 using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
+using Netloy.ConsoleApp.Helpers;
 using Netloy.ConsoleApp.NetloyLogger;
 
 namespace Netloy.ConsoleApp.Package.Windows;
@@ -32,81 +33,91 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
 
     public async Task BuildAsync()
     {
-        try
+        Logger.LogInfo("Starting Windows EXE package build...", forceLog: true);
+
+        // Publish project
+        PublishOutputDir = Path.Combine(RootDirectory, "publish");
+        await PublishAsync(PublishOutputDir, ".ico");
+
+        if (!Configurations.StartCommand.IsStringNullOrEmpty() &&
+            !Configurations.StartCommand.Equals(AppExecName, StringComparison.InvariantCultureIgnoreCase))
         {
-            Logger.LogInfo("Starting Windows EXE package build...", forceLog: true);
-
-            // Publish project
-            PublishOutputDir = Path.Combine(RootDirectory, "publish");
-            await PublishAsync(PublishOutputDir);
-
-            if (!Configurations.StartCommand.IsStringNullOrEmpty() &&
-                !Configurations.StartCommand.Equals(AppExecName, StringComparison.InvariantCultureIgnoreCase))
-            {
-                var path = Path.Combine(PublishOutputDir, Configurations.StartCommand + ".bat");
-                var installPath = Path.Combine("", AppExecName);
-                var script = $"start {installPath} %*";
-                await File.WriteAllTextAsync(path, script, Encoding.UTF8);
-            }
-
-            if (!Configurations.SetupCommandPrompt.IsStringNullOrEmpty())
-            {
-                var title = EscapeBat(Configurations.SetupCommandPrompt);
-                var cmd = EscapeBat(!Configurations.StartCommand.IsStringNullOrEmpty() ? Configurations.StartCommand : Configurations.AppBaseName);
-                var path = Path.Combine(PublishOutputDir, PromptBat);
-
-                var echoCopy = !Configurations.PublisherCopyright.IsStringNullOrEmpty()
-                    ? $"& echo {EscapeBat(Configurations.PublisherCopyright)}"
-                    : null;
-
-                var script = $"start cmd /k \"cd /D %userprofile% & title {title} & echo {cmd} {AppVersion} {echoCopy} & set path=%path%;%~dp0\"";
-                await File.WriteAllTextAsync(path, script, Encoding.UTF8);
-            }
-
-            // Generate Inno Setup script
-            Logger.LogInfo("Generating Inno Setup script...");
-            var scriptContent = GenerateInnoSetupScript();
-
-            // Save script to temp file
-            await File.WriteAllTextAsync(InnoSetupScriptPath, scriptContent, Encoding.UTF8);
-            Logger.LogInfo("Script saved to: {0}", InnoSetupScriptPath);
-
-            // Compile with Inno Setup
-            Logger.LogInfo("Compiling setup with Inno Setup...");
-            CompileInnoSetupScript();
-
-            Logger.LogSuccess("Windows EXE package build completed successfully!");
+            var path = Path.Combine(PublishOutputDir, Configurations.StartCommand + ".bat");
+            var installPath = Path.Combine("", AppExecName);
+            var script = $"start {installPath} %*";
+            await File.WriteAllTextAsync(path, script, Encoding.UTF8);
         }
-        catch (Exception ex)
+
+        if (!Configurations.SetupCommandPrompt.IsStringNullOrEmpty())
         {
-            Logger.LogException(ex);
-            throw;
+            var title = EscapeBat(Configurations.SetupCommandPrompt);
+            var cmd = EscapeBat(!Configurations.StartCommand.IsStringNullOrEmpty() ? Configurations.StartCommand : Configurations.AppBaseName);
+            var path = Path.Combine(PublishOutputDir, PromptBat);
+
+            var echoCopy = !Configurations.PublisherCopyright.IsStringNullOrEmpty()
+                ? $"& echo {EscapeBat(Configurations.PublisherCopyright)}"
+                : null;
+
+            var script = $"start cmd /k \"cd /D %userprofile% & title {title} & echo {cmd} {AppVersion} {echoCopy} & set path=%path%;%~dp0\"";
+            await File.WriteAllTextAsync(path, script, Encoding.UTF8);
         }
+
+        // Generate Inno Setup script
+        Logger.LogInfo("Generating Inno Setup script...");
+        var scriptContent = GenerateInnoSetupScript();
+
+        // Save script to temp file
+        await File.WriteAllTextAsync(InnoSetupScriptPath, scriptContent, Encoding.UTF8);
+        Logger.LogInfo("Script saved to: {0}", InnoSetupScriptPath);
+
+        // Compile with Inno Setup
+        Logger.LogInfo("Compiling setup with Inno Setup...");
+        CompileInnoSetupScript();
+
+        Logger.LogSuccess("Windows EXE package build completed successfully!");
     }
 
     public bool Validate()
     {
+        var errors = new List<string>();
+
         // Check if Inno Setup is installed
         if (!IsInnoSetupInstalled())
-            throw new InvalidOperationException($"Inno Setup compiler (iscc) not found. Please install Inno Setup from {Constants.InnoSetupDownloadUrl}");
+            errors.Add($"Inno Setup compiler (iscc) not found. Please install Inno Setup from {Constants.InnoSetupDownloadUrl}");
 
         var ext = Path.GetExtension(Configurations.ExeWizardImageFile);
         if (!Configurations.ExeWizardImageFile.IsStringNullOrEmpty() &&
             (!File.Exists(Configurations.ExeWizardImageFile) || !ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase)))
-            throw new FileNotFoundException($"Setup wizard image file not found. File path: {Configurations.ExeWizardImageFile}");
+        {
+            errors.Add($"Setup wizard image file not found. File path: {Configurations.ExeWizardImageFile}");
+        }
 
         ext = Path.GetExtension(Configurations.ExeWizardSmallImageFile);
         if (!Configurations.ExeWizardSmallImageFile.IsStringNullOrEmpty() &&
             (!File.Exists(Configurations.ExeWizardSmallImageFile) || !ext.Equals(".bmp", StringComparison.OrdinalIgnoreCase)))
-            throw new FileNotFoundException($"Setup wizard small image file not found. File path: {Configurations.ExeWizardSmallImageFile}");
+        {
+            errors.Add($"Setup wizard small image file not found. File path: {Configurations.ExeWizardSmallImageFile}");
+        }
 
         ext = Path.GetExtension(Configurations.SetupUninstallScript);
         if (!Configurations.SetupUninstallScript.IsStringNullOrEmpty() &&
             (!File.Exists(Configurations.SetupUninstallScript) || !ext.Equals(".bat", StringComparison.OrdinalIgnoreCase)))
-            throw new FileNotFoundException($"Setup uninstall script file not found. File path: {Configurations.SetupUninstallScript}");
+        {
+            errors.Add($"Setup uninstall script file not found. File path: {Configurations.SetupUninstallScript}");
+        }
 
         if ((Configurations.AssociateFiles || Configurations.ContextMenuIntegration) && !Configurations.SetupAdminInstall)
-            throw new InvalidOperationException($"You must set {nameof(Configurations.SetupAdminInstall)} to true if you want to associate files or add context menu items.");
+            errors.Add($"You must set {nameof(Configurations.SetupAdminInstall)} to true if you want to associate files or add context menu items.");
+
+        var icoIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
+        if (icoIcon.IsStringNullOrEmpty() || !File.Exists(icoIcon))
+            errors.Add($"Couldn't find icon file. Icon path: The ico file is required for building {Arguments.PackageType.ToString()?.ToUpperInvariant()} package.");
+
+        if (errors.Count > 0)
+        {
+            var errorMessage = $"The following errors were found:\n\n{string.Join("\n", errors)}";
+            throw new InvalidOperationException(errorMessage);
+        }
 
         return true;
     }
@@ -155,11 +166,8 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
         var sb = new StringBuilder();
 
         // Get primary icon
-        var primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
-        var iconFileName = Path.GetFileName(primaryIcon);
-
-        if (primaryIcon.IsStringNullOrEmpty() || iconFileName.IsStringNullOrEmpty())
-            throw new FileNotFoundException($"Couldn't find icon file. Icon path: {primaryIcon}");
+        var primaryIcon = MacroExpander.GetMacroValue(MacroId.PrimaryIconFilePath);
+        var iconFileName = MacroExpander.GetMacroValue(MacroId.PrimaryIconFileName);
 
         // Generate each section
         GenerateSetupSection(sb, primaryIcon!, iconFileName!);

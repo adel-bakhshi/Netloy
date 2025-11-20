@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
+using Netloy.ConsoleApp.Helpers;
 using Netloy.ConsoleApp.NetloyLogger;
 
 namespace Netloy.ConsoleApp.Package.Windows;
@@ -61,7 +62,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
         // Publish project
         PublishOutputDir = Path.Combine(RootDirectory, "publish");
-        await PublishAsync(PublishOutputDir);
+        await PublishAsync(PublishOutputDir, ".ico");
 
         // Create intermediates directory
         if (Directory.Exists(IntermediatesPath))
@@ -71,28 +72,43 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
         // Generate WiX source file
         Logger.LogInfo("Generating WiX source file...");
-        GenerateWixSource();
+        await GenerateWixSourceAsync();
 
         // Build MSI with WiX
         Logger.LogInfo("Building MSI with WiX Toolset v3...");
-        RunCandle();
-        RunLight();
+        await RunCandleAsync();
+        await RunLightAsync();
 
         Logger.LogSuccess("Windows MSI package build completed successfully!");
     }
 
     public bool Validate()
     {
+        var errors = new List<string>();
+
         // Validate wizard images
         if (!Configurations.MsiUiBanner.IsStringNullOrEmpty() && !File.Exists(Configurations.MsiUiBanner))
-            throw new FileNotFoundException($"MSI UI banner file not found: {Configurations.MsiUiBanner}");
+            errors.Add($"MSI UI banner file not found: {Configurations.MsiUiBanner}");
 
         if (!Configurations.MsiUiDialog.IsStringNullOrEmpty() && !File.Exists(Configurations.MsiUiDialog))
-            throw new FileNotFoundException($"MSI UI dialog file not found: {Configurations.MsiUiDialog}");
+            errors.Add($"MSI UI dialog file not found: {Configurations.MsiUiDialog}");
 
         // File association and context menu require admin
         if ((Configurations.AssociateFiles || Configurations.ContextMenuIntegration) && !Configurations.SetupAdminInstall)
-            throw new InvalidOperationException($"You must set {nameof(Configurations.SetupAdminInstall)} to true if you want to associate files or add context menu items.");
+            errors.Add($"You must set {nameof(Configurations.SetupAdminInstall)} to true if you want to associate files or add context menu items.");
+
+        if (!Configurations.MsiUpgradeCode.IsStringNullOrEmpty() && !Guid.TryParse(Configurations.MsiUpgradeCode, out _))
+            errors.Add($"Invalid MsiUpgradeCode: {Configurations.MsiUpgradeCode}. Must be a valid GUID.");
+
+        var icoIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
+        if (icoIcon.IsStringNullOrEmpty() || !File.Exists(icoIcon))
+            errors.Add($"Couldn't find icon file. Icon path: The ico file is required for building {Arguments.PackageType.ToString()?.ToUpperInvariant()} package.");
+
+        if (errors.Count > 0)
+        {
+            var errorMessage = $"The following errors were found:\n\n{string.Join("\n", errors)}";
+            throw new InvalidOperationException(errorMessage);
+        }
 
         return true;
     }
@@ -142,15 +158,14 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
     #region WiX Source Generation
 
-    private void GenerateWixSource()
+    private async Task GenerateWixSourceAsync()
     {
-        var primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
-        if (primaryIcon.IsStringNullOrEmpty())
-            throw new FileNotFoundException("Couldn't find icon file.");
+        var primaryIcon = MacroExpander.GetMacroValue(MacroId.PrimaryIconFilePath);
 
+        // Create wix content
         var wixContent = CreateWixXml(primaryIcon!);
 
-        File.WriteAllText(WixSourcePath, wixContent.ToString(), Encoding.UTF8);
+        await File.WriteAllTextAsync(WixSourcePath, wixContent.ToString(), Encoding.UTF8);
         Logger.LogInfo("WiX source saved to: {0}", WixSourcePath);
     }
 
@@ -811,6 +826,9 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
     private string GenerateUpgradeCode()
     {
+        if (!Configurations.MsiUpgradeCode.IsStringNullOrEmpty())
+            return Guid.Parse(Configurations.MsiUpgradeCode).ToString().ToUpperInvariant();
+
         var hash = MD5.HashData(Encoding.UTF8.GetBytes(Configurations.AppId));
         return new Guid(hash).ToString().ToUpperInvariant();
     }
@@ -839,7 +857,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
     #region Candle & Light Execution
 
-    private void RunCandle()
+    private async Task RunCandleAsync()
     {
         var packageArch = GetPackageArch();
 
@@ -868,9 +886,9 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         ClearEnvironmentForWix(processInfo);
 
         using var process = Process.Start(processInfo)!;
-        var output = process.StandardOutput.ReadToEnd();
-        var error = process.StandardError.ReadToEnd();
-        process.WaitForExit();
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
 
         if (Arguments.Verbose && !string.IsNullOrEmpty(output))
             Logger.LogInfo("Candle output:\n{0}", output);
@@ -882,7 +900,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    private void RunLight()
+    private async Task RunLightAsync()
     {
         var lightExe = Path.Combine(WixToolsPath, LightExe);
         var outputFile = Path.Combine(OutputDirectory, OutputName);
@@ -911,9 +929,9 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         ClearEnvironmentForWix(processInfo);
 
         using var process = Process.Start(processInfo)!;
-        var output = process.StandardOutput.ReadToEnd();
-        var error = process.StandardError.ReadToEnd();
-        process.WaitForExit();
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
 
         if (Arguments.Verbose && !string.IsNullOrEmpty(output))
             Logger.LogInfo("Light output:\n{0}", output);

@@ -53,11 +53,16 @@ public class Configurations
 
     public string DebianRecommends { get; set; } = string.Empty;
 
+    public string MacOsInfoPlist { get; set; } = string.Empty;
+    public string MacOsEntitlements { get; set; } = string.Empty;
+    public string MacOsMinimumSystemVersion { get; set; } = "10.13";
+
     public string SetupGroupName { get; set; } = string.Empty;
     public bool SetupAdminInstall { get; set; }
     public string SetupCommandPrompt { get; set; } = string.Empty;
     public string SetupMinWindowsVersion { get; set; } = "10";
     public string SetupSignTool { get; set; } = string.Empty;
+    public string MsiUpgradeCode { get; set; } = string.Empty;
     public string SetupUninstallScript { get; set; } = string.Empty;
     public string SetupPasswordEncryption { get; set; } = string.Empty;
     public string ExeWizardImageFile { get; set; } = string.Empty;

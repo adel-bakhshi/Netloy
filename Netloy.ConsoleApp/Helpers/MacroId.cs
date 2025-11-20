@@ -8,6 +8,7 @@ public enum MacroId : byte
     AppId,
     AppShortSummary,
     AppLicenseId,
+    AppExecName,
     PublisherName,
     PublisherId,
     PublisherCopyright,
@@ -25,5 +26,7 @@ public enum MacroId : byte
     PackageArch,
     PublishOutputDirectory,
     AppStreamDescriptionXml, // TODO: Add value
-    AppStreamChangelogXml // TODO: Add value
+    AppStreamChangelogXml, // TODO: Add value
+    PrimaryIconFileName,
+    PrimaryIconFilePath
 }

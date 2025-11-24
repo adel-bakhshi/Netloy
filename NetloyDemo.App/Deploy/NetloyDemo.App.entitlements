@@ -16,6 +16,10 @@
     <key>com.apple.security.cs.allow-jit</key>
     <true/>
 
+    <!-- Add Apple Events to fix an error that shows up in Console.app -->
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+
     <!--
         Additional entitlements that are often useful for .NET apps
         (uncomment only if you understand the security implications)

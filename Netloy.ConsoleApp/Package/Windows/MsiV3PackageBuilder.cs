@@ -7,7 +7,7 @@ using System.Xml.Linq;
 using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
-using Netloy.ConsoleApp.Helpers;
+using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
 
 namespace Netloy.ConsoleApp.Package.Windows;
@@ -62,7 +62,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
         // Publish project
         PublishOutputDir = Path.Combine(RootDirectory, "publish");
-        await PublishAsync(PublishOutputDir, ".ico");
+        await PublishAsync(PublishOutputDir);
 
         // Create intermediates directory
         if (Directory.Exists(IntermediatesPath))

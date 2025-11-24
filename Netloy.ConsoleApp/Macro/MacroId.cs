@@ -1,4 +1,4 @@
-﻿namespace Netloy.ConsoleApp.Helpers;
+﻿namespace Netloy.ConsoleApp.Macro;
 
 public enum MacroId : byte
 {
@@ -28,5 +28,6 @@ public enum MacroId : byte
     AppStreamDescriptionXml, // TODO: Add value
     AppStreamChangelogXml, // TODO: Add value
     PrimaryIconFileName,
-    PrimaryIconFilePath
+    PrimaryIconFilePath,
+    InstallExec
 }

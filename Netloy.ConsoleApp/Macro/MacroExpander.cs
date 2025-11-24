@@ -2,7 +2,7 @@
 using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.Package;
 
-namespace Netloy.ConsoleApp.Helpers;
+namespace Netloy.ConsoleApp.Macro;
 
 public class MacroExpander
 {
@@ -50,6 +50,7 @@ public class MacroExpander
             MacroId.AppStreamChangelogXml => "${APPSTREAM_CHANGELOG_XML}",
             MacroId.PrimaryIconFileName => "${PRIMARY_ICON_FILE_NAME}",
             MacroId.PrimaryIconFilePath => "${PRIMARY_ICON_FILE_PATH}",
+            MacroId.InstallExec => "${INSTALL_EXEC}",
             _ => throw new ArgumentException("Unknown macro " + id)
         };
     }
@@ -67,7 +68,6 @@ public class MacroExpander
 
         if (id == MacroId.PrimeCategory)
         {
-            // return _arguments.PackageType is PackageType.AppBundle or PackageType.Dmg ? GetMacOsCategoryType(value) : value;
             return _arguments.PackageType switch
             {
                 PackageType.App or PackageType.Dmg => GetMacOsCategoryType(value),

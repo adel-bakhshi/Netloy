@@ -212,7 +212,11 @@ public class FileCreator
         sb.AppendLine("  <id>${APP_ID}</id>");
         sb.AppendLine("  <name>${APP_FRIENDLY_NAME}</name>");
         sb.AppendLine("  <summary>${APP_SHORT_SUMMARY}</summary>");
-        sb.AppendLine("  <developer_name>${PUBLISHER_NAME}</developer_name>");
+
+        sb.AppendLine("  <developer id=\"${PUBLISHER_ID}\">");
+        sb.AppendLine("    <name>${PUBLISHER_NAME}</name>");
+        sb.AppendLine("  </developer>");
+
         sb.AppendLine("  <url type=\"homepage\">${PUBLISHER_LINK_URL}</url>");
         sb.AppendLine("  <project_license>${APP_LICENSE_ID}</project_license>");
         sb.AppendLine("  <content_rating type=\"oars-1.1\" />");
@@ -489,13 +493,13 @@ public class FileCreator
         sb.AppendLine("    <key>com.apple.security.files.user-selected.read-write</key>");
         sb.AppendLine("    <true/>");
         sb.AppendLine();
-        
+
         // JIT compilation
         sb.AppendLine("    <!-- Allow JIT compilation (.NET runtime requirement) -->");
         sb.AppendLine("    <key>com.apple.security.cs.allow-jit</key>");
         sb.AppendLine("    <true/>");
         sb.AppendLine();
-        
+
         // Add Apple Events to fix an error that shows up in Console.app
         sb.AppendLine("    <!-- Add Apple Events to fix an error that shows up in Console.app -->");
         sb.AppendLine("    <key>com.apple.security.automation.apple-events</key>");

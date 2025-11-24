@@ -3,7 +3,7 @@ using System.Text;
 using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
-using Netloy.ConsoleApp.Helpers;
+using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
 
 namespace Netloy.ConsoleApp.Package.Mac;
@@ -17,7 +17,6 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
 
     private const string InfoPlistFileName = "Info.plist";
     private const string PkgInfoFileName = "PkgInfo";
-    private const string EntitlementsFileName = "Entitlements.plist";
 
     #endregion
 
@@ -29,7 +28,6 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
     public string MacOsDirectory { get; protected set; }
     public string ResourcesDirectory { get; protected set; }
     public string InfoPlistPath { get; protected set; }
-    public string EntitlementsPath { get; protected set; }
 
     #endregion
 
@@ -41,7 +39,6 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
         MacOsDirectory = Path.Combine(ContentsDirectory, "MacOS");
         ResourcesDirectory = Path.Combine(ContentsDirectory, "Resources");
         InfoPlistPath = Path.Combine(ContentsDirectory, InfoPlistFileName);
-        EntitlementsPath = Path.Combine(ResourcesDirectory, EntitlementsFileName);
         PublishOutputDir = MacOsDirectory;
     }
 
@@ -86,18 +83,6 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
         // Write to Info.plist
         await File.WriteAllTextAsync(InfoPlistPath, plistContent, Encoding.UTF8);
         Logger.LogInfo("Info.plist saved at: {0}", InfoPlistPath);
-    }
-
-    protected async Task ProcessEntitlementsAsync()
-    {
-        // Read user-provided Entitlements and expand macros
-        Logger.LogInfo("Reading Entitlements content from: {0}", Configurations.MacOsEntitlements);
-        var rawContent = await File.ReadAllTextAsync(Configurations.MacOsEntitlements);
-        var entitlementsContent = MacroExpander.ExpandMacros(rawContent);
-
-        // Write to Entitlements.plist
-        await File.WriteAllTextAsync(EntitlementsPath, entitlementsContent, Encoding.UTF8);
-        Logger.LogInfo("Entitlements saved at: {0}", EntitlementsPath);
     }
 
     protected void GeneratePkgInfo()
@@ -155,7 +140,7 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
             var processInfo = new ProcessStartInfo
             {
                 FileName = "chmod",
-                Arguments = $"-R a+r \"{AppBundlePath}\"",
+                Arguments = $"-R a+rx \"{AppBundlePath}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -191,14 +176,18 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
         }
 
         Logger.LogInfo("Starting code signing process...");
-        if (!File.Exists(EntitlementsPath))
-            Logger.LogWarning("Entitlements file not found. Signing may fail.");
+
+        if (Configurations.MacOsEntitlements.IsStringNullOrEmpty() || !File.Exists(Configurations.MacOsEntitlements))
+        {
+            Logger.LogWarning("Entitlements file not provided or does not exist. Code signing aborted.");
+            return;
+        }
 
         // Sign all files in MacOS directory
-        await SignFilesInDirectoryAsync(MacOsDirectory, EntitlementsPath);
+        await SignFilesInDirectoryAsync(MacOsDirectory, Configurations.MacOsEntitlements);
 
         // Sign the app bundle itself
-        await SignAppBundleMainAsync(EntitlementsPath);
+        await SignAppBundleMainAsync(Configurations.MacOsEntitlements);
 
         // Verify signing
         await VerifyCodeSignatureAsync();

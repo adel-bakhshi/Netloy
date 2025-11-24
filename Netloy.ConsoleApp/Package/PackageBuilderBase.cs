@@ -1,12 +1,14 @@
-﻿using System.Diagnostics;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
-using Netloy.ConsoleApp.Argument;
+﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.Helpers;
+using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Netloy.ConsoleApp.Package;
 
@@ -17,6 +19,7 @@ public class PackageBuilderBase
     protected Arguments Arguments { get; }
     protected Configurations Configurations { get; }
     protected string NetloyTempPath { get; }
+    protected string NetloyProjectTempPath { get; }
     protected string RootDirectory { get; }
     protected string AppVersion { get; }
     protected string PackageRelease { get; }
@@ -37,13 +40,14 @@ public class PackageBuilderBase
         Arguments = arguments;
         Configurations = configurations;
         NetloyTempPath = Path.Combine(Path.GetTempPath(), "netloy");
-        RootDirectory = Path.Combine(NetloyTempPath, Configurations.AppBaseName, Arguments.PackageType!.Value.ToString().ToLowerInvariant());
+        NetloyProjectTempPath = Path.Combine(NetloyTempPath, Configurations.AppBaseName);
+        RootDirectory = Path.Combine(NetloyProjectTempPath, Arguments.PackageType!.Value.ToString().ToLowerInvariant());
         AppVersion = Arguments.AppVersion ?? GetAppVersion(Configurations.AppVersionRelease);
         PackageRelease = GetPackageRelease(Configurations.AppVersionRelease);
         OutputDirectory = GetOutputDirectory();
         OutputName = GetOutputName();
-        IconsDirectory = Path.Combine(RootDirectory, "icons");
-        ScriptsDirectory = Path.Combine(RootDirectory, "scripts");
+        IconsDirectory = Path.Combine(NetloyProjectTempPath, "icons");
+        ScriptsDirectory = Path.Combine(NetloyProjectTempPath, "scripts");
         StartupDirectory = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location) ?? throw new DirectoryNotFoundException("Unable to find startup directory.");
         AppExecName = GetAppExecName();
         DotnetProjectPath = GetProjectPath();
@@ -55,7 +59,7 @@ public class PackageBuilderBase
         IconHelper.GenerateIconsAsync().Wait();
     }
 
-    protected async Task PublishAsync(string outputDir, string primaryIconExt)
+    protected async Task PublishAsync(string outputDir)
     {
         // Check and clean build directory
         if (Directory.Exists(outputDir))
@@ -78,7 +82,7 @@ public class PackageBuilderBase
         }
 
         // Set primary icon in macros
-        SetPrimaryIconInMacros(primaryIconExt);
+        SetPrimaryIconInMacros();
 
         Directory.CreateDirectory(outputDir);
         MacroExpander.SetMacroValue(MacroId.PublishOutputDirectory, outputDir);
@@ -109,11 +113,92 @@ public class PackageBuilderBase
         throw new PlatformNotSupportedException($"Couldn't get package arch. {RuntimeInformation.OSDescription} is not supported.");
     }
 
-    private void SetPrimaryIconInMacros(string ext)
+    private void SetPrimaryIconInMacros()
     {
-        var primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(ext, StringComparison.OrdinalIgnoreCase));
+        string? primaryIcon = string.Empty;
+        switch (Arguments.PackageType)
+        {
+            case PackageType.Exe:
+            case PackageType.Msi:
+            {
+                primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
+                break;
+            }
+
+            case PackageType.App:
+            case PackageType.Dmg:
+            {
+                primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".icns", StringComparison.OrdinalIgnoreCase));
+                break;
+            }
+
+            case PackageType.AppImage:
+            case PackageType.Deb:
+            case PackageType.Flatpack:
+            case PackageType.Rpm:
+            {
+                var svgIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".svg", StringComparison.OrdinalIgnoreCase));
+                if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
+                {
+                    primaryIcon = svgIcon;
+                }
+                else
+                {
+                    var pngIcons = Configurations.IconsCollection
+                        .Where(ico => Path.GetExtension(ico).Equals(".png", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    switch (pngIcons.Count)
+                    {
+                        case 0:
+                        {
+                            Logger.LogWarning("There is no PNG primary icon.");
+                            break;
+                        }
+
+                        case 1:
+                        {
+                            primaryIcon = pngIcons[0];
+                            break;
+                        }
+
+                        case > 1:
+                        {
+                            var biggestSize = 0;
+                            var biggestPngPath = string.Empty;
+                            foreach (var iconPath in pngIcons)
+                            {
+                                var sections = iconPath.Split('.');
+                                var sizeSection = sections[1].Split('x');
+                                var size = int.Parse(sizeSection[0]);
+                                if (size > biggestSize)
+                                {
+                                    biggestSize = size;
+                                    biggestPngPath = iconPath;
+                                }
+                            }
+
+                            primaryIcon = biggestPngPath;
+                            break;
+                        }
+                    }
+                }
+
+                break;
+            }
+
+            default:
+            {
+                Logger.LogWarning("There is no primary icon for {0} package type", Arguments.PackageType?.ToString().ToUpperInvariant());
+                break;
+            }
+        }
+
         if (primaryIcon.IsStringNullOrEmpty())
+        {
+            Logger.LogWarning("Couldn't find valid primary icon for {0} package type", Arguments.PackageType?.ToString().ToUpperInvariant());
             return;
+        }
 
         if (!File.Exists(primaryIcon))
             Logger.LogWarning("Primary icon file not found. File path: {0}", primaryIcon);
@@ -160,7 +245,7 @@ public class PackageBuilderBase
             var customArgs = MacroExpander.ExpandMacros(Configurations.DotnetPublishArgs);
             sb.Append($" {customArgs}");
         }
-        
+
         // Add UseAppHost argument if not present and package type is App or Dmg
         // For more info visit https://docs.microsoft.com/en-us/dotnet/core/install/macos-notarization-issues
         if (!Configurations.DotnetPostPublishArguments.Contains("UseAppHost", StringComparison.OrdinalIgnoreCase)

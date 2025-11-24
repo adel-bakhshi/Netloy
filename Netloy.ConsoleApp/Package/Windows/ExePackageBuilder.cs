@@ -3,7 +3,7 @@ using System.Text;
 using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
-using Netloy.ConsoleApp.Helpers;
+using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
 
 namespace Netloy.ConsoleApp.Package.Windows;
@@ -37,7 +37,7 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
 
         // Publish project
         PublishOutputDir = Path.Combine(RootDirectory, "publish");
-        await PublishAsync(PublishOutputDir, ".ico");
+        await PublishAsync(PublishOutputDir);
 
         if (!Configurations.StartCommand.IsStringNullOrEmpty() &&
             !Configurations.StartCommand.Equals(AppExecName, StringComparison.InvariantCultureIgnoreCase))

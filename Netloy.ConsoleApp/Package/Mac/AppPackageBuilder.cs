@@ -22,7 +22,7 @@ public class AppPackageBuilder : MacOsPackageBuilderBase, IPackageBuilder
         CreateAppBundleStructure();
 
         // Publish project
-        await PublishAsync(PublishOutputDir, ".icns");
+        await PublishAsync(PublishOutputDir);
 
         // Copy icon to Resources directory
         Logger.LogInfo("Copying application icon...");
@@ -31,10 +31,6 @@ public class AppPackageBuilder : MacOsPackageBuilderBase, IPackageBuilder
         // Generate or copy Info.plist
         Logger.LogInfo("Processing Info.plist...");
         await ProcessInfoPlistAsync();
-
-        // Generate or copy Entitlements
-        Logger.LogInfo("Processing Entitlements...");
-        await ProcessEntitlementsAsync();
 
         // Generate PkgInfo
         Logger.LogInfo("Generating PkgInfo...");

@@ -22,7 +22,7 @@ public class PortablePackageBuilder : PackageBuilderBase, IPackageBuilder
     {
         Logger.LogInfo("Starting Portable package build...");
 
-        await PublishAsync(PublishOutputDir, primaryIconExt: "");
+        await PublishAsync(PublishOutputDir);
 
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             await SetExecutePermissionsAsync();
@@ -53,36 +53,48 @@ public class PortablePackageBuilder : PackageBuilderBase, IPackageBuilder
 
     private async Task SetExecutePermissionsAsync()
     {
-        Logger.LogInfo("Setting execute permissions for executable file...");
+        Logger.LogInfo("Setting permissions for all files...");
 
-        var executablePath = Path.Combine(PublishOutputDir, AppExecName);
-        if (!File.Exists(executablePath))
+        foreach (var file in Directory.GetFiles(PublishOutputDir, "*", SearchOption.AllDirectories))
         {
-            Logger.LogWarning("Executable file not found: {0}", executablePath);
-            return;
+            var fileName = Path.GetFileName(file);
+
+            // Set executable permission for the main executable
+            if (fileName == AppExecName)
+            {
+                Logger.LogInfo("Setting execute permissions for: {0}", fileName);
+                var exitCode = await ExecuteChmodAsync(file, "+x");
+                if (exitCode != 0)
+                    throw new InvalidOperationException($"Failed to set execute permissions on {file}");
+            }
+            else
+            {
+                // Set read permission for all other files
+                Logger.LogInfo("Setting read permissions for: {0}", fileName);
+                var exitCode = await ExecuteChmodAsync(file, "a+rx");
+                if (exitCode != 0)
+                    throw new InvalidOperationException($"Failed to set read permissions on {file}");
+            }
         }
 
-        // Use chmod +x to make the file executable
-        var exitCode = await ExecuteChmodAsync(executablePath);
-        if (exitCode != 0)
-            throw new InvalidOperationException($"Failed to set execute permissions. chmod exited with code {exitCode}");
-
-        Logger.LogSuccess("Execute permissions set successfully!");
+        Logger.LogSuccess("Permissions set successfully for all files!");
     }
 
-    private async Task<int> ExecuteChmodAsync(string filePath)
+    private async Task<int> ExecuteChmodAsync(string filePath, string mode)
     {
         var processInfo = new ProcessStartInfo
         {
             FileName = "chmod",
-            Arguments = $"+x \"{filePath}\"",
+            Arguments = $"{mode} \"{filePath}\"",
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
 
-        using var process = Process.Start(processInfo) ?? throw new InvalidOperationException("Failed to start chmod process.");
+        using var process = Process.Start(processInfo)
+            ?? throw new InvalidOperationException("Failed to start chmod process.");
+
         var output = await process.StandardOutput.ReadToEndAsync();
         var error = await process.StandardError.ReadToEndAsync();
         await process.WaitForExitAsync();

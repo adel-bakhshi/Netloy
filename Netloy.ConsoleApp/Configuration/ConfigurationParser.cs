@@ -318,7 +318,7 @@ public class ConfigurationParser
 
         // DEBIAN OPTIONS
         config.DebianRecommends = GetValue(nameof(config.DebianRecommends));
-        
+
         // MACOS OPTIONS
         config.MacOsInfoPlist = GetValue(nameof(config.MacOsInfoPlist));
         config.MacOsEntitlements = GetValue(nameof(config.MacOsEntitlements));
@@ -426,6 +426,9 @@ public class ConfigurationParser
 
         if (!config.PublisherEmail.CheckEmailValidation())
             Logger.LogWarning("Invalid {0} '{1}'", nameof(config.PublisherEmail), config.PublisherEmail);
+
+        ValidatePath(config, config.DesktopFile, nameof(config.DesktopFile), errors, isDirectory: false, required: false);
+        ValidatePath(config, config.MetaFile, nameof(config.MetaFile), errors, isDirectory: false, required: false);
 
         await ValidateIconsAsync(config, errors);
 

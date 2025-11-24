@@ -27,7 +27,7 @@ public static class ScriptRunner
                 CreateNoWindow = true
             };
         }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
             var command = string.IsNullOrEmpty(arguments)
                 ? scriptPath
@@ -59,6 +59,7 @@ public static class ScriptRunner
         await process.WaitForExitAsync();
 
         Logger.LogInfo("Output: \n{0}", forceLog: true, output);
+
         if (!error.IsStringNullOrEmpty())
         {
             Logger.LogError("Error: {0}", forceLog: true, error);

@@ -51,8 +51,8 @@ public class IconHelper
             foreach (var iconFile in remainingIcons)
             {
                 var ext = Path.GetExtension(iconFile).ToLowerInvariant();
-                var finalIconPath = Path.Combine(_iconsDirectory, $"{_configurations.AppBaseName}{ext}");
-                File.Copy(iconFile, finalIconPath);
+                var finalIconPath = Path.Combine(_iconsDirectory, _configurations.AppBaseName + ext);
+                File.Copy(iconFile, finalIconPath, overwrite: true);
                 var originalIcon = _configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(ext, StringComparison.OrdinalIgnoreCase));
                 if (originalIcon.IsStringNullOrEmpty())
                     continue;
@@ -85,7 +85,7 @@ public class IconHelper
                     finalIconPath = Path.Combine(_iconsDirectory, $"{_configurations.AppBaseName}.{ext}");
                 }
 
-                File.Copy(iconFile, finalIconPath);
+                File.Copy(iconFile, finalIconPath, overwrite: true);
                 _configurations.IconsCollection[i] = finalIconPath;
             }
         }
@@ -95,6 +95,14 @@ public class IconHelper
     {
         using var image = await Image.LoadAsync(imagePath);
         return image.Size;
+    }
+
+    public List<string> GetIconSizes()
+    {
+        var iconSizes = _standardIconSizes.Select(s => $"{s}x{s}").ToList();
+        iconSizes.Add("scalable");
+
+        return iconSizes;
     }
 
     private async Task ResizeImageAsync(string inputPath, int size)

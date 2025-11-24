@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Netloy.ConsoleApp.Extensions;
 
@@ -12,11 +13,18 @@ public static partial class FileExtensions
         // Remove quotes and trim whitespace
         var normalized = path.Replace("\"", "").Trim();
 
-        // Standardize path separators
-        normalized = normalized.Replace("/", "\\");
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            // Standardize path separators
+            normalized = normalized.Replace("/", "\\");
 
-        // Remove duplicate separators
-        normalized = NormalizePathRegex().Replace(normalized, "\\");
+            // Remove duplicate separators
+            normalized = NormalizePathRegex().Replace(normalized, "\\");
+        }
+        else
+        {
+            normalized = normalized.Replace("\\", "/");
+        }
 
         return normalized;
     }

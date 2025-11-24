@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using CommandLine;
 using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
@@ -16,12 +16,15 @@ internal class Program
         {
 #if DEBUG
             // const string command = "netloy -t exe -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t msi -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            // const string command = "netloy -t msi -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             // const string command = "netloy -t portable -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t app -r osx-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            // const string command = "netloy -t app -r osx-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            // const string command = "netloy -t dmg -r osx-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            // const string command = "netloy -t prtable -r osx-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             // const string command = "netloy -t appimage -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             // const string command = "netloy -t deb -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            const string command = "netloy -t rpm -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            // const string command = "netloy -t rpm -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            const string command = "netloy -t portable -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             // const string command = "netloy -n all -o ../../../../NetloyDemo.App/Deploy/ --verbose";
             // const string command = "netloy --upgrade-config --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             args = command.Split(" ");

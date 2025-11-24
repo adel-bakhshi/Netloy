@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Text;
 using Netloy.ConsoleApp.Extensions;
 
 namespace Netloy.ConsoleApp;
@@ -23,6 +24,7 @@ public static class Constants
     }
 
     public static string ConfigFileDirectory => Path.GetDirectoryName(ConfigFilePath) ?? throw new InvalidOperationException("Config file path is not defined.");
+    public static UTF8Encoding Utf8WithoutBom => new(false);
 
     static Constants()
     {

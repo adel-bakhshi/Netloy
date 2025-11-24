@@ -40,6 +40,3 @@ echo ""
 echo "========================================"
 echo "End of program"
 echo "========================================"
-
-# Optional: wait for user input (similar to pause in batch)
-read -p "Press Enter to continue..."

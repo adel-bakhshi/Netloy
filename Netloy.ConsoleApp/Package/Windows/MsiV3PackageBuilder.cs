@@ -165,7 +165,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         // Create wix content
         var wixContent = CreateWixXml(primaryIcon!);
 
-        await File.WriteAllTextAsync(WixSourcePath, wixContent.ToString(), Encoding.UTF8);
+        await File.WriteAllTextAsync(WixSourcePath, wixContent.ToString(), Constants.Utf8WithoutBom);
         Logger.LogInfo("WiX source saved to: {0}", WixSourcePath);
     }
 
@@ -829,13 +829,13 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         if (!Configurations.MsiUpgradeCode.IsStringNullOrEmpty())
             return Guid.Parse(Configurations.MsiUpgradeCode).ToString().ToUpperInvariant();
 
-        var hash = MD5.HashData(Encoding.UTF8.GetBytes(Configurations.AppId));
+        var hash = MD5.HashData(Constants.Utf8WithoutBom.GetBytes(Configurations.AppId));
         return new Guid(hash).ToString().ToUpperInvariant();
     }
 
     private string GenerateComponentGuid(string key)
     {
-        var bytes = Encoding.UTF8.GetBytes($"{Configurations.AppId}_{key}");
+        var bytes = Constants.Utf8WithoutBom.GetBytes($"{Configurations.AppId}_{key}");
         var hash = MD5.HashData(bytes);
         return new Guid(hash).ToString().ToUpperInvariant();
     }

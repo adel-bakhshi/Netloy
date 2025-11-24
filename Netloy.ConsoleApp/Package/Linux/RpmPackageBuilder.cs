@@ -313,7 +313,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         desktopContent = MacroExpander.ExpandMacros(desktopContent);
 
         // Write to applications directory
-        await File.WriteAllTextAsync(DesktopFilePath, desktopContent, Encoding.UTF8);
+        await File.WriteAllTextAsync(DesktopFilePath, desktopContent, Constants.Utf8WithoutBom);
 
         Logger.LogSuccess("Desktop file copied: {0}", Path.GetFileName(DesktopFilePath));
     }
@@ -334,7 +334,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         metaInfoContent = MacroExpander.ExpandMacros(metaInfoContent);
 
         // Write to metainfo directory
-        await File.WriteAllTextAsync(MetaInfoFilePath, metaInfoContent, Encoding.UTF8);
+        await File.WriteAllTextAsync(MetaInfoFilePath, metaInfoContent, Constants.Utf8WithoutBom);
 
         Logger.LogSuccess("MetaInfo file copied: {0}", Path.GetFileName(MetaInfoFilePath));
     }
@@ -360,7 +360,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
             var fileName = Path.GetFileName(iconPath);
             var sizeDir = DetermineIconSize(iconPath);
             var targetDir = Path.Combine(IconsShareDirectory, sizeDir, "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppBaseName}.png");
+            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.png");
 
             Directory.CreateDirectory(targetDir);
             File.Copy(iconPath, targetPath, true);
@@ -374,7 +374,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
         {
             var targetDir = Path.Combine(IconsShareDirectory, "scalable", "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppBaseName}.svg");
+            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.svg");
             Directory.CreateDirectory(targetDir);
             File.Copy(svgIcon, targetPath, true);
             Logger.LogInfo("SVG icon copied to scalable directory");
@@ -398,7 +398,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
 
         if (!largestIcon.IsStringNullOrEmpty() && File.Exists(largestIcon))
         {
-            var pixmapPath = Path.Combine(PixmapsDirectory, $"{Configurations.AppBaseName}.png");
+            var pixmapPath = Path.Combine(PixmapsDirectory, $"{Configurations.AppId}.png");
             File.Copy(largestIcon, pixmapPath, true);
             Logger.LogInfo("Icon copied to pixmaps directory");
         }
@@ -611,7 +611,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         sb.AppendLine("fi");
         sb.AppendLine();
 
-        await File.WriteAllTextAsync(SpecFilePath, sb.ToString(), Encoding.UTF8);
+        await File.WriteAllTextAsync(SpecFilePath, sb.ToString(), Constants.Utf8WithoutBom);
 
         Logger.LogSuccess("Spec file generated: {0}", SpecFilePath);
     }

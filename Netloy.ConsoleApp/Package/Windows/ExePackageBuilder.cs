@@ -45,7 +45,7 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
             var path = Path.Combine(PublishOutputDir, Configurations.StartCommand + ".bat");
             var installPath = Path.Combine("", AppExecName);
             var script = $"start {installPath} %*";
-            await File.WriteAllTextAsync(path, script, Encoding.UTF8);
+            await File.WriteAllTextAsync(path, script, Constants.Utf8WithoutBom);
         }
 
         if (!Configurations.SetupCommandPrompt.IsStringNullOrEmpty())
@@ -59,7 +59,7 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
                 : null;
 
             var script = $"start cmd /k \"cd /D %userprofile% & title {title} & echo {cmd} {AppVersion} {echoCopy} & set path=%path%;%~dp0\"";
-            await File.WriteAllTextAsync(path, script, Encoding.UTF8);
+            await File.WriteAllTextAsync(path, script, Constants.Utf8WithoutBom);
         }
 
         // Generate Inno Setup script
@@ -67,7 +67,7 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
         var scriptContent = GenerateInnoSetupScript();
 
         // Save script to temp file
-        await File.WriteAllTextAsync(InnoSetupScriptPath, scriptContent, Encoding.UTF8);
+        await File.WriteAllTextAsync(InnoSetupScriptPath, scriptContent, Constants.Utf8WithoutBom);
         Logger.LogInfo("Script saved to: {0}", InnoSetupScriptPath);
 
         // Compile with Inno Setup

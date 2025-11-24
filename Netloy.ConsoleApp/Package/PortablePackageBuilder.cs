@@ -92,11 +92,11 @@ public class PortablePackageBuilder : PackageBuilderBase, IPackageBuilder
             CreateNoWindow = true
         };
 
-        using var process = Process.Start(processInfo)
-            ?? throw new InvalidOperationException("Failed to start chmod process.");
+        using var process = Process.Start(processInfo) ?? throw new InvalidOperationException("Failed to start chmod process.");
 
         var output = await process.StandardOutput.ReadToEndAsync();
         var error = await process.StandardError.ReadToEndAsync();
+
         await process.WaitForExitAsync();
 
         if (!output.IsStringNullOrEmpty() && Arguments.Verbose)

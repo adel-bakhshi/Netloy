@@ -320,7 +320,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         desktopContent = MacroExpander.ExpandMacros(desktopContent);
 
         // Write to applications directory
-        await File.WriteAllTextAsync(DesktopFilePath, desktopContent, Encoding.UTF8);
+        await File.WriteAllTextAsync(DesktopFilePath, desktopContent, Constants.Utf8WithoutBom);
 
         Logger.LogSuccess("Desktop file copied: {0}", Path.GetFileName(DesktopFilePath));
     }
@@ -341,7 +341,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         metaInfoContent = MacroExpander.ExpandMacros(metaInfoContent);
 
         // Write to metainfo directory
-        await File.WriteAllTextAsync(MetaInfoFilePath, metaInfoContent, Encoding.UTF8);
+        await File.WriteAllTextAsync(MetaInfoFilePath, metaInfoContent, Constants.Utf8WithoutBom);
 
         Logger.LogSuccess("MetaInfo file copied: {0}", Path.GetFileName(MetaInfoFilePath));
     }
@@ -367,7 +367,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
             var fileName = Path.GetFileName(iconPath);
             var sizeDir = DetermineIconSize(iconPath);
             var targetDir = Path.Combine(IconsShareDirectory, sizeDir, "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppBaseName}.png");
+            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.png");
 
             Directory.CreateDirectory(targetDir);
             File.Copy(iconPath, targetPath, true);
@@ -381,7 +381,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
         {
             var targetDir = Path.Combine(IconsShareDirectory, "scalable", "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppBaseName}.svg");
+            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.svg");
 
             Directory.CreateDirectory(targetDir);
             File.Copy(svgIcon, targetPath, true);
@@ -410,7 +410,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
 
         if (!largestIcon.IsStringNullOrEmpty() && File.Exists(largestIcon))
         {
-            var pixmapPath = Path.Combine(PixmapsDirectory, $"{Configurations.AppBaseName}.png");
+            var pixmapPath = Path.Combine(PixmapsDirectory, $"{Configurations.AppId}.png");
             File.Copy(largestIcon, pixmapPath, true);
             Logger.LogInfo("Icon copied to pixmaps directory");
         }
@@ -560,7 +560,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         // Required
         sb.AppendLine();
 
-        await File.WriteAllTextAsync(ControlFilePath, sb.ToString(), Encoding.UTF8);
+        await File.WriteAllTextAsync(ControlFilePath, sb.ToString(), Constants.Utf8WithoutBom);
 
         Logger.LogSuccess("Control file generated: {0}", ControlFilePath);
     }
@@ -625,36 +625,108 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
     private async Task SetFilePermissionsAsync()
     {
         Logger.LogInfo("Setting file permissions...");
-
         try
         {
-            // Set directory permissions (755)
-            await ExecuteChmodAsync($"-R 755 \"{RootDirectory}\"");
+            // Set permissions for all directories first
+            await SetPermissionsForAllDirectoriesAsync();
 
-            // Set file permissions (644)
-            await ExecuteChmodAsync($"-R 644 \"{RootDirectory}\"/*");
+            // Set permissions for all regular files
+            await SetPermissionsForAllFilesAsync();
 
-            // Set executable permissions for binaries and scripts (755)
-            if (Directory.Exists(PublishOutputDir))
-            {
-                var mainExec = Path.Combine(PublishOutputDir, AppExecName);
-                if (File.Exists(mainExec))
-                    await ExecuteChmodAsync($"755 \"{mainExec}\"");
-            }
-
-            // Set executable permission for launcher script
-            if (!Configurations.StartCommand.IsStringNullOrEmpty())
-            {
-                var launcherPath = Path.Combine(UsrBinDirectory, Configurations.StartCommand);
-                if (File.Exists(launcherPath))
-                    await ExecuteChmodAsync($"755 \"{launcherPath}\"");
-            }
+            // Set executable permissions for specific files
+            await SetExecutablePermissionsAsync();
 
             Logger.LogSuccess("File permissions set!");
         }
         catch (Exception ex)
         {
             Logger.LogWarning("Failed to set some permissions: {0}", ex.Message);
+        }
+    }
+
+    private async Task SetPermissionsForAllDirectoriesAsync()
+    {
+        Logger.LogInfo("Setting directory permissions to 755...");
+
+        var directories = Directory.GetDirectories(RootDirectory, "*", SearchOption.AllDirectories)
+            .Prepend(RootDirectory) // Include root directory itself
+            .ToList();
+
+        foreach (var dir in directories)
+        {
+            await ExecuteChmodAsync($"755 \"{dir}\"");
+
+            if (Arguments.Verbose)
+                Logger.LogDebug("Directory permission set: {0}", dir);
+        }
+    }
+
+    private async Task SetPermissionsForAllFilesAsync()
+    {
+        Logger.LogInfo("Setting file permissions to 644...");
+
+        var files = Directory.GetFiles(RootDirectory, "*", SearchOption.AllDirectories)
+            .Where(f => !f.StartsWith(DebianDirectory + Path.DirectorySeparatorChar)) // Skip DEBIAN control files
+            .ToList();
+
+        foreach (var file in files)
+        {
+            await ExecuteChmodAsync($"644 \"{file}\"");
+
+            if (Arguments.Verbose)
+                Logger.LogDebug("File permission set: {0}", file);
+        }
+    }
+
+    private async Task SetExecutablePermissionsAsync()
+    {
+        Logger.LogInfo("Setting executable permissions...");
+
+        var executableFiles = new List<string>();
+
+        // Main application executable
+        if (Directory.Exists(PublishOutputDir))
+        {
+            var mainExec = Path.Combine(PublishOutputDir, AppExecName);
+            if (File.Exists(mainExec))
+                executableFiles.Add(mainExec);
+
+            // Find all other executables in publish directory (files without extension or .so files)
+            var publishFiles = Directory.GetFiles(PublishOutputDir, "*", SearchOption.AllDirectories)
+                .Where(f =>
+                {
+                    var ext = Path.GetExtension(f).ToLowerInvariant();
+                    return string.IsNullOrEmpty(ext) || ext == ".so";
+                })
+                .ToList();
+
+            executableFiles.AddRange(publishFiles);
+        }
+
+        // Launcher script
+        if (!Configurations.StartCommand.IsStringNullOrEmpty())
+        {
+            var launcherPath = Path.Combine(UsrBinDirectory, Configurations.StartCommand);
+            if (File.Exists(launcherPath))
+                executableFiles.Add(launcherPath);
+        }
+
+        // DEBIAN control scripts (if any)
+        var controlScripts = new[] { "preinst", "postinst", "prerm", "postrm" };
+        foreach (var script in controlScripts)
+        {
+            var scriptPath = Path.Combine(DebianDirectory, script);
+            if (File.Exists(scriptPath))
+                executableFiles.Add(scriptPath);
+        }
+
+        // Set 755 permission for all executable files
+        foreach (var file in executableFiles.Distinct())
+        {
+            await ExecuteChmodAsync($"755 \"{file}\"");
+
+            if (Arguments.Verbose)
+                Logger.LogDebug("Executable permission set: {0}", file);
         }
     }
 
@@ -674,7 +746,6 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         if (process != null)
         {
             await process.WaitForExitAsync();
-
             if (process.ExitCode != 0 && Arguments.Verbose)
             {
                 var error = await process.StandardError.ReadToEndAsync();

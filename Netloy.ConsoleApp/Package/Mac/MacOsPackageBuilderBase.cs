@@ -81,7 +81,7 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
         var plistContent = MacroExpander.ExpandMacros(rawContent);
 
         // Write to Info.plist
-        await File.WriteAllTextAsync(InfoPlistPath, plistContent, Encoding.UTF8);
+        await File.WriteAllTextAsync(InfoPlistPath, plistContent, Constants.Utf8WithoutBom);
         Logger.LogInfo("Info.plist saved at: {0}", InfoPlistPath);
     }
 

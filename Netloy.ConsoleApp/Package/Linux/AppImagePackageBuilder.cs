@@ -133,8 +133,8 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
             // Check if appimagetool is available
             if (!IsAppImageToolAvailable())
             {
-                errors.Add("appimagetool not found. Please install it from: https://github.com/AppImage/AppImageKit/releases");
-                errors.Add("On Ubuntu/Debian: wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage");
+                errors.Add("appimagetool not found. Please install it from: https://github.com/AppImage/appimagetool/releases");
+                errors.Add("On Ubuntu/Debian: wget https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage");
                 errors.Add("Then: chmod +x appimagetool-x86_64.AppImage && sudo mv appimagetool-x86_64.AppImage /usr/local/bin/appimagetool");
             }
 
@@ -256,8 +256,8 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         desktopContent = MacroExpander.ExpandMacros(desktopContent);
 
         // Write to both root and share locations (required for AppImage validation)
-        await File.WriteAllTextAsync(RootDesktopFile, desktopContent, Encoding.UTF8);
-        await File.WriteAllTextAsync(ShareDesktopFile, desktopContent, Encoding.UTF8);
+        await File.WriteAllTextAsync(RootDesktopFile, desktopContent, Constants.Utf8WithoutBom);
+        await File.WriteAllTextAsync(ShareDesktopFile, desktopContent, Constants.Utf8WithoutBom);
 
         Logger.LogSuccess("Desktop file copied to root and share: {0}", Path.GetFileName(RootDesktopFile));
     }
@@ -278,8 +278,8 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         metaInfoContent = MacroExpander.ExpandMacros(metaInfoContent);
 
         // Write to both root and share locations
-        await File.WriteAllTextAsync(RootMetaInfoFile, metaInfoContent, Encoding.UTF8);
-        await File.WriteAllTextAsync(ShareMetaInfoFile, metaInfoContent, Encoding.UTF8);
+        await File.WriteAllTextAsync(RootMetaInfoFile, metaInfoContent, Constants.Utf8WithoutBom);
+        await File.WriteAllTextAsync(ShareMetaInfoFile, metaInfoContent, Constants.Utf8WithoutBom);
 
         Logger.LogSuccess("MetaInfo file copied to root and share: {0}", Path.GetFileName(RootMetaInfoFile));
     }
@@ -309,8 +309,8 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
 
         if (!largestIcon.IsStringNullOrEmpty() && File.Exists(largestIcon))
         {
-            // Copy largest icon to root with AppBaseName
-            var rootIconPath = Path.Combine(RootDirectory, $"{Configurations.AppBaseName}.png");
+            // Copy largest icon to root with AppId
+            var rootIconPath = Path.Combine(RootDirectory, $"{Configurations.AppId}.png");
             File.Copy(largestIcon, rootIconPath, true);
             Logger.LogInfo("Root icon copied: {0}", Path.GetFileName(rootIconPath));
         }
@@ -322,7 +322,7 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
             var sizeDir = DetermineIconSize(iconPath);
 
             var targetDir = Path.Combine(IconsShareDirectory, sizeDir, "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppBaseName}.png");
+            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.png");
 
             Directory.CreateDirectory(targetDir);
             File.Copy(iconPath, targetPath, true);
@@ -336,7 +336,7 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
         {
             var targetDir = Path.Combine(IconsShareDirectory, "scalable", "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppBaseName}.svg");
+            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.svg");
 
             Directory.CreateDirectory(targetDir);
             File.Copy(svgIcon, targetPath, true);

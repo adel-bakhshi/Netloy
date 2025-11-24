@@ -120,78 +120,78 @@ public class PackageBuilderBase
         {
             case PackageType.Exe:
             case PackageType.Msi:
-            {
-                primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
-                break;
-            }
+                {
+                    primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
+                    break;
+                }
 
             case PackageType.App:
             case PackageType.Dmg:
-            {
-                primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".icns", StringComparison.OrdinalIgnoreCase));
-                break;
-            }
+                {
+                    primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".icns", StringComparison.OrdinalIgnoreCase));
+                    break;
+                }
 
             case PackageType.AppImage:
             case PackageType.Deb:
             case PackageType.Flatpack:
             case PackageType.Rpm:
-            {
-                var svgIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".svg", StringComparison.OrdinalIgnoreCase));
-                if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
                 {
-                    primaryIcon = svgIcon;
-                }
-                else
-                {
-                    var pngIcons = Configurations.IconsCollection
-                        .Where(ico => Path.GetExtension(ico).Equals(".png", StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-
-                    switch (pngIcons.Count)
+                    var svgIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".svg", StringComparison.OrdinalIgnoreCase));
+                    if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
                     {
-                        case 0:
-                        {
-                            Logger.LogWarning("There is no PNG primary icon.");
-                            break;
-                        }
+                        primaryIcon = svgIcon;
+                    }
+                    else
+                    {
+                        var pngIcons = Configurations.IconsCollection
+                            .Where(ico => Path.GetExtension(ico).Equals(".png", StringComparison.OrdinalIgnoreCase))
+                            .ToList();
 
-                        case 1:
+                        switch (pngIcons.Count)
                         {
-                            primaryIcon = pngIcons[0];
-                            break;
-                        }
-
-                        case > 1:
-                        {
-                            var biggestSize = 0;
-                            var biggestPngPath = string.Empty;
-                            foreach (var iconPath in pngIcons)
-                            {
-                                var sections = iconPath.Split('.');
-                                var sizeSection = sections[1].Split('x');
-                                var size = int.Parse(sizeSection[0]);
-                                if (size > biggestSize)
+                            case 0:
                                 {
-                                    biggestSize = size;
-                                    biggestPngPath = iconPath;
+                                    Logger.LogWarning("There is no PNG primary icon.");
+                                    break;
                                 }
-                            }
 
-                            primaryIcon = biggestPngPath;
-                            break;
+                            case 1:
+                                {
+                                    primaryIcon = pngIcons[0];
+                                    break;
+                                }
+
+                            case > 1:
+                                {
+                                    var biggestSize = 0;
+                                    var biggestPngPath = string.Empty;
+                                    foreach (var iconPath in pngIcons)
+                                    {
+                                        var sections = iconPath.Split('.');
+                                        var sizeSection = sections[1].Split('x');
+                                        var size = int.Parse(sizeSection[0]);
+                                        if (size > biggestSize)
+                                        {
+                                            biggestSize = size;
+                                            biggestPngPath = iconPath;
+                                        }
+                                    }
+
+                                    primaryIcon = biggestPngPath;
+                                    break;
+                                }
                         }
                     }
+
+                    break;
                 }
 
-                break;
-            }
-
             default:
-            {
-                Logger.LogWarning("There is no primary icon for {0} package type", Arguments.PackageType?.ToString().ToUpperInvariant());
-                break;
-            }
+                {
+                    Logger.LogWarning("There is no primary icon for {0} package type", Arguments.PackageType?.ToString().ToUpperInvariant());
+                    break;
+                }
         }
 
         if (primaryIcon.IsStringNullOrEmpty())
@@ -342,13 +342,45 @@ public class PackageBuilderBase
         var scriptPath = Path.Combine(ScriptsDirectory, fileName);
         await File.WriteAllTextAsync(scriptPath, scriptContent);
 
-        var arguments = Configurations.DotnetPostPublishArguments.IsStringNullOrEmpty()
-            ? string.Empty
-            : MacroExpander.ExpandMacros(Configurations.DotnetPostPublishArguments);
+        var processInfo = new ProcessStartInfo
+        {
+            FileName = "chmod",
+            Arguments = $"+x \"{scriptPath}\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
 
-        var exitCode = await ScriptRunner.RunScriptAsync(scriptPath, arguments);
-        if (exitCode != 0)
-            throw new InvalidOperationException($"Post publish script failed with exit code {exitCode}");
+        using var process = Process.Start(processInfo);
+        if (process != null)
+        {
+            var output = await process.StandardOutput.ReadToEndAsync();
+            var error = await process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode != 0)
+            {
+                var message = error.IsStringNullOrEmpty() ? output : error;
+                throw new InvalidOperationException(message);
+            }
+
+            if (Arguments.Verbose && !output.IsStringNullOrEmpty())
+                Logger.LogDebug("chmod output: {0}", output);
+
+            var arguments = Configurations.DotnetPostPublishArguments.IsStringNullOrEmpty()
+                ? string.Empty
+                : MacroExpander.ExpandMacros(Configurations.DotnetPostPublishArguments);
+
+            var exitCode = await ScriptRunner.RunScriptAsync(scriptPath, arguments);
+            if (exitCode != 0)
+                throw new InvalidOperationException($"Post publish script failed with exit code {exitCode}");
+        }
+        else
+        {
+            Logger.LogWarning("Couldn't make script executable. Script path: {0}", scriptPath);
+        }
     }
 
     private static string GetAppVersion(string version)
@@ -476,21 +508,21 @@ public class PackageBuilderBase
                 throw new FileNotFoundException("No project file found in the specified directory.");
 
             case > 1:
-            {
-                Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
-
-                if (!Arguments.SkipAll)
                 {
-                    if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
-                        throw new OperationCanceledException("Operation canceled by user.");
-                }
-                else
-                {
-                    Logger.LogInfo("Using first project file found. Project path: {0}", projectFiles[0]);
-                }
+                    Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
 
-                break;
-            }
+                    if (!Arguments.SkipAll)
+                    {
+                        if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
+                            throw new OperationCanceledException("Operation canceled by user.");
+                    }
+                    else
+                    {
+                        Logger.LogInfo("Using first project file found. Project path: {0}", projectFiles[0]);
+                    }
+
+                    break;
+                }
         }
 
         return projectFiles[0];

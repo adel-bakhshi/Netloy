@@ -43,7 +43,7 @@ public class MsiPackageBuilder : PackageBuilderBase, IPackageBuilder
         var wixContent = GenerateWixSource();
 
         // Save WiX source to file
-        await File.WriteAllTextAsync(WixSourcePath, wixContent, Encoding.UTF8);
+        await File.WriteAllTextAsync(WixSourcePath, wixContent, Constants.Utf8WithoutBom);
         Logger.LogInfo("WiX source saved to: {0}", WixSourcePath);
 
         // Build MSI with WiX
@@ -579,7 +579,7 @@ public class MsiPackageBuilder : PackageBuilderBase, IPackageBuilder
     private string GenerateUpgradeCode()
     {
         using var md5 = System.Security.Cryptography.MD5.Create();
-        var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(Configurations.AppId));
+        var hash = md5.ComputeHash(Constants.Utf8WithoutBom.GetBytes(Configurations.AppId));
         return new Guid(hash).ToString().ToUpperInvariant();
     }
 

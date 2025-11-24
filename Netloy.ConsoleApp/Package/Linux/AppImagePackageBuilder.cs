@@ -3,7 +3,6 @@ using System.Text;
 using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
-using Netloy.ConsoleApp.Helpers;
 using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
 
@@ -103,9 +102,6 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
     public async Task BuildAsync()
     {
         Logger.LogInfo("Starting AppImage package build...");
-
-        // Generate AppStream metadata
-        await GenerateAppStreamMetadataAsync();
 
         CreateAppDirStructure();
 
@@ -250,15 +246,6 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
     #endregion
 
     #region File Operations
-
-    private async Task GenerateAppStreamMetadataAsync()
-    {
-        var description = AppStreamMetadataHelper.GenerateDescriptionXml(Configurations.AppDescription);
-        MacroExpander.SetMacroValue(MacroId.AppStreamDescriptionXml, description);
-
-        var changelog = await AppStreamMetadataHelper.GenerateChangelogXmlAsync(Configurations.AppChangeFile);
-        MacroExpander.SetMacroValue(MacroId.AppStreamChangelogXml, changelog);
-    }
 
     private async Task CopyDesktopFilesAsync()
     {
@@ -571,7 +558,7 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         if (!Configurations.AppImageArgs.IsStringNullOrEmpty())
             arguments = $"{Configurations.AppImageArgs} " + arguments;
 
-        if (Arguments.Verbose && Configurations.AppImageArgs?.Contains("--verbose") != true && Configurations.AppImageArgs?.Contains("-v") != true)
+        if (Arguments.Verbose && !Configurations.AppImageArgs.Contains("--verbose") && !Configurations.AppImageArgs.Contains("-v"))
             arguments = "--verbose " + arguments;
 
         var processInfo = new ProcessStartInfo
@@ -581,11 +568,13 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
-            CreateNoWindow = true
+            CreateNoWindow = true,
+            Environment =
+            {
+                // Set ARCH environment variable (required by appimagetool)
+                ["ARCH"] = arch
+            }
         };
-
-        // Set ARCH environment variable (required by appimagetool)
-        processInfo.Environment["ARCH"] = arch;
 
         // Disable UPDATE_INFORMATION if not needed
         if (!processInfo.Environment.ContainsKey("UPDATE_INFORMATION"))

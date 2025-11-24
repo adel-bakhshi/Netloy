@@ -6,23 +6,14 @@
   <component name="ChangeListManager">
     <list default="true" id="ae53800c-27fc-467d-92a5-c69bc931df4e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Netloy/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Netloy/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Argument/Arguments.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Argument/Arguments.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Configuration/ConfigurationParser.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Configuration/ConfigurationParser.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Configuration/Configurations.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Configuration/Configurations.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Helpers/MacroExpander.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Helpers/MacroExpander.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Helpers/ScriptRunner.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Helpers/ScriptRunner.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/NetloyFiles/FileCreator.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/NetloyFiles/FileCreator.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Mac/AppBundlePackageBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Mac/AppPackageBuilder.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Mac/DmgPackageBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Mac/DmgPackageBuilder.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/AppImagePackageBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/AppImagePackageBuilder.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/DebPackageBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/DebPackageBuilder.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/RpmPackageBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/RpmPackageBuilder.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageBuilderBase.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageBuilderBase.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageBuilderFactory.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageBuilderFactory.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageType.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageType.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Windows/MsiPackageBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Windows/MsiPackageBuilder.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Program.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NetloyDemo.App/Deploy/NetloyDemo.App.entitlements" beforeDir="false" afterPath="$PROJECT_DIR$/NetloyDemo.App/Deploy/NetloyDemo.App.entitlements" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/NetloyDemo.App/Deploy/NetloyDemo.App.metainfo.xml" beforeDir="false" afterPath="$PROJECT_DIR$/NetloyDemo.App/Deploy/NetloyDemo.App.metainfo.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/NetloyDemo.App/Deploy/NetloyDemo.App.netloy" beforeDir="false" afterPath="$PROJECT_DIR$/NetloyDemo.App/Deploy/NetloyDemo.App.netloy" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NetloyDemo.App/Deploy/NetloyDemo.App.plist" beforeDir="false" afterPath="$PROJECT_DIR$/NetloyDemo.App/Deploy/NetloyDemo.App.plist" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,22 +54,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    ".NET Project.Netloy.ConsoleApp.executor": "Debug",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.sourceCode.C#",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;.NET Project.Netloy.ConsoleApp.executor&quot;: &quot;Debug&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.sourceCode.C#&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected=".NET Project.Netloy.ConsoleApp">
     <configuration name="NetloyDemo.App" type="DotNetProject" factoryName=".NET Project">
       <option name="EXE_PATH" value="" />
@@ -139,8 +130,18 @@
       <workItem from="1763455596071" duration="7295000" />
       <workItem from="1763526201159" duration="71000" />
       <workItem from="1763627467833" duration="4185000" />
-      <workItem from="1763632450730" duration="11132000" />
+      <workItem from="1763632450730" duration="11268000" />
+      <workItem from="1763964592549" duration="18230000" />
     </task>
+    <task id="LOCAL-00001" summary="Generating macOS APP and DMG packages successfully finished">
+      <option name="closed" value="true" />
+      <created>1763644698286</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1763644698286</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -161,6 +162,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <MESSAGE value="Generating macOS APP and DMG packages successfully finished" />
+    <option name="LAST_COMMIT_MESSAGE" value="Generating macOS APP and DMG packages successfully finished" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -192,42 +195,81 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Windows/MsiPackageBuilder.cs</url>
-          <line>32</line>
-          <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Windows\MsiPackageBuilder.cs" containingFunctionPresentation="Method 'BuildAsync'">
-            <startOffsets>
-              <option value="911" />
-            </startOffsets>
-            <endOffsets>
-              <option value="912" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="12" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Windows/MsiPackageBuilder.cs</url>
           <line>580</line>
           <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Windows\MsiPackageBuilder.cs" containingFunctionPresentation="Method 'GenerateUpgradeCode'">
             <startOffsets>
-              <option value="23006" />
+              <option value="23122" />
             </startOffsets>
             <endOffsets>
-              <option value="23079" />
+              <option value="23180" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="14" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Program.cs</url>
-          <line>103</line>
+          <line>106</line>
           <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Program.cs" containingFunctionPresentation="Method 'Main'">
             <startOffsets>
-              <option value="3780" />
+              <option value="4228" />
             </startOffsets>
             <endOffsets>
-              <option value="3818" />
+              <option value="4266" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="23" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/DebPackageBuilder.cs</url>
+          <line>138</line>
+          <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Linux\DebPackageBuilder.cs" containingFunctionPresentation="Method 'BuildAsync'">
+            <startOffsets>
+              <option value="4016" />
+            </startOffsets>
+            <endOffsets>
+              <option value="4017" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="24" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/DebPackageBuilder.cs</url>
+          <line>183</line>
+          <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Linux\DebPackageBuilder.cs" containingFunctionPresentation="Method 'Validate'">
+            <startOffsets>
+              <option value="5168" />
+            </startOffsets>
+            <endOffsets>
+              <option value="5194" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="25" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/RpmPackageBuilder.cs</url>
+          <line>175</line>
+          <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Linux\RpmPackageBuilder.cs" containingFunctionPresentation="Method 'Validate'">
+            <startOffsets>
+              <option value="4836" />
+            </startOffsets>
+            <endOffsets>
+              <option value="4863" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="32" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DotNet Breakpoints">
+          <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/RpmPackageBuilder.cs</url>
+          <line>131</line>
+          <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Linux\RpmPackageBuilder.cs" containingFunctionPresentation="Method 'BuildAsync'">
+            <startOffsets>
+              <option value="3686" />
+            </startOffsets>
+            <endOffsets>
+              <option value="3687" />
+            </endOffsets>
+          </properties>
+          <option name="timeStamp" value="33" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

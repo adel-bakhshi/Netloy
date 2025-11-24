@@ -288,12 +288,19 @@ RpmRequires = """
 # Default values are recommended for use with dotnet and Debian packages at the time of writing.
 # For updated information, see: https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu#dependencies
 DebianRecommends = """
+    libx11-6
+    libice6
+    libsm6
+    libfontconfig1
+    ca-certificates
+    tzdata
     libc6
-    libgcc1
+    libgcc1 | libgcc-s1
     libgssapi-krb5-2
-    libicu
-    libssl
+    libstdc++6
     zlib1g
+    libssl1.0.0 | libssl1.0.2 | libssl1.1 | libssl3
+    libicu | libicu74 | libicu72 | libicu71 | libicu70 | libicu69 | libicu68 | libicu67 | libicu66 | libicu65 | libicu63 | libicu60 | libicu57 | libicu55 | libicu52
 """
 
 ########################################

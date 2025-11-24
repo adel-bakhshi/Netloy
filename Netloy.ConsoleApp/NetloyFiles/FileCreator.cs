@@ -199,7 +199,7 @@ public class FileCreator
 
         // XML Declaration
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        sb.AppendLine("<!-- Copyright ${PUBLISHER_COPYRIGHT} -->");
+        sb.AppendLine("<!-- ${PUBLISHER_COPYRIGHT} -->");
         sb.AppendLine("<component type=\"desktop-application\">");
         sb.AppendLine("  <metadata_license>${APP_LICENSE_ID}</metadata_license>");
         sb.AppendLine();

@@ -115,7 +115,7 @@ public class PackageBuilderBase
 
     private void SetPrimaryIconInMacros()
     {
-        string? primaryIcon = string.Empty;
+        var primaryIcon = string.Empty;
         switch (Arguments.PackageType)
         {
             case PackageType.Exe:
@@ -520,5 +520,16 @@ public class PackageBuilderBase
         MacroExpander.SetMacroValue(MacroId.PackageType, Arguments.PackageType!.ToString()!.ToLowerInvariant());
         MacroExpander.SetMacroValue(MacroId.DotnetRuntime, RuntimeInformation.FrameworkDescription);
         MacroExpander.SetMacroValue(MacroId.PackageArch, Arguments.Runtime!);
+
+        GenerateAppStreamMetadataAsync().Wait();
+    }
+
+    private async Task GenerateAppStreamMetadataAsync()
+    {
+        var description = AppStreamMetadataHelper.GenerateDescriptionXml(Configurations.AppDescription);
+        MacroExpander.SetMacroValue(MacroId.AppStreamDescriptionXml, description);
+
+        var changelog = await AppStreamMetadataHelper.GenerateChangelogXmlAsync(Configurations.AppChangeFile);
+        MacroExpander.SetMacroValue(MacroId.AppStreamChangelogXml, changelog);
     }
 }

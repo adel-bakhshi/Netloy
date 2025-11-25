@@ -9,6 +9,6 @@ public enum PackageType : byte
     AppImage,
     Deb,
     Rpm,
-    Flatpack,
+    Flatpak,
     Portable,
 }

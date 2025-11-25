@@ -65,6 +65,8 @@ public class Arguments
     [Option("apple-password")]
     public string? ApplePassword { get; set; }
 
+    [Option("flatpak-branch")]
+    public string FlatpakBranch { get; set; } = "stable";
 
     public bool ShowHelp { get; set; }
 }

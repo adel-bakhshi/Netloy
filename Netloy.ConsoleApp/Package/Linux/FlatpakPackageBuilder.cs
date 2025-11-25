@@ -12,7 +12,7 @@ namespace Netloy.ConsoleApp.Package.Linux;
 /// <summary>
 /// Package builder for Flatpak format on Linux
 /// </summary>
-public class FlatpackPackageBuilder : PackageBuilderBase, IPackageBuilder
+public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
 {
     #region Constants
 
@@ -86,7 +86,7 @@ public class FlatpackPackageBuilder : PackageBuilderBase, IPackageBuilder
 
     #endregion
 
-    public FlatpackPackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
+    public FlatpakPackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {
         // Initialize directory paths
         InitializeDirectoryPaths();
@@ -435,7 +435,16 @@ public class FlatpackPackageBuilder : PackageBuilderBase, IPackageBuilder
             ? string.Empty
             : MacroExpander.ExpandMacros(Configurations.FlatpakBuilderArgs);
 
+        if (!Configurations.FlatpakGpgSign.IsStringNullOrEmpty())
+        {
+            extraArgs += $" --gpg-sign={Configurations.FlatpakGpgSign}";
+
+            if (!Configurations.FlatpakGpgHomedir.IsStringNullOrEmpty())
+                extraArgs += $" --gpg-homedir={Configurations.FlatpakGpgHomedir}";
+        }
+
         var arguments = $"{extraArgs} --arch={arch} --repo=\"{RepoDirectory}\" --force-clean \"{BuildDirectory}\" --state-dir \"{StateDirectory}\" \"{ManifestFilePath}\"";
+        arguments = arguments.Trim();
 
         var processInfo = new ProcessStartInfo
         {
@@ -473,7 +482,13 @@ public class FlatpackPackageBuilder : PackageBuilderBase, IPackageBuilder
         Logger.LogInfo("Exporting Flatpak bundle...");
 
         var arch = GetFlatpakArch();
-        var arguments = $"build-bundle \"{RepoDirectory}\" \"{OutputPath}\" {Configurations.AppId} --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo --arch={arch}";
+        var arguments = $"build-bundle \"{RepoDirectory}\" \"{OutputPath}\" {Configurations.AppId} ";
+
+        if (!Configurations.FlatpakRuntimeRepo.IsStringNullOrEmpty())
+            arguments += $"--runtime-repo={Configurations.FlatpakRuntimeRepo} ";
+
+        arguments += $"--arch={arch} --branch={Arguments.FlatpakBranch}";
+        arguments = arguments.Trim();
 
         var processInfo = new ProcessStartInfo
         {

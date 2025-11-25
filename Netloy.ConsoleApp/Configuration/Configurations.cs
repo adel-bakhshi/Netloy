@@ -46,6 +46,9 @@ public class Configurations
     public string FlatpakPlatformVersion { get; set; } = string.Empty;
     public string FlatpakFinishArgs { get; set; } = string.Empty;
     public string FlatpakBuilderArgs { get; set; } = string.Empty;
+    public string FlatpakRuntimeRepo { get; set; } = "https://flathub.org/repo/flathub.flatpakrepo";
+    public string FlatpakGpgSign { get; set; } = string.Empty;
+    public string FlatpakGpgHomedir { get; set; } = string.Empty;
 
     public bool RpmAutoReq { get; set; }
     public bool RpmAutoProv { get; set; }

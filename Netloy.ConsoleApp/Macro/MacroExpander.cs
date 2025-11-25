@@ -71,7 +71,7 @@ public class MacroExpander
             return _arguments.PackageType switch
             {
                 PackageType.App or PackageType.Dmg => GetMacOsCategoryType(value),
-                PackageType.AppImage or PackageType.Flatpack or PackageType.Rpm or PackageType.Deb => GetLinuxCategoryType(value),
+                PackageType.AppImage or PackageType.Flatpak or PackageType.Rpm or PackageType.Deb => GetLinuxCategoryType(value),
                 _ => value
             };
         }

@@ -348,23 +348,27 @@ public class ArgumentParser
             throw new ArgumentException("App version is not in the correct format");
 
         if (arguments.PublishConfiguration.IsStringNullOrEmpty())
-        {
             throw new ArgumentException("Publish configuration is required");
+
+        if (arguments.PublishConfiguration.Equals("Release", StringComparison.OrdinalIgnoreCase))
+        {
+            arguments.PublishConfiguration = "Release";
+        }
+        else if (arguments.PublishConfiguration.Equals("Debug", StringComparison.OrdinalIgnoreCase))
+        {
+            arguments.PublishConfiguration = "Debug";
         }
         else
         {
-            if (arguments.PublishConfiguration.Equals("Release", StringComparison.OrdinalIgnoreCase))
-            {
-                arguments.PublishConfiguration = "Release";
-            }
-            else if (arguments.PublishConfiguration.Equals("Debug", StringComparison.OrdinalIgnoreCase))
-            {
-                arguments.PublishConfiguration = "Debug";
-            }
-            else
-            {
-                throw new ArgumentException($"Invalid publish configuration: {arguments.PublishConfiguration}. Must be 'Release' or 'Debug'");
-            }
+            throw new ArgumentException($"Invalid publish configuration: {arguments.PublishConfiguration}. Must be 'Release' or 'Debug'");
+        }
+
+        if (!arguments.FlatpakBranch.IsStringNullOrEmpty())
+        {
+            List<string> validValues = ["stable", "beta", "nightly"];
+            arguments.FlatpakBranch = arguments.FlatpakBranch.ToLowerInvariant().Trim();
+            if (!validValues.Contains(arguments.FlatpakBranch))
+                throw new ArgumentException($"Invalid Flatpak branch: {arguments.FlatpakBranch}. Must be 'stable', 'beta', or 'nightly'");
         }
     }
 

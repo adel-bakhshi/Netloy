@@ -34,7 +34,7 @@ public class PackageBuilderFactory
         {
             PackageType.Exe or PackageType.Msi => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsWindowsRuntimeValid(),
             PackageType.App or PackageType.Dmg => RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && IsMacOsRuntimeValid(),
-            PackageType.AppImage or PackageType.Deb or PackageType.Rpm or PackageType.Flatpack => RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && IsLinuxRuntimeValid(),
+            PackageType.AppImage or PackageType.Deb or PackageType.Rpm or PackageType.Flatpak => RuntimeInformation.IsOSPlatform(OSPlatform.Linux) && IsLinuxRuntimeValid(),
             PackageType.Portable => IsPortableRuntimeValid(),
             _ => false
         };
@@ -51,7 +51,7 @@ public class PackageBuilderFactory
             PackageType.AppImage => new AppImagePackageBuilder(_arguments, _configurations),
             PackageType.Deb => new DebPackageBuilder(_arguments, _configurations),
             PackageType.Rpm => new RpmPackageBuilder(_arguments, _configurations),
-            PackageType.Flatpack => new FlatpackPackageBuilder(_arguments, _configurations),
+            PackageType.Flatpak => new FlatpakPackageBuilder(_arguments, _configurations),
             PackageType.Portable => new PortablePackageBuilder(_arguments, _configurations),
             _ => throw new InvalidOperationException($"Invalid package type {_arguments.PackageType}")
         };

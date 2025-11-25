@@ -310,6 +310,9 @@ public class ConfigurationParser
         config.FlatpakPlatformVersion = GetValue(nameof(config.FlatpakPlatformVersion));
         config.FlatpakFinishArgs = GetValue(nameof(config.FlatpakFinishArgs));
         config.FlatpakBuilderArgs = GetValue(nameof(config.FlatpakBuilderArgs));
+        config.FlatpakRuntimeRepo = GetValue(nameof(config.FlatpakRuntimeRepo));
+        config.FlatpakGpgSign = GetValue(nameof(config.FlatpakGpgSign));
+        config.FlatpakGpgHomedir = GetValue(nameof(config.FlatpakGpgHomedir));
 
         // RPM OPTIONS
         config.RpmAutoReq = GetBoolValue(nameof(config.RpmAutoReq));
@@ -1132,6 +1135,40 @@ public class ConfigurationParser
         }
 
         AppendKeyValue(sb, nameof(config.FlatpakBuilderArgs), config.FlatpakBuilderArgs);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "URL to the runtime repository used for resolving runtime dependencies in the Flatpak bundle.");
+            AppendComment(sb, "This URL is embedded in the .flatpak file and tells the user's system where to download the required");
+            AppendComment(sb, "runtime (like org.freedesktop.Platform) when installing the application. Default is Flathub repository.");
+            AppendComment(sb, "Only change this if you're hosting your own runtime or using a different repository.");
+        }
+
+        AppendKeyValue(sb, nameof(config.FlatpakRuntimeRepo), config.FlatpakRuntimeRepo);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional GPG key ID to sign the Flatpak repository commits and bundles. Signing ensures the");
+            AppendComment(sb, "authenticity and integrity of your application. Use the full GPG key ID (e.g., ABCD1234EF567890).");
+            AppendComment(sb, "If empty, the package will not be signed. To generate a GPG key, run: gpg --generate-key");
+            AppendComment(sb, "Note: Only the Key ID is needed here, not the private key itself. The private key must be");
+            AppendComment(sb, "available in your GPG keyring (typically in ~/.gnupg/). Default is empty (no signing).");
+        }
+
+        AppendKeyValue(sb, nameof(config.FlatpakGpgSign), config.FlatpakGpgSign);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional path to GPG home directory containing the signing key. If empty, the default GPG");
+            AppendComment(sb, "home directory (~/.gnupg/) will be used. Only specify this if you're using a custom GPG");
+            AppendComment(sb, "keyring location. This is useful for CI/CD environments where keys are stored in specific");
+            AppendComment(sb, "locations. Default is empty (uses system default ~/.gnupg/).");
+        }
+
+        AppendKeyValue(sb, nameof(config.FlatpakGpgHomedir), config.FlatpakGpgHomedir);
         sb.AppendLine();
     }
 

@@ -134,7 +134,7 @@ public class PackageBuilderBase
 
             case PackageType.AppImage:
             case PackageType.Deb:
-            case PackageType.Flatpack:
+            case PackageType.Flatpak:
             case PackageType.Rpm:
                 {
                     var svgIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".svg", StringComparison.OrdinalIgnoreCase));
@@ -438,7 +438,7 @@ public class PackageBuilderBase
             PackageType.AppImage => ".AppImage",
             PackageType.Deb => ".deb",
             PackageType.Rpm => ".rpm",
-            PackageType.Flatpack => ".flatpak",
+            PackageType.Flatpak => ".flatpak",
             PackageType.Portable => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".zip" : ".tar.gz",
             _ => throw new InvalidOperationException("Invalid package type.")
         };

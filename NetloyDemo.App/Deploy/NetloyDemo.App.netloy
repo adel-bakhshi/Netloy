@@ -1,6 +1,6 @@
 ################################################################################
 # Netloy 1.0.0 - .NET Application Packaging Tool
-# Configuration upgraded on: 2025-11-20 12:59:46
+# Configuration upgraded on: 2025-11-25 17:01:06
 ################################################################################
 
 ########################################
@@ -255,6 +255,25 @@ FlatpakFinishArgs = """
 # Additional arguments for use with flatpak-builder. Useful for signing. Default is empty.
 # See flatpak-builder --help.
 FlatpakBuilderArgs =
+
+# URL to the runtime repository used for resolving runtime dependencies in the Flatpak bundle.
+# This URL is embedded in the .flatpak file and tells the user's system where to download the required
+# runtime (like org.freedesktop.Platform) when installing the application. Default is Flathub repository.
+# Only change this if you're hosting your own runtime or using a different repository.
+FlatpakRuntimeRepo = https://flathub.org/repo/flathub.flatpakrepo
+
+# Optional GPG key ID to sign the Flatpak repository commits and bundles. Signing ensures the
+# authenticity and integrity of your application. Use the full GPG key ID (e.g., ABCD1234EF567890).
+# If empty, the package will not be signed. To generate a GPG key, run: gpg --generate-key
+# Note: Only the Key ID is needed here, not the private key itself. The private key must be
+# available in your GPG keyring (typically in ~/.gnupg/). Default is empty (no signing).
+FlatpakGpgSign =
+
+# Optional path to GPG home directory containing the signing key. If empty, the default GPG
+# home directory (~/.gnupg/) will be used. Only specify this if you're using a custom GPG
+# keyring location. This is useful for CI/CD environments where keys are stored in specific
+# locations. Default is empty (uses system default ~/.gnupg/).
+FlatpakGpgHomedir =
 
 ########################################
 # RPM OPTIONS

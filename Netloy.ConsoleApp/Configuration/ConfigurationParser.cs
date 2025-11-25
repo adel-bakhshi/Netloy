@@ -1520,8 +1520,11 @@ public class ConfigurationParser
 
         sb.AppendLine("--socket=wayland");
         sb.AppendLine("--socket=x11");
-        sb.AppendLine("--filesystem=host");
+        sb.AppendLine("--socket=fallback-x11");
+        sb.AppendLine("--filesystem=home");
         sb.AppendLine("--share=network");
+        sb.AppendLine("--share=ipc");
+        sb.AppendLine("--device=dri");
 
         var flatpackFinishArgs = sb.ToString();
 

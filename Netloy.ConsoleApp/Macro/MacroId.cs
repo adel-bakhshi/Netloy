@@ -25,8 +25,8 @@ public enum MacroId : byte
     DotnetRuntime,
     PackageArch,
     PublishOutputDirectory,
-    AppStreamDescriptionXml, // TODO: Add value
-    AppStreamChangelogXml, // TODO: Add value
+    AppStreamDescriptionXml,
+    AppStreamChangelogXml,
     PrimaryIconFileName,
     PrimaryIconFilePath,
     InstallExec

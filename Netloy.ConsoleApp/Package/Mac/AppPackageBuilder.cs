@@ -68,21 +68,6 @@ public class AppPackageBuilder : MacOsPackageBuilderBase, IPackageBuilder
         return ValidateMacOsPackage();
     }
 
-    public void Clear()
-    {
-        try
-        {
-            Logger.LogInfo("Cleaning up '{0}'...", RootDirectory);
-            Directory.Delete(RootDirectory, true);
-            Logger.LogSuccess("Cleanup completed successfully!");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogException(ex);
-            throw;
-        }
-    }
-
     #region Zip Archive Creation
 
     private async Task CreateZipArchiveAsync()

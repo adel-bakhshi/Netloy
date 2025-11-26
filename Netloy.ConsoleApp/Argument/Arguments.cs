@@ -13,6 +13,9 @@ public class Arguments
     [Option('r', "runtime")]
     public string? Runtime { get; set; }
 
+    [Option('f', "framework")]
+    public FrameworkType? Framework { get; set; }
+
     [Option('y', "skip-all")]
     public bool SkipAll { get; set; }
 
@@ -34,7 +37,6 @@ public class Arguments
     [Option('n', "new")]
     public NewFileType? NewType { get; set; }
 
-    // TODO: Overwrite configuration project path when provided
     [Option('p', "project-path")]
     public string? ProjectPath { get; set; }
 

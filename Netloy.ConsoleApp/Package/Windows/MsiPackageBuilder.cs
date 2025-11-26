@@ -75,7 +75,7 @@ public class MsiPackageBuilder : PackageBuilderBase, IPackageBuilder
         var icoIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
         if (icoIcon.IsStringNullOrEmpty() || !File.Exists(icoIcon))
             errors.Add($"Couldn't find icon file. Icon path: The ico file is required for building {Arguments.PackageType.ToString()?.ToUpperInvariant()} package.");
-        
+
         if (!Configurations.MsiUpgradeCode.IsStringNullOrEmpty() && !Guid.TryParse(Configurations.MsiUpgradeCode, out _))
             errors.Add($"Invalid MsiUpgradeCode: {Configurations.MsiUpgradeCode}. Must be a valid GUID.");
 
@@ -86,21 +86,6 @@ public class MsiPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
 
         return true;
-    }
-
-    public void Clear()
-    {
-        try
-        {
-            Logger.LogInfo("Cleaning up '{0}'...", RootDirectory);
-            Directory.Delete(RootDirectory, true);
-            Logger.LogSuccess("Cleanup completed successfully!");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogException(ex);
-            throw;
-        }
     }
 
     private static bool IsWixInstalled()
@@ -591,7 +576,7 @@ public class MsiPackageBuilder : PackageBuilderBase, IPackageBuilder
     private void CompileWixSource()
     {
         var outputFile = Path.Combine(OutputDirectory, OutputName);
-        var arch = GetPackageArch();
+        var arch = GetWindowsPackageArch();
 
         var processInfo = new ProcessStartInfo
         {

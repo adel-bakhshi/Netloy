@@ -122,22 +122,6 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
         return true;
     }
 
-    public void Clear()
-    {
-        try
-        {
-            Logger.LogInfo("Cleaning up '{0}'...", RootDirectory);
-            Directory.Delete(RootDirectory, true);
-
-            Logger.LogSuccess("Cleanup completed successfully!");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogException(ex);
-            throw;
-        }
-    }
-
     private static bool IsInnoSetupInstalled()
     {
         try
@@ -238,7 +222,7 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
             sb.AppendLine("ChangesAssociations=yes");
 
         // Architecture
-        var packageArch = GetPackageArch();
+        var packageArch = GetWindowsPackageArch();
         if (packageArch is "x64" or "arm64")
         {
             // https://jrsoftware.org/ishelp/index.php?topic=setup_architecturesallowed

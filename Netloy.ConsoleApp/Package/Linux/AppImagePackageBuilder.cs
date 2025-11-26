@@ -168,28 +168,6 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    public void Clear()
-    {
-        try
-        {
-            Logger.LogInfo("Cleaning AppImage build artifacts...");
-
-            // Delete AppDir if exists
-            if (Directory.Exists(RootDirectory))
-            {
-                Directory.Delete(RootDirectory, true);
-                Logger.LogInfo("Deleted AppDir: {0}", RootDirectory);
-            }
-
-            Logger.LogSuccess("Cleanup completed!");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError("Failed to clean build artifacts: {0}", forceLog: true, ex.Message);
-            throw;
-        }
-    }
-
     #endregion
 
     #region Directory Structure Creation

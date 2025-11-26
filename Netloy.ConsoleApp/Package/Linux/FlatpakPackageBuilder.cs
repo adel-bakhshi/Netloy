@@ -190,42 +190,6 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    public void Clear()
-    {
-        try
-        {
-            Logger.LogInfo("Cleaning Flatpak build artifacts...");
-
-            // Delete build directory if exists
-            if (Directory.Exists(BuildDirectory))
-            {
-                Directory.Delete(BuildDirectory, true);
-                Logger.LogInfo("Deleted build directory: {0}", BuildDirectory);
-            }
-
-            // Delete repo directory if exists
-            if (Directory.Exists(RepoDirectory))
-            {
-                Directory.Delete(RepoDirectory, true);
-                Logger.LogInfo("Deleted repo directory: {0}", RepoDirectory);
-            }
-
-            // Delete RootDirectory if exists
-            if (Directory.Exists(RootDirectory))
-            {
-                Directory.Delete(RootDirectory, true);
-                Logger.LogInfo("Deleted root directory: {0}", RootDirectory);
-            }
-
-            Logger.LogSuccess("Cleanup completed!");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError("Failed to clean build artifacts: {0}", forceLog: true, ex.Message);
-            throw;
-        }
-    }
-
     #endregion
 
     #region Directory Structure Creation

@@ -113,21 +113,6 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         return true;
     }
 
-    public void Clear()
-    {
-        try
-        {
-            Logger.LogInfo("Cleaning up '{0}'...", RootDirectory);
-            Directory.Delete(RootDirectory, true);
-            Logger.LogSuccess("Cleanup completed successfully!");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogException(ex);
-            throw;
-        }
-    }
-
     #region WiX Tools Management
 
     private async Task EnsureWixToolsInstalledAsync()
@@ -171,7 +156,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
     private XDocument CreateWixXml(string primaryIcon)
     {
-        var packageArch = GetPackageArch();
+        var packageArch = GetWindowsPackageArch();
 
         var isWin64 = !packageArch.Equals("x86", StringComparison.OrdinalIgnoreCase);
         var win64 = isWin64 ? "yes" : "no";
@@ -859,7 +844,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
     private async Task RunCandleAsync()
     {
-        var packageArch = GetPackageArch();
+        var packageArch = GetWindowsPackageArch();
 
         var candleExe = Path.Combine(WixToolsPath, CandleExe);
         var args = new List<string>

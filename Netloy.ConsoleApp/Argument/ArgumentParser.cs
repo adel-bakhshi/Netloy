@@ -139,6 +139,17 @@ public class ArgumentParser
             helpText.AppendLine("  # Skip prompts for CI/CD");
             helpText.AppendLine("  netloy -t deb -r linux-x64 -y --clean");
             helpText.AppendLine();
+            helpText.AppendLine("  # Build .NET Framework application");
+            helpText.AppendLine("  netloy -t exe -r win-x64 -f netframework");
+            helpText.AppendLine();
+            helpText.AppendLine("  # Build and sign macOS DMG");
+            helpText.AppendLine("  netloy -t dmg -r osx-arm64 --signing-identity \"Developer ID\" \\");
+            helpText.AppendLine("         --apple-id \"dev@example.com\" --apple-team-id \"ABC1234XYZ\"");
+            helpText.AppendLine();
+            helpText.AppendLine("  # Build Flatpak for beta channel");
+            helpText.AppendLine("  netloy -t flatpak -r linux-x64 --flatpak-branch beta");
+            helpText.AppendLine();
+
         }
 
         if (!_arguments.Verbose)
@@ -146,6 +157,7 @@ public class ArgumentParser
             helpText.AppendLine("PACKAGE OPTIONS:");
             helpText.AppendLine("  -t, --package-type <TYPE>");
             helpText.AppendLine("  -r, --runtime <RID>");
+            helpText.AppendLine("  -f, --framework <TYPE>");
             helpText.AppendLine("  -o, --output-path <NAME>");
             helpText.AppendLine("  -v, --app-version <VERSION>");
             helpText.AppendLine("  -p, --project-path <PATH>");
@@ -159,6 +171,11 @@ public class ArgumentParser
             helpText.AppendLine("  -y, --skip-all");
             helpText.AppendLine("  -h, --help");
             helpText.AppendLine("      --version");
+            helpText.AppendLine("      --signing-identity <ID>");
+            helpText.AppendLine("      --apple-id <EMAIL>");
+            helpText.AppendLine("      --apple-team-id <ID>");
+            helpText.AppendLine("      --apple-password <PASSWORD>");
+            helpText.AppendLine("      --flatpak-branch <BRANCH>");
             helpText.AppendLine();
 
             helpText.AppendLine("Use --verbose for more information");
@@ -168,24 +185,33 @@ public class ArgumentParser
             // Options (Grouped by category)
             helpText.AppendLine("PACKAGE OPTIONS:");
             helpText.AppendLine("  -t, --package-type <TYPE>      Package type:");
-            helpText.AppendLine("                                   exe        - Windows executable");
-            helpText.AppendLine("                                   app-bundle - macOS application bundle");
-            helpText.AppendLine("                                   app-image  - Linux AppImage");
-            helpText.AppendLine("                                   deb        - Debian/Ubuntu package");
-            helpText.AppendLine("                                   rpm        - RedHat/Fedora package");
-            helpText.AppendLine("                                   flatpack   - Flatpak package");
-            helpText.AppendLine("                                   portable        - Compressed archive");
+            helpText.AppendLine("                                   exe       - Windows executable");
+            helpText.AppendLine("                                   msi       - Windows installer");
+            helpText.AppendLine("                                   app       - macOS application bundle");
+            helpText.AppendLine("                                   dmg       - macOS disk image");
+            helpText.AppendLine("                                   appimage  - Linux AppImage");
+            helpText.AppendLine("                                   deb       - Debian/Ubuntu package");
+            helpText.AppendLine("                                   rpm       - RedHat/Fedora package");
+            helpText.AppendLine("                                   flatpak   - Flatpak package");
+            helpText.AppendLine("                                   portable  - Compressed archive");
             helpText.AppendLine("  -r, --runtime <RID>            Target runtime identifier:");
             helpText.AppendLine("                                   linux-x64, linux-arm64, win-x64, osx-x64, osx-arm64");
+            helpText.AppendLine("  -f, --framework <TYPE>         Target framework type (default: netcore):");
+            helpText.AppendLine("                                   netcore       - .NET Core and .NET projects");
+            helpText.AppendLine("                                   netframework  - .NET Framework projects (Only works on Windows - exe, msi or portable)");
             helpText.AppendLine("  -o, --output-path <NAME>       Custom output package name");
             helpText.AppendLine("  -v, --app-version <VERSION>    Application version (e.g., 1.2.3)");
             helpText.AppendLine();
 
             helpText.AppendLine("PROJECT OPTIONS:");
-            helpText.AppendLine("  -p, --project-path <PATH>      Project directory path (default: current directory)");
-            helpText.AppendLine("  -c, --publish-config <CONFIG>  Publish configuration (default: Release)");
+            helpText.AppendLine("  -p, --project-path <PATH>      Project directory path:");
+            helpText.AppendLine("                                   If not specified, uses the DotnetProjectPath from configuration file");
+            helpText.AppendLine("  -c, --publish-config <CONFIG>  Publish configuration (default: Release):");
+            helpText.AppendLine("                                   Release");
+            helpText.AppendLine("                                   Debug");
             helpText.AppendLine("      --config-path <PATH>       Netloy configuration file path");
-            helpText.AppendLine("      --clean                    Clean project before building");
+            helpText.AppendLine("      --clean                    Clean project before building:");
+            helpText.AppendLine("                                   Also clean directories and files created by Netloy");
             helpText.AppendLine();
 
             helpText.AppendLine("CONFIGURATION OPTIONS:");
@@ -197,6 +223,22 @@ public class ArgumentParser
             helpText.AppendLine("                                   plist   - macOS property list");
             helpText.AppendLine("                                   entitle - macOS entitlements");
             helpText.AppendLine("      --upgrade-config           Upgrade configuration to latest version");
+            helpText.AppendLine();
+
+            helpText.AppendLine("PLATFORM-SPECIFIC OPTIONS:");
+            helpText.AppendLine("   --signing-identity <ID>       macOS code signing identity (e.g., \"Developer ID Application\")");
+            helpText.AppendLine("                                   Optional for app and dmg packages on macOS");
+            helpText.AppendLine("   --apple-id <EMAIL>            Apple ID email for notarization");
+            helpText.AppendLine("                                   Optional for app and dmg packages notarization");
+            helpText.AppendLine("   --apple-team-id <ID>          Apple Developer Team ID (10-character string)");
+            helpText.AppendLine("                                   Optional for app and dmg packages notarization");
+            helpText.AppendLine("   --apple-password <PASSWORD>   App-specific password for Apple ID");
+            helpText.AppendLine("                                   Optional for app and dmg packages notarization");
+            helpText.AppendLine("                                   Generate at: appleid.apple.com");
+            helpText.AppendLine("   --flatpak-branch <BRANCH>     Flatpak release branch (default: stable)");
+            helpText.AppendLine("                                   stable - Stable release channel");
+            helpText.AppendLine("                                   beta - Beta testing channel");
+            helpText.AppendLine("                                   nightly - Development/nightly builds");
             helpText.AppendLine();
 
             helpText.AppendLine("OUTPUT OPTIONS:");

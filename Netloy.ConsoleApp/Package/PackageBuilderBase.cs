@@ -8,7 +8,6 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Netloy.ConsoleApp.Package;
 
@@ -33,7 +32,7 @@ public class PackageBuilderBase
     protected IconHelper IconHelper { get; }
     protected MacroExpander MacroExpander { get; }
 
-    #endregion
+    #endregion Properties
 
     protected PackageBuilderBase(Arguments arguments, Configurations configurations)
     {
@@ -87,17 +86,28 @@ public class PackageBuilderBase
         Directory.CreateDirectory(outputDir);
         MacroExpander.SetMacroValue(MacroId.PublishOutputDirectory, outputDir);
 
-        if (Arguments.CleanProject)
-            await CleanDotnetProjectAsync(DotnetProjectPath);
+        switch (Arguments.Framework)
+        {
+            case null:
+            case FrameworkType.NetCore:
+            {
+                await PublishWithDotnetCliAsync(outputDir);
+                break;
+            }
 
-        await PublishDotnetProjectAsync(DotnetProjectPath, outputDir);
+            default:
+            {
+                await PublishWithMSBuildAsync(outputDir);
+                break;
+            }
+        }
 
         await RunPostPublishScriptAsync();
 
         Logger.LogSuccess("Publish completed successfully!");
     }
 
-    protected string GetPackageArch()
+    protected string GetWindowsPackageArch()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -113,6 +123,26 @@ public class PackageBuilderBase
         throw new PlatformNotSupportedException($"Couldn't get package arch. {RuntimeInformation.OSDescription} is not supported.");
     }
 
+    public virtual void Clear()
+    {
+        try
+        {
+            if (!Directory.Exists(NetloyTempPath))
+                return;
+
+            Logger.LogInfo("Cleaning {0} package build artifacts...", Arguments.PackageType?.ToString().ToUpperInvariant());
+
+            Directory.Delete(NetloyTempPath, true);
+
+            Logger.LogSuccess("Cleanup completed!");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("Failed to clean build artifacts: {0}", forceLog: true, ex.Message);
+            throw;
+        }
+    }
+
     private void SetPrimaryIconInMacros()
     {
         var primaryIcon = string.Empty;
@@ -120,78 +150,78 @@ public class PackageBuilderBase
         {
             case PackageType.Exe:
             case PackageType.Msi:
-                {
-                    primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
-                    break;
-                }
+            {
+                primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".ico", StringComparison.OrdinalIgnoreCase));
+                break;
+            }
 
             case PackageType.App:
             case PackageType.Dmg:
-                {
-                    primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".icns", StringComparison.OrdinalIgnoreCase));
-                    break;
-                }
+            {
+                primaryIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".icns", StringComparison.OrdinalIgnoreCase));
+                break;
+            }
 
             case PackageType.AppImage:
             case PackageType.Deb:
             case PackageType.Flatpak:
             case PackageType.Rpm:
+            {
+                var svgIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".svg", StringComparison.OrdinalIgnoreCase));
+                if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
                 {
-                    var svgIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".svg", StringComparison.OrdinalIgnoreCase));
-                    if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
-                    {
-                        primaryIcon = svgIcon;
-                    }
-                    else
-                    {
-                        var pngIcons = Configurations.IconsCollection
-                            .Where(ico => Path.GetExtension(ico).Equals(".png", StringComparison.OrdinalIgnoreCase))
-                            .ToList();
+                    primaryIcon = svgIcon;
+                }
+                else
+                {
+                    var pngIcons = Configurations.IconsCollection
+                        .Where(ico => Path.GetExtension(ico).Equals(".png", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
 
-                        switch (pngIcons.Count)
+                    switch (pngIcons.Count)
+                    {
+                        case 0:
                         {
-                            case 0:
-                                {
-                                    Logger.LogWarning("There is no PNG primary icon.");
-                                    break;
-                                }
+                            Logger.LogWarning("There is no PNG primary icon.");
+                            break;
+                        }
 
-                            case 1:
-                                {
-                                    primaryIcon = pngIcons[0];
-                                    break;
-                                }
+                        case 1:
+                        {
+                            primaryIcon = pngIcons[0];
+                            break;
+                        }
 
-                            case > 1:
+                        case > 1:
+                        {
+                            var biggestSize = 0;
+                            var biggestPngPath = string.Empty;
+                            foreach (var iconPath in pngIcons)
+                            {
+                                var sections = iconPath.Split('.');
+                                var sizeSection = sections[1].Split('x');
+                                var size = int.Parse(sizeSection[0]);
+                                if (size > biggestSize)
                                 {
-                                    var biggestSize = 0;
-                                    var biggestPngPath = string.Empty;
-                                    foreach (var iconPath in pngIcons)
-                                    {
-                                        var sections = iconPath.Split('.');
-                                        var sizeSection = sections[1].Split('x');
-                                        var size = int.Parse(sizeSection[0]);
-                                        if (size > biggestSize)
-                                        {
-                                            biggestSize = size;
-                                            biggestPngPath = iconPath;
-                                        }
-                                    }
-
-                                    primaryIcon = biggestPngPath;
-                                    break;
+                                    biggestSize = size;
+                                    biggestPngPath = iconPath;
                                 }
+                            }
+
+                            primaryIcon = biggestPngPath;
+                            break;
                         }
                     }
-
-                    break;
                 }
+
+                break;
+            }
 
             default:
-                {
-                    Logger.LogWarning("There is no primary icon for {0} package type", Arguments.PackageType?.ToString().ToUpperInvariant());
-                    break;
-                }
+            {
+                Logger.LogWarning("There is no primary icon for {0} package type", Arguments.PackageType?.ToString().ToUpperInvariant());
+                break;
+            }
         }
 
         if (primaryIcon.IsStringNullOrEmpty())
@@ -205,6 +235,14 @@ public class PackageBuilderBase
 
         MacroExpander.SetMacroValue(MacroId.PrimaryIconFileName, Path.GetFileName(primaryIcon) ?? string.Empty);
         MacroExpander.SetMacroValue(MacroId.PrimaryIconFilePath, primaryIcon ?? string.Empty);
+    }
+
+    private async Task PublishWithDotnetCliAsync(string outputDir)
+    {
+        if (Arguments.CleanProject)
+            await CleanDotnetProjectAsync(DotnetProjectPath);
+
+        await PublishDotnetProjectAsync(DotnetProjectPath, outputDir);
     }
 
     private async Task PublishDotnetProjectAsync(string projectPath, string outputDir)
@@ -316,6 +354,106 @@ public class PackageBuilderBase
         {
             // Sometimes warnings come through stderr
             Logger.LogWarning("dotnet warnings:\n{0}", forceLog: true, error);
+        }
+
+        return process.ExitCode;
+    }
+
+    private async Task PublishWithMSBuildAsync(string outputDir)
+    {
+        Logger.LogInfo("Building .NET Framework project with MSBuild...");
+
+        if (Arguments.CleanProject)
+            await CleanWithMSBuildAsync();
+
+        var buildArgs = BuildMSBuildArguments(outputDir);
+        Logger.LogInfo("Running: msbuild {0}", buildArgs);
+
+        var exitCode = await ExecuteMSBuildCommandAsync(buildArgs);
+        if (exitCode != 0)
+            throw new InvalidOperationException($"MSBuild failed with exit code {exitCode}");
+
+        Logger.LogSuccess("Project built successfully with MSBuild!");
+    }
+
+    private string BuildMSBuildArguments(string outputDir)
+    {
+        var sb = new StringBuilder();
+        sb.Append($"\"{DotnetProjectPath}\"");
+        sb.Append(" /t:Build");
+        sb.Append($" /p:Configuration={Arguments.PublishConfiguration}");
+        sb.Append($" /p:OutputPath=\"{outputDir}\"");
+        sb.Append(" /p:Platform=AnyCPU");
+
+        if (!Arguments.Runtime.IsStringNullOrEmpty())
+            sb.Append($" /p:RuntimeIdentifier={Arguments.Runtime}");
+
+        // Add any extra publish arguments from configuration
+        if (!Configurations.DotnetPublishArgs.IsStringNullOrEmpty())
+        {
+            var customArgs = MacroExpander.ExpandMacros(Configurations.DotnetPublishArgs);
+            sb.Append($" {customArgs}");
+        }
+
+        return sb.ToString();
+    }
+
+    private async Task CleanWithMSBuildAsync()
+    {
+        Logger.LogInfo("Cleaning .NET Framework project with MSBuild...");
+
+        var sb = new StringBuilder();
+        sb.Append($"\"{DotnetProjectPath}\"");
+        sb.Append(" /t:Clean");
+
+        Logger.LogInfo("Running: msbuild {0}", sb.ToString());
+
+        var exitCode = await ExecuteMSBuildCommandAsync(sb.ToString());
+        if (exitCode != 0)
+            throw new InvalidOperationException($"MSBuild clean failed with exit code {exitCode}");
+
+        Logger.LogSuccess("Project cleaned successfully with MSBuild!");
+    }
+
+    private async Task<int> ExecuteMSBuildCommandAsync(string arguments)
+    {
+        var processInfo = new ProcessStartInfo
+        {
+            FileName = "msbuild",
+            Arguments = arguments,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = Process.Start(processInfo) ?? throw new InvalidOperationException("Failed to start msbuild process.");
+
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
+
+        await process.WaitForExitAsync();
+
+        // Log output if verbose mode is enabled
+        if (Arguments.Verbose && !output.IsStringNullOrEmpty())
+            Logger.LogInfo("msbuild output:\n{0}", output);
+
+        if (error.IsStringNullOrEmpty())
+            return process.ExitCode;
+
+        if (!output.IsStringNullOrEmpty() && Arguments.Verbose)
+            Logger.LogInfo("msbuild output:\n{0}", output);
+
+        // Always log errors
+        if (process.ExitCode != 0)
+        {
+            var message = error.IsStringNullOrEmpty() ? output : error;
+            Logger.LogError("msbuild error:\n{0}", forceLog: true, message);
+        }
+        else if (!error.IsStringNullOrEmpty())
+        {
+            // Sometimes warnings come through stderr
+            Logger.LogWarning("msbuild warnings:\n{0}", forceLog: true, error);
         }
 
         return process.ExitCode;
@@ -508,21 +646,21 @@ public class PackageBuilderBase
                 throw new FileNotFoundException("No project file found in the specified directory.");
 
             case > 1:
+            {
+                Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
+
+                if (!Arguments.SkipAll)
                 {
-                    Logger.LogWarning("Multiple project files found in the specified directory. Directory path: {0}", projectPath);
-
-                    if (!Arguments.SkipAll)
-                    {
-                        if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
-                            throw new OperationCanceledException("Operation canceled by user.");
-                    }
-                    else
-                    {
-                        Logger.LogInfo("Using first project file found. Project path: {0}", projectFiles[0]);
-                    }
-
-                    break;
+                    if (!Confirm.ShowConfirm("Multiple project files found. Do you want to use the first project file found?"))
+                        throw new OperationCanceledException("Operation canceled by user.");
                 }
+                else
+                {
+                    Logger.LogInfo("Using first project file found. Project path: {0}", projectFiles[0]);
+                }
+
+                break;
+            }
         }
 
         return projectFiles[0];

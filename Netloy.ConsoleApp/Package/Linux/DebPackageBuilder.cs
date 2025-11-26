@@ -217,28 +217,6 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    public void Clear()
-    {
-        try
-        {
-            Logger.LogInfo("Cleaning Debian package build artifacts...");
-
-            // Delete build directory if exists
-            if (Directory.Exists(RootDirectory))
-            {
-                Directory.Delete(RootDirectory, true);
-                Logger.LogInfo("Deleted build directory: {0}", RootDirectory);
-            }
-
-            Logger.LogSuccess("Cleanup completed!");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError("Failed to clean build artifacts: {0}", forceLog: true, ex.Message);
-            throw;
-        }
-    }
-
     #endregion
 
     #region Directory Structure Creation

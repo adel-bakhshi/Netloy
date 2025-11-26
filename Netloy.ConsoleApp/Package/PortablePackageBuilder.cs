@@ -45,12 +45,6 @@ public class PortablePackageBuilder : PackageBuilderBase, IPackageBuilder
         return true;
     }
 
-    public void Clear()
-    {
-        Logger.LogInfo("Cleaning up temporary directory: {0}", RootDirectory);
-        Directory.Delete(RootDirectory, true);
-    }
-
     private async Task SetExecutePermissionsAsync()
     {
         Logger.LogInfo("Setting permissions for all files...");

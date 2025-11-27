@@ -110,6 +110,18 @@ public class PackageBuilderFactory
             return false;
         }
 
+        if (_arguments.Runtime?.Equals("linux-x86", StringComparison.OrdinalIgnoreCase) == true
+            || _arguments.Runtime?.Contains("x86", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            Logger.LogError("The runtime identifier 'linux-x86' is not supported by Netloy.");
+            Logger.LogError("Reason: Microsoft .NET does not provide an application host for 32-bit Linux systems (linux-x86) since .NET Core 3.0.");
+            Logger.LogError("This means self-contained deployments cannot be created for this platform.");
+            Logger.LogError("Solution: Use 'linux-x64' or 'linux-arm64' instead for Linux packaging.");
+            Logger.LogError("For more information, visit: https://github.com/dotnet/runtime/issues/31180");
+            
+            return false;
+        }
+
         if (!_arguments.Runtime.IsStringNullOrEmpty())
         {
             return _arguments.Runtime switch

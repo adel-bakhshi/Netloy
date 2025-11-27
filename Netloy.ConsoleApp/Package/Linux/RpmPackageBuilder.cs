@@ -671,33 +671,48 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
 
         try
         {
-            // Set directory permissions (755)
-            await ExecuteChmodAsync($"-R 755 \"{RpmStructure}\"");
-
-            // Set file permissions (644)
-            await ExecuteChmodAsync($"-R 644 \"{RpmStructure}\"/*");
-
-            // Set executable permissions for binaries and scripts (755)
-            if (Directory.Exists(PublishOutputDir))
-            {
-                var mainExec = Path.Combine(PublishOutputDir, AppExecName);
-                if (File.Exists(mainExec))
-                    await ExecuteChmodAsync($"755 \"{mainExec}\"");
-            }
-
-            // Set executable permission for launcher script
-            if (!Configurations.StartCommand.IsStringNullOrEmpty())
-            {
-                var launcherPath = Path.Combine(UsrBinDirectory, Configurations.StartCommand);
-                if (File.Exists(launcherPath))
-                    await ExecuteChmodAsync($"755 \"{launcherPath}\"");
-            }
-
+            // Set all directories to 755
+            await SetPermissionsForAllDirectoriesAsync();
+            
+            // Set all regular files to 644
+            await SetPermissionsForAllFilesAsync();
+            
+            // Set executable permissions for specific files (755)
+            await SetExecutablePermissionsAsync();
+            
             Logger.LogSuccess("File permissions set!");
         }
         catch (Exception ex)
         {
             Logger.LogWarning("Failed to set some permissions: {0}", ex.Message);
+        }
+    }
+
+    private async Task SetPermissionsForAllDirectoriesAsync()
+    {
+        foreach (var dir in Directory.GetDirectories(RpmStructure, "*", SearchOption.AllDirectories))
+            await ExecuteChmodAsync($"755 \"{dir}\"");
+    }
+
+    private async Task SetPermissionsForAllFilesAsync()
+    {
+        foreach (var file in Directory.GetFiles(RpmStructure, "*", SearchOption.AllDirectories))
+            await ExecuteChmodAsync($"644 \"{file}\"");
+    }
+
+    private async Task SetExecutablePermissionsAsync()
+    {
+        // Main executable
+        var mainExec = Path.Combine(PublishOutputDir, AppExecName);
+        if (File.Exists(mainExec))
+            await ExecuteChmodAsync($"755 \"{mainExec}\"");
+        
+        // Launcher script
+        if (!Configurations.StartCommand.IsStringNullOrEmpty())
+        {
+            var launcherPath = Path.Combine(UsrBinDirectory, Configurations.StartCommand);
+            if (File.Exists(launcherPath))
+                await ExecuteChmodAsync($"755 \"{launcherPath}\"");
         }
     }
 
@@ -753,10 +768,13 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         if (Arguments.Verbose)
             arguments.Append(" --verbose");
 
+        var args = arguments.ToString();
+        Logger.LogInfo($"Running: rpmbuild {args}");
+
         var processInfo = new ProcessStartInfo
         {
             FileName = "rpmbuild",
-            Arguments = arguments.ToString(),
+            Arguments = args,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,

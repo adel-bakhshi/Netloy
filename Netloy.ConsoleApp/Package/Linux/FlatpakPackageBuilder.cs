@@ -235,6 +235,10 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
         // Create icon directories for different sizes
         foreach (var size in IconHelper.GetIconSizes())
         {
+            // Max icon size for flatpak is 512x512
+            if (size.Equals("1024x1024", StringComparison.OrdinalIgnoreCase))
+                continue;
+
             var sizeDir = Path.Combine(IconsShareDirectory, size, "apps");
             Directory.CreateDirectory(sizeDir);
         }
@@ -304,6 +308,11 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
         {
             var fileName = Path.GetFileName(iconPath);
             var sizeDir = DetermineIconSize(iconPath);
+
+            // Max icon size for flatpak is 512x512
+            if (sizeDir.Equals("1024x1024", StringComparison.OrdinalIgnoreCase))
+                continue;
+
             var targetDir = Path.Combine(IconsShareDirectory, sizeDir, "apps");
             var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.png");
 
@@ -407,7 +416,9 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
                 extraArgs += $" --gpg-homedir={Configurations.FlatpakGpgHomedir}";
         }
 
-        var arguments = $"{extraArgs} --arch={arch} --repo=\"{RepoDirectory}\" --force-clean \"{BuildDirectory}\" --state-dir \"{StateDirectory}\" \"{ManifestFilePath}\"";
+        var arguments = $"{extraArgs} --disable-rofiles-fuse --arch={arch} --repo=\"{RepoDirectory}\" " +
+            $"--force-clean \"{BuildDirectory}\" --state-dir \"{StateDirectory}\" \"{ManifestFilePath}\"";
+
         arguments = arguments.Trim();
 
         var processInfo = new ProcessStartInfo
@@ -451,7 +462,7 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
         if (!Configurations.FlatpakRuntimeRepo.IsStringNullOrEmpty())
             arguments += $"--runtime-repo={Configurations.FlatpakRuntimeRepo} ";
 
-        arguments += $"--arch={arch} --branch={Arguments.FlatpakBranch}";
+        arguments += $"--arch={arch}";
         arguments = arguments.Trim();
 
         var processInfo = new ProcessStartInfo
@@ -466,8 +477,7 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
 
         Logger.LogInfo("Running: flatpak {0}", arguments);
 
-        using var process = Process.Start(processInfo)
-                            ?? throw new InvalidOperationException("Failed to start flatpak process.");
+        using var process = Process.Start(processInfo) ?? throw new InvalidOperationException("Failed to start flatpak process.");
 
         var output = await process.StandardOutput.ReadToEndAsync();
         var error = await process.StandardError.ReadToEndAsync();

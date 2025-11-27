@@ -146,9 +146,6 @@ public class ArgumentParser
             helpText.AppendLine("  netloy -t dmg -r osx-arm64 --signing-identity \"Developer ID\" \\");
             helpText.AppendLine("         --apple-id \"dev@example.com\" --apple-team-id \"ABC1234XYZ\"");
             helpText.AppendLine();
-            helpText.AppendLine("  # Build Flatpak for beta channel");
-            helpText.AppendLine("  netloy -t flatpak -r linux-x64 --flatpak-branch beta");
-            helpText.AppendLine();
         }
 
         if (!_arguments.Verbose)
@@ -174,7 +171,6 @@ public class ArgumentParser
             helpText.AppendLine("      --apple-id <EMAIL>");
             helpText.AppendLine("      --apple-team-id <ID>");
             helpText.AppendLine("      --apple-password <PASSWORD>");
-            helpText.AppendLine("      --flatpak-branch <BRANCH>");
             helpText.AppendLine();
 
             helpText.AppendLine("Use --verbose for more information");
@@ -234,10 +230,6 @@ public class ArgumentParser
             helpText.AppendLine("   --apple-password <PASSWORD>   App-specific password for Apple ID");
             helpText.AppendLine("                                   Optional for app and dmg packages notarization");
             helpText.AppendLine("                                   Generate at: appleid.apple.com");
-            helpText.AppendLine("   --flatpak-branch <BRANCH>     Flatpak release branch (default: stable)");
-            helpText.AppendLine("                                   stable - Stable release channel");
-            helpText.AppendLine("                                   beta - Beta testing channel");
-            helpText.AppendLine("                                   nightly - Development/nightly builds");
             helpText.AppendLine();
 
             helpText.AppendLine("OUTPUT OPTIONS:");
@@ -402,14 +394,6 @@ public class ArgumentParser
         else
         {
             throw new ArgumentException($"Invalid publish configuration: {arguments.PublishConfiguration}. Must be 'Release' or 'Debug'");
-        }
-
-        if (!arguments.FlatpakBranch.IsStringNullOrEmpty())
-        {
-            List<string> validValues = ["stable", "beta", "nightly"];
-            arguments.FlatpakBranch = arguments.FlatpakBranch.ToLowerInvariant().Trim();
-            if (!validValues.Contains(arguments.FlatpakBranch))
-                throw new ArgumentException($"Invalid Flatpak branch: {arguments.FlatpakBranch}. Must be 'stable', 'beta', or 'nightly'");
         }
     }
 

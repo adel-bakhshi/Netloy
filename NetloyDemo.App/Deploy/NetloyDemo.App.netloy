@@ -236,7 +236,7 @@ FlatpakPlatformSdk = org.freedesktop.Sdk
 
 # The platform runtime version. The latest available version may change periodically.
 # Refer to Flatpak documentation.
-FlatpakPlatformVersion = 23.08
+FlatpakPlatformVersion = 25.08
 
 # Flatpak manifest 'finish-args' sandbox permissions. Optional, but if empty, the application will have
 # extremely limited access to the host environment. This option may be used to grant required

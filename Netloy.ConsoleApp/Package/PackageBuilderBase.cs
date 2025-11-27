@@ -383,10 +383,13 @@ public class PackageBuilderBase
         sb.Append(" /t:Build");
         sb.Append($" /p:Configuration={Arguments.PublishConfiguration}");
         sb.Append($" /p:OutputPath=\"{outputDir}\"");
-        sb.Append(" /p:Platform=AnyCPU");
 
-        if (!Arguments.Runtime.IsStringNullOrEmpty())
-            sb.Append($" /p:RuntimeIdentifier={Arguments.Runtime}");
+        // Map Runtime to Platform for .NET Framework projects
+        var platform = GetWindowsPackageArch();
+        // Valid values are x86, x64 and ARM64. So we need to convert arm64 to ARM64
+        platform = platform.Equals("arm64", StringComparison.CurrentCultureIgnoreCase) ? platform.ToUpperInvariant() : platform;
+        sb.Append($" /p:PlatformTarget={platform}");
+        sb.Append(" /p:Prefer32Bit=false");
 
         // Add any extra publish arguments from configuration
         if (!Configurations.DotnetPublishArgs.IsStringNullOrEmpty())
@@ -417,9 +420,13 @@ public class PackageBuilderBase
 
     private async Task<int> ExecuteMSBuildCommandAsync(string arguments)
     {
+        var msbuildPath = FindMSBuildProcess();
+        if (msbuildPath.IsStringNullOrEmpty())
+            throw new InvalidOperationException("Failed to find MSBuild process.");
+
         var processInfo = new ProcessStartInfo
         {
-            FileName = "msbuild",
+            FileName = msbuildPath,
             Arguments = arguments,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -459,6 +466,36 @@ public class PackageBuilderBase
         return process.ExitCode;
     }
 
+    private static string? FindMSBuildProcess()
+    {
+        var programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+        var vswherePath = Path.Combine(programFilesX86, "Microsoft Visual Studio", "Installer", "vswhere.exe");
+
+        if (File.Exists(vswherePath))
+        {
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = vswherePath,
+                    Arguments = "-latest -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                }
+            };
+
+            process.Start();
+            var output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+
+            var paths = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+            return paths.FirstOrDefault();
+        }
+
+        return null;
+    }
+
     private async Task RunPostPublishScriptAsync()
     {
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
@@ -480,45 +517,13 @@ public class PackageBuilderBase
         var scriptPath = Path.Combine(ScriptsDirectory, fileName);
         await File.WriteAllTextAsync(scriptPath, scriptContent);
 
-        var processInfo = new ProcessStartInfo
-        {
-            FileName = "chmod",
-            Arguments = $"+x \"{scriptPath}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+        var arguments = Configurations.DotnetPostPublishArguments.IsStringNullOrEmpty()
+            ? string.Empty
+            : MacroExpander.ExpandMacros(Configurations.DotnetPostPublishArguments);
 
-        using var process = Process.Start(processInfo);
-        if (process != null)
-        {
-            var output = await process.StandardOutput.ReadToEndAsync();
-            var error = await process.StandardError.ReadToEndAsync();
-
-            await process.WaitForExitAsync();
-
-            if (process.ExitCode != 0)
-            {
-                var message = error.IsStringNullOrEmpty() ? output : error;
-                throw new InvalidOperationException(message);
-            }
-
-            if (Arguments.Verbose && !output.IsStringNullOrEmpty())
-                Logger.LogDebug("chmod output: {0}", output);
-
-            var arguments = Configurations.DotnetPostPublishArguments.IsStringNullOrEmpty()
-                ? string.Empty
-                : MacroExpander.ExpandMacros(Configurations.DotnetPostPublishArguments);
-
-            var exitCode = await ScriptRunner.RunScriptAsync(scriptPath, arguments);
-            if (exitCode != 0)
-                throw new InvalidOperationException($"Post publish script failed with exit code {exitCode}");
-        }
-        else
-        {
-            Logger.LogWarning("Couldn't make script executable. Script path: {0}", scriptPath);
-        }
+        var exitCode = await ScriptRunner.RunScriptAsync(scriptPath, arguments);
+        if (exitCode != 0)
+            throw new InvalidOperationException($"Post publish script failed with exit code {exitCode}");
     }
 
     private static string GetAppVersion(string version)

@@ -1,7 +1,7 @@
-﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
-using Netloy.ConsoleApp.Extensions;
+﻿using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace Netloy.ConsoleApp.Helpers;
 
@@ -29,6 +29,8 @@ public static class ScriptRunner
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
+            await MakeProcessExecutableAsync(scriptPath);
+
             var command = string.IsNullOrEmpty(arguments)
                 ? scriptPath
                 : $"{scriptPath} {arguments}";
@@ -68,5 +70,37 @@ public static class ScriptRunner
 
         Logger.LogInfo("Exit Code: {0}", process.ExitCode);
         return process.ExitCode;
+    }
+
+    private static async Task MakeProcessExecutableAsync(string processPath)
+    {
+        var processInfo = new ProcessStartInfo
+        {
+            FileName = "chmod",
+            Arguments = $"+x \"{processPath}\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = Process.Start(processInfo);
+        if (process != null)
+        {
+            var output = await process.StandardOutput.ReadToEndAsync();
+            var error = await process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync();
+
+            if (process.ExitCode == 0)
+                return;
+
+            var message = error.IsStringNullOrEmpty() ? output : error;
+            throw new InvalidOperationException(message);
+        }
+        else
+        {
+            Logger.LogWarning("Couldn't make script executable. Script path: {0}", processPath);
+        }
     }
 }

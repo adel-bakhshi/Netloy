@@ -22,7 +22,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
     private const string LightExe = "light.exe";
 
     private static readonly string[] WixRequiredFiles =
-    {
+    [
         "candle.exe",
         "candle.exe.config",
         "darice.cub",
@@ -33,7 +33,13 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         "wix.dll",
         "WixUIExtension.dll",
         "WixUtilExtension.dll"
-    };
+    ];
+
+    #endregion
+
+    #region Private Fields
+
+    private readonly List<string> _fileComponentIds;
 
     #endregion
 
@@ -48,6 +54,8 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
     public MsiV3PackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {
+        _fileComponentIds = [];
+
         WixToolsPath = Path.Combine(NetloyTempPath, "wix-v3");
         IntermediatesPath = Path.Combine(RootDirectory, "wix-intermediates");
         WixSourcePath = Path.Combine(IntermediatesPath, $"{Configurations.AppBaseName}.wxs");
@@ -394,7 +402,12 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
             if (Path.GetFileName(file).Equals(AppExecName, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            installDir.Add(CreateFileComponent(file));
+            var fileComponent = CreateFileComponent(file);
+            var componentId = fileComponent.Attribute("Id")?.Value;
+            if (!string.IsNullOrEmpty(componentId))
+                _fileComponentIds.Add(componentId);
+
+            installDir.Add(fileComponent);
         }
 
         programFilesDir.Add(installDir);
@@ -479,8 +492,13 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
     {
         var fileName = Path.GetFileName(filePath);
         var sanitizedName = Regex.Replace(fileName, @"[^\w\d\.]", "_");
-        var componentId = $"File_{sanitizedName}_{Guid.NewGuid():N}".Substring(0, 72);
-        var fileId = $"F_{sanitizedName}".Substring(0, 72);
+
+        // Generate IDs and ensure they don't exceed 72 characters
+        var componentId = $"File_{sanitizedName}_{Guid.NewGuid():N}";
+        componentId = componentId.Substring(0, Math.Min(componentId.Length, 72));
+
+        var fileId = $"F_{sanitizedName}";
+        fileId = fileId.Substring(0, Math.Min(fileId.Length, 72));
 
         var component = new XElement(XName.Get("Component", WixNamespace),
             new XAttribute("Id", componentId),
@@ -713,6 +731,13 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
         feature.Add(new XElement(XName.Get("ComponentRef", WixNamespace),
             new XAttribute("Id", "RegistryEntriesComponent")));
+
+        // Add all file components
+        foreach (var componentId in _fileComponentIds)
+        {
+            feature.Add(new XElement(XName.Get("ComponentRef", WixNamespace),
+                new XAttribute("Id", componentId)));
+        }
 
         // Shortcuts feature - Required
         var shortcutsFeature = new XElement(XName.Get("Feature", WixNamespace),

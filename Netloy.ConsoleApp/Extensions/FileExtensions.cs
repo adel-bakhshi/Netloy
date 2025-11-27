@@ -19,14 +19,12 @@ public static partial class FileExtensions
             normalized = normalized.Replace("/", "\\");
 
             // Remove duplicate separators
-            normalized = NormalizePathRegex().Replace(normalized, "\\");
+            return NormalizePathRegex().Replace(normalized, "\\");
         }
         else
         {
-            normalized = normalized.Replace("\\", "/");
+            return normalized.Replace("\\", "/");
         }
-
-        return normalized;
     }
 
     public static bool IsAbsolutePath(this string path)

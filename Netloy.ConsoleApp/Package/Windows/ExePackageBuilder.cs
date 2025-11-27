@@ -352,13 +352,12 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
             sb.AppendLine($"Name: \"{{group}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"");
 
             // Desktop Icon
-            sb.AppendLine(
-                $"Name: \"{{userdesktop}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: desktopicon");
+            sb.AppendLine($"Name: \"{{userdesktop}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: desktopicon");
         }
 
         // Startup Icon
-        sb.AppendLine(
-            $"Name: \"{{userstartup}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: startup");
+        if (Configurations.SetupStartOnWindowsStartup)
+            sb.AppendLine($"Name: \"{{userstartup}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: startup");
 
         // Uninstaller Icon
         sb.AppendLine($"Name: \"{{group}}\\Uninstall {Configurations.AppFriendlyName}\"; Filename: \"{{uninstallexe}}\"");

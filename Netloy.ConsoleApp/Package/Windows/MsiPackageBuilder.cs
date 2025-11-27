@@ -119,7 +119,7 @@ public class MsiPackageBuilder : PackageBuilderBase, IPackageBuilder
         // Create WiX XML document
         var doc = new XDocument(
             new XDeclaration("1.0", "utf-8", null),
-            CreateWixElement(primaryIcon!)
+            CreateWixElement(primaryIcon)
         );
 
         return doc.ToString();

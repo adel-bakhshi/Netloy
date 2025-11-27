@@ -79,6 +79,12 @@ public class PackageBuilderFactory
 
     private bool IsMacOsRuntimeValid()
     {
+        if (_arguments.Framework == FrameworkType.NetFramework)
+        {
+            Logger.LogWarning("Net Framework is not supported for macOS");
+            return false;
+        }
+
         if (!_arguments.Runtime.IsStringNullOrEmpty())
         {
             return _arguments.Runtime switch
@@ -98,7 +104,12 @@ public class PackageBuilderFactory
 
     private bool IsLinuxRuntimeValid()
     {
-        // TODO: Check for linux-arm or linux-arm32
+        if (_arguments.Framework == FrameworkType.NetFramework)
+        {
+            Logger.LogWarning("Net Framework is not supported for Linux");
+            return false;
+        }
+
         if (!_arguments.Runtime.IsStringNullOrEmpty())
         {
             return _arguments.Runtime switch
@@ -106,6 +117,7 @@ public class PackageBuilderFactory
                 "linux-x64" => true,
                 "linux-x86" => true,
                 "linux-arm64" => true,
+                "linux-arm" => true,
                 _ => false
             };
         }
@@ -162,7 +174,7 @@ public class PackageBuilderFactory
             Architecture.X64 => "win-x64",
             Architecture.X86 => "win-x86",
             Architecture.Arm64 => "win-arm64",
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new InvalidOperationException($"Unsupported architecture for Windows. Arch: {_arguments.Runtime}")
         };
     }
 
@@ -172,7 +184,7 @@ public class PackageBuilderFactory
         {
             Architecture.X64 => "osx-x64",
             Architecture.Arm64 => "osx-arm64",
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new InvalidOperationException($"Unsupported architecture for macOS. Arch: {_arguments.Runtime}")
         };
     }
 
@@ -183,7 +195,7 @@ public class PackageBuilderFactory
             Architecture.X64 => "linux-x64",
             Architecture.X86 => "linux-x86",
             Architecture.Arm64 => "linux-arm64",
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new InvalidOperationException($"Unsupported architecture for Linux. Arch: {_arguments.Runtime}")
         };
     }
 }

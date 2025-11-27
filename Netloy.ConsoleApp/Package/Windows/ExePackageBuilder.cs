@@ -154,11 +154,11 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
         var iconFileName = MacroExpander.GetMacroValue(MacroId.PrimaryIconFileName);
 
         // Generate each section
-        GenerateSetupSection(sb, primaryIcon!, iconFileName!);
-        GenerateFilesSection(sb, primaryIcon!);
+        GenerateSetupSection(sb, primaryIcon, iconFileName);
+        GenerateFilesSection(sb, primaryIcon);
         GenerateTasksSection(sb);
-        GenerateRegistrySection(sb, iconFileName!);
-        GenerateIconsSection(sb, iconFileName!);
+        GenerateRegistrySection(sb, iconFileName);
+        GenerateIconsSection(sb, iconFileName);
         GenerateRunSection(sb);
         GenerateInstallDeleteSection(sb);
         GenerateUninstallRunSection(sb);
@@ -289,11 +289,13 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
 
         // Startup Task
         if (Configurations.SetupStartOnWindowsStartup)
-            sb.AppendLine($"Name: \"startup\"; Description: \"Run {Configurations.AppFriendlyName} at Windows startup\"; GroupDescription: \"Additional options:\"; Flags: unchecked");
+            sb.AppendLine(
+                $"Name: \"startup\"; Description: \"Run {Configurations.AppFriendlyName} at Windows startup\"; GroupDescription: \"Additional options:\"; Flags: unchecked");
 
         // File Association
         if (Configurations.AssociateFiles && !Configurations.FileExtension.IsStringNullOrEmpty())
-            sb.AppendLine($"Name: \"associatefiles\"; Description: \"Associate {Configurations.FileExtension} files with {Configurations.AppFriendlyName}\"; GroupDescription: \"File associations:\"; Flags: unchecked");
+            sb.AppendLine(
+                $"Name: \"associatefiles\"; Description: \"Associate {Configurations.FileExtension} files with {Configurations.AppFriendlyName}\"; GroupDescription: \"File associations:\"; Flags: unchecked");
 
         // Context Menu
         if (Configurations.ContextMenuIntegration)
@@ -352,12 +354,14 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
             sb.AppendLine($"Name: \"{{group}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"");
 
             // Desktop Icon
-            sb.AppendLine($"Name: \"{{userdesktop}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: desktopicon");
+            sb.AppendLine(
+                $"Name: \"{{userdesktop}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: desktopicon");
         }
 
         // Startup Icon
         if (Configurations.SetupStartOnWindowsStartup)
-            sb.AppendLine($"Name: \"{{userstartup}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: startup");
+            sb.AppendLine(
+                $"Name: \"{{userstartup}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: startup");
 
         // Uninstaller Icon
         sb.AppendLine($"Name: \"{{group}}\\Uninstall {Configurations.AppFriendlyName}\"; Filename: \"{{uninstallexe}}\"");

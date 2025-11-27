@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO.Compression;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Netloy.ConsoleApp.Argument;
@@ -156,7 +155,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         var primaryIcon = MacroExpander.GetMacroValue(MacroId.PrimaryIconFilePath);
 
         // Create wix content
-        var wixContent = CreateWixXml(primaryIcon!);
+        var wixContent = CreateWixXml(primaryIcon);
 
         await File.WriteAllTextAsync(WixSourcePath, wixContent.ToString(), Constants.Utf8WithoutBom);
         Logger.LogInfo("WiX source saved to: {0}", WixSourcePath);
@@ -301,7 +300,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         }
 
         // UI
-        var ui = CreateUIElement();
+        var ui = CreateUiElement();
         product.Add(ui);
 
         // Directory Structure
@@ -313,7 +312,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         return product;
     }
 
-    private XElement CreateUIElement()
+    private XElement CreateUiElement()
     {
         var ui = new XElement(XName.Get("UI", WixNamespace));
 

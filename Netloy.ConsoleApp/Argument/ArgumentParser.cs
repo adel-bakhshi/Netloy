@@ -149,7 +149,6 @@ public class ArgumentParser
             helpText.AppendLine("  # Build Flatpak for beta channel");
             helpText.AppendLine("  netloy -t flatpak -r linux-x64 --flatpak-branch beta");
             helpText.AppendLine();
-
         }
 
         if (!_arguments.Verbose)

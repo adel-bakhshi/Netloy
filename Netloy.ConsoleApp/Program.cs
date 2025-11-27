@@ -29,7 +29,8 @@ internal class Program
             //const string command = "netloy -n all -o ../../../../NetloyDemo.App/Deploy/ --verbose";
             //const string command = "netloy --upgrade-config --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             //const string command = "netloy --help --verbose";
-            const string command = "netloy -t portable -r win-x64 --config-path \"D:\\Programming\\Projects\\MusicPlayerProject\\Deploy\\MusicPlayerProject.netloy\" -f netframework --verbose";
+            const string command =
+                "netloy -t portable -r win-x64 --config-path \"D:\\Programming\\Projects\\MusicPlayerProject\\Deploy\\MusicPlayerProject.netloy\" -f netframework --verbose";
             args = command.Split(" ");
 #endif
 
@@ -63,22 +64,22 @@ internal class Program
                 switch (arguments.Help?.ToLowerInvariant())
                 {
                     case "conf":
-                        {
-                            argumentParser.ShowConfigHelps();
-                            break;
-                        }
+                    {
+                        argumentParser.ShowConfigHelps();
+                        break;
+                    }
 
                     case "macro":
-                        {
-                            // TODO: Complete this section
-                            throw new NotImplementedException();
-                        }
+                    {
+                        // TODO: Complete this section
+                        throw new NotImplementedException();
+                    }
 
                     default:
-                        {
-                            argumentParser.ShowHelps();
-                            break;
-                        }
+                    {
+                        argumentParser.ShowHelps();
+                        break;
+                    }
                 }
 
                 return 0;

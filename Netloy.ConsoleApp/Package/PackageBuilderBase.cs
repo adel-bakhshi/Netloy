@@ -97,7 +97,7 @@ public class PackageBuilderBase
 
             default:
             {
-                await PublishWithMSBuildAsync(outputDir);
+                await PublishWithMsBuildAsync(outputDir);
                 break;
             }
         }
@@ -359,24 +359,24 @@ public class PackageBuilderBase
         return process.ExitCode;
     }
 
-    private async Task PublishWithMSBuildAsync(string outputDir)
+    private async Task PublishWithMsBuildAsync(string outputDir)
     {
         Logger.LogInfo("Building .NET Framework project with MSBuild...");
 
         if (Arguments.CleanProject)
-            await CleanWithMSBuildAsync();
+            await CleanWithMsBuildAsync();
 
-        var buildArgs = BuildMSBuildArguments(outputDir);
+        var buildArgs = BuildMsBuildArguments(outputDir);
         Logger.LogInfo("Running: msbuild {0}", buildArgs);
 
-        var exitCode = await ExecuteMSBuildCommandAsync(buildArgs);
+        var exitCode = await ExecuteMsBuildCommandAsync(buildArgs);
         if (exitCode != 0)
             throw new InvalidOperationException($"MSBuild failed with exit code {exitCode}");
 
         Logger.LogSuccess("Project built successfully with MSBuild!");
     }
 
-    private string BuildMSBuildArguments(string outputDir)
+    private string BuildMsBuildArguments(string outputDir)
     {
         var sb = new StringBuilder();
         sb.Append($"\"{DotnetProjectPath}\"");
@@ -401,7 +401,7 @@ public class PackageBuilderBase
         return sb.ToString();
     }
 
-    private async Task CleanWithMSBuildAsync()
+    private async Task CleanWithMsBuildAsync()
     {
         Logger.LogInfo("Cleaning .NET Framework project with MSBuild...");
 
@@ -411,16 +411,16 @@ public class PackageBuilderBase
 
         Logger.LogInfo("Running: msbuild {0}", sb.ToString());
 
-        var exitCode = await ExecuteMSBuildCommandAsync(sb.ToString());
+        var exitCode = await ExecuteMsBuildCommandAsync(sb.ToString());
         if (exitCode != 0)
             throw new InvalidOperationException($"MSBuild clean failed with exit code {exitCode}");
 
         Logger.LogSuccess("Project cleaned successfully with MSBuild!");
     }
 
-    private async Task<int> ExecuteMSBuildCommandAsync(string arguments)
+    private async Task<int> ExecuteMsBuildCommandAsync(string arguments)
     {
-        var msbuildPath = FindMSBuildProcess();
+        var msbuildPath = FindMsBuildProcess();
         if (msbuildPath.IsStringNullOrEmpty())
             throw new InvalidOperationException("Failed to find MSBuild process.");
 
@@ -466,34 +466,32 @@ public class PackageBuilderBase
         return process.ExitCode;
     }
 
-    private static string? FindMSBuildProcess()
+    private static string? FindMsBuildProcess()
     {
         var programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
         var vswherePath = Path.Combine(programFilesX86, "Microsoft Visual Studio", "Installer", "vswhere.exe");
 
-        if (File.Exists(vswherePath))
+        if (!File.Exists(vswherePath))
+            return null;
+
+        var process = new Process
         {
-            var process = new Process
+            StartInfo = new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = vswherePath,
-                    Arguments = "-latest -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    CreateNoWindow = true
-                }
-            };
+                FileName = vswherePath,
+                Arguments = "-latest -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
+            }
+        };
 
-            process.Start();
-            var output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
+        process.Start();
+        var output = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
 
-            var paths = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-            return paths.FirstOrDefault();
-        }
-
-        return null;
+        var paths = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        return paths.FirstOrDefault();
     }
 
     private async Task RunPostPublishScriptAsync()

@@ -467,7 +467,7 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
         Logger.LogInfo("Running: flatpak {0}", arguments);
 
         using var process = Process.Start(processInfo)
-            ?? throw new InvalidOperationException("Failed to start flatpak process.");
+                            ?? throw new InvalidOperationException("Failed to start flatpak process.");
 
         var output = await process.StandardOutput.ReadToEndAsync();
         var error = await process.StandardError.ReadToEndAsync();

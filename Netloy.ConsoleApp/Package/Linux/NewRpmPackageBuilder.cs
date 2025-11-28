@@ -100,7 +100,7 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
     {
         _rpmPackageName = Configurations.AppId.ToLowerInvariant().Replace(" ", "-");
 
-        NfpmDir = Path.Combine(NetloyProjectTempPath, "nfpm");
+        NfpmDir = Path.Combine(NetloyTempPath, "nfpm");
     }
 
     #endregion
@@ -128,7 +128,7 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
             // Copy metainfo file if exists
             await CopyMetaInfoFileAsync();
 
-            // ✅ FIXED: Copy license and changelog files
+            // Copy license and changelog files
             CopyLicenseAndChangelogFiles();
 
             // Create launcher script if needed
@@ -179,14 +179,25 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
                 // On Debian-based distro
                 if (isArmArch)
                 {
-                    // ARM architecture: use nfpm
-                    _useNfpm = true;
-                    Logger.LogInfo("Building ARM package on Debian-based distribution. Using nfpm.");
-
-                    if (!NfpmTool.IsAvailableAsync(Arguments.Runtime ?? string.Empty, NfpmDir).GetAwaiter().GetResult())
+                    if (Arguments.Runtime?.Equals("linux-arm64", StringComparison.OrdinalIgnoreCase) != true)
                     {
-                        errors.Add("nfpm tool is not available.");
-                        errors.Add("This is an internal error. Please report this issue.");
+                        errors.Add("Building ARM (32-bit) RPM packages on Debian-based distributions is not supported at the moment.");
+                        errors.Add("You can build:");
+                        errors.Add("  - x64 RPM packages (linux-x64) using rpmbuild");
+                        errors.Add("  - ARM64 RPM packages (linux-arm64) using nfpm");
+                        errors.Add("If you need 32-bit ARM RPMs (armhf/armhfp), please build them on an RPM-based distribution (Fedora/RHEL/openSUSE) with an ARM toolchain.");
+                    }
+                    else
+                    {
+                        // ARM architecture: use nfpm
+                        _useNfpm = true;
+                        Logger.LogInfo("Building ARM package on Debian-based distribution. Using nfpm.");
+
+                        if (!NfpmTool.IsAvailableAsync(Arguments.Runtime ?? string.Empty, NfpmDir).GetAwaiter().GetResult())
+                        {
+                            errors.Add("nfpm tool is not available.");
+                            errors.Add("This is an internal error. Please report this issue.");
+                        }
                     }
                 }
                 else
@@ -249,7 +260,7 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         Logger.LogInfo("Initializing RPM directory structure...");
 
         // Root structure directory
-        RpmStructure = Path.Combine(RootDirectory, "rpm", "structure");
+        RpmStructure = Path.Combine(RootDirectory, "structure");
         Directory.CreateDirectory(RpmStructure);
 
         // Create opt directory structure
@@ -274,11 +285,10 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         Directory.CreateDirectory(MetaInfoDirectory);
 
         // Spec file path
-        SpecFilePath = Path.Combine(RootDirectory, "rpm", $"{_rpmPackageName}{SpecFileExtension}");
+        SpecFilePath = Path.Combine(RootDirectory, $"{_rpmPackageName}{SpecFileExtension}");
 
         // Output path
-        var rpmFileName = $"{_rpmPackageName}-{AppVersion}-{PackageRelease}.{GetRpmArch()}.rpm";
-        OutputPath = Path.Combine(OutputDirectory, rpmFileName);
+        OutputPath = Path.Combine(OutputDirectory, OutputName);
 
         Logger.LogSuccess("RPM directory structure initialized");
     }
@@ -574,7 +584,7 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         await GenerateSpecFileAsync();
 
         // Build RPM
-        var rpmbuildDir = Path.Combine(RootDirectory, "rpm", "rpmbuild");
+        var rpmbuildDir = Path.Combine(RootDirectory, "rpmbuild");
         Directory.CreateDirectory(rpmbuildDir);
 
         var arguments = new StringBuilder();
@@ -606,8 +616,7 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
             }
         };
 
-        using var process = Process.Start(processInfo) ??
-                            throw new InvalidOperationException("Failed to start rpmbuild process.");
+        using var process = Process.Start(processInfo) ?? throw new InvalidOperationException("Failed to start rpmbuild process.");
 
         var output = await process.StandardOutput.ReadToEndAsync();
         var error = await process.StandardError.ReadToEndAsync();
@@ -641,7 +650,7 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         Logger.LogInfo("Building RPM package with nfpm...");
 
         // Generate nfpm.yaml config file
-        var nfpmConfigPath = Path.Combine(RootDirectory, "rpm", "nfpm.yaml");
+        var nfpmConfigPath = Path.Combine(RootDirectory, "nfpm.yaml");
         await GenerateNfpmConfigAsync(nfpmConfigPath);
 
         // Get nfpm binary path
@@ -663,8 +672,7 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
             WorkingDirectory = RootDirectory
         };
 
-        using var process = Process.Start(processInfo) ??
-                            throw new InvalidOperationException("Failed to start nfpm process.");
+        using var process = Process.Start(processInfo) ?? throw new InvalidOperationException("Failed to start nfpm process.");
 
         var output = await process.StandardOutput.ReadToEndAsync();
         var error = await process.StandardError.ReadToEndAsync();
@@ -888,7 +896,15 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         var license = !Configurations.AppLicenseId.IsStringNullOrEmpty()
             ? Configurations.AppLicenseId
             : "Proprietary";
+
         sb.AppendLine($"license: \"{license}\"");
+        sb.AppendLine();
+
+        // ============ Maintainer ============
+        var maintainer = $"{Configurations.PublisherName} <{Configurations.PublisherEmail}>";
+        if (!Configurations.PublisherEmail.IsStringNullOrEmpty())
+            sb.AppendLine($"maintainer: \"{maintainer}\"");
+
         sb.AppendLine();
 
         // ============ Dependencies ============
@@ -905,14 +921,10 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
                 sb.AppendLine("depends:");
                 foreach (var req in requires)
                     sb.AppendLine($"  - \"{req}\"");
+
                 sb.AppendLine();
             }
         }
-
-        // ============ File Mode Umask ============
-        sb.AppendLine("# Umask for files without explicit mode");
-        sb.AppendLine("umask: 0o002");
-        sb.AppendLine();
 
         // ============ Contents ============
         sb.AppendLine("contents:");
@@ -939,53 +951,73 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
             sb.AppendLine();
         }
 
-        // ============ RPM-Specific Overrides ============
-        sb.AppendLine("overrides:");
-        sb.AppendLine("  rpm:");
+        // ============ Global Scripts (nFPM root-level) ============
+        sb.AppendLine("scripts:");
 
-        // RPM Summary (first line of description)
+        var postInstallScriptPath = await GeneratePostInstallScriptAsync();
+        sb.AppendLine($"  postinstall: {postInstallScriptPath}");
+
+        var postRemoveScriptPath = await GeneratePostRemoveScriptAsync();
+        sb.AppendLine($"  postremove: {postRemoveScriptPath}");
+        sb.AppendLine();
+
+        // ============ RPM-Specific Configuration ============
+        sb.AppendLine("rpm:");
+
         var summary = Configurations.AppShortSummary;
         if (!summary.IsStringNullOrEmpty())
-        {
-            sb.AppendLine($"    summary: \"{summary}\"");
-        }
+            sb.AppendLine($"  summary: \"{summary}\"");
 
-        // RPM Group (deprecated but needed for old distros)
-        sb.AppendLine($"    group: \"Applications/Productivity\"");
+        sb.AppendLine($"  group: \"Applications/Productivity\"");
+        sb.AppendLine($"  compression: \"zstd\"");
 
-        // Compression algorithm
-        sb.AppendLine($"    compression: \"zstd\"");
-
-        // RPM Scripts
-        sb.AppendLine($"    scripts:");
-
-        // Post-install
-        sb.AppendLine($"      postinstall: |");
-        sb.AppendLine($"        # Update desktop database");
-        sb.AppendLine($"        if [ -x /usr/bin/update-desktop-database ]; then");
-        sb.AppendLine($"          /usr/bin/update-desktop-database -q /usr/share/applications 2>/dev/null || :");
-        sb.AppendLine($"        fi");
-        sb.AppendLine($"        # Update icon cache");
-        sb.AppendLine($"        if [ -x /usr/bin/gtk-update-icon-cache ]; then");
-        sb.AppendLine($"          /usr/bin/gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || :");
-        sb.AppendLine($"        fi");
-
-        // Post-remove
-        sb.AppendLine($"      postremove: |");
-        sb.AppendLine($"        # Update desktop database");
-        sb.AppendLine($"        if [ -x /usr/bin/update-desktop-database ]; then");
-        sb.AppendLine($"          /usr/bin/update-desktop-database -q /usr/share/applications 2>/dev/null || :");
-        sb.AppendLine($"        fi");
-        sb.AppendLine($"        # Update icon cache only on complete removal");
-        sb.AppendLine($"        if [ $1 -eq 0 ]; then");
-        sb.AppendLine($"          if [ -x /usr/bin/gtk-update-icon-cache ]; then");
-        sb.AppendLine($"            /usr/bin/gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || :");
-        sb.AppendLine($"          fi");
-        sb.AppendLine($"        fi");
-
-        await File.WriteAllTextAsync(configPath, sb.ToString(), Encoding.UTF8);
+        await File.WriteAllTextAsync(configPath, sb.ToString(), Constants.Utf8WithoutBom);
 
         Logger.LogSuccess("nfpm configuration generated: {0}", configPath);
+    }
+
+    private async Task<string> GeneratePostInstallScriptAsync()
+    {
+        var sb = new StringBuilder();
+
+        sb.AppendLine("#!/usr/bin/env bash");
+        sb.AppendLine();
+
+        sb.AppendLine("# Update desktop database");
+        sb.AppendLine("if [ -x /usr/bin/update-desktop-database ]; then");
+        sb.AppendLine("  /usr/bin/update-desktop-database -q /usr/share/applications 2>/dev/null || :");
+        sb.AppendLine("fi");
+        sb.AppendLine("# Update icon cache");
+        sb.AppendLine("if [ -x /usr/bin/gtk-update-icon-cache ]; then");
+        sb.AppendLine("  /usr/bin/gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || :");
+        sb.AppendLine("fi");
+
+        var scriptPath = Path.Combine(RootDirectory, "post-install.sh");
+        await File.WriteAllTextAsync(scriptPath, sb.ToString(), Constants.Utf8WithoutBom);
+        return scriptPath;
+    }
+
+    private async Task<string> GeneratePostRemoveScriptAsync()
+    {
+        var sb = new StringBuilder();
+
+        sb.AppendLine("#!/usr/bin/env bash");
+        sb.AppendLine();
+
+        sb.AppendLine("# Update desktop database");
+        sb.AppendLine("if [ -x /usr/bin/update-desktop-database ]; then");
+        sb.AppendLine("  /usr/bin/update-desktop-database -q /usr/share/applications 2>/dev/null || :");
+        sb.AppendLine("fi");
+        sb.AppendLine("# Update icon cache only on complete removal");
+        sb.AppendLine("if [ $1 -eq 0 ]; then");
+        sb.AppendLine("  if [ -x /usr/bin/gtk-update-icon-cache ]; then");
+        sb.AppendLine("    /usr/bin/gtk-update-icon-cache -q /usr/share/icons/hicolor 2>/dev/null || :");
+        sb.AppendLine("  fi");
+        sb.AppendLine("fi");
+
+        var scriptPath = Path.Combine(RootDirectory, "post-remove.sh");
+        await File.WriteAllTextAsync(scriptPath, sb.ToString(), Constants.Utf8WithoutBom);
+        return scriptPath;
     }
 
     /// <summary>
@@ -1017,7 +1049,7 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
             return true;
 
         // .so files (shared libraries)
-        if (file.EndsWith(".so", StringComparison.OrdinalIgnoreCase))
+        if (file.EndsWith(".so", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
             return true;
 
         return false;

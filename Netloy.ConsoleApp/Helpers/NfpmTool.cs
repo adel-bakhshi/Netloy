@@ -1,10 +1,12 @@
-﻿using System.Formats.Tar;
+﻿using System.Diagnostics;
+using System.Formats.Tar;
+using System.IO.Compression;
 using System.Runtime.Versioning;
+using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.NetloyLogger;
 
 namespace Netloy.ConsoleApp.Helpers;
 
-[SupportedOSPlatform("linux")]
 public static class NfpmTool
 {
     private static string? _nfpmPath;
@@ -14,34 +16,40 @@ public static class NfpmTool
     /// </summary>
     public static async Task<string> GetNfpmPathAsync(string arch, string destDir)
     {
-        if (_nfpmPath != null && File.Exists(_nfpmPath))
-            return _nfpmPath;
+        try
+        {
+            if (!_nfpmPath.IsStringNullOrEmpty() && File.Exists(_nfpmPath))
+                return _nfpmPath;
 
-        Logger.LogInfo("Extracting nfpm tool...");
+            Logger.LogInfo("Extracting nfpm tool...");
 
-        // Determine the embedded resource name based on current architecture
-        if (!arch.Equals("arm-64", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("nfpm tool is only available for arm-64 architecture");
+            // Determine the embedded resource name based on current architecture
+            if (!arch.Equals("linux-arm64", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("nfpm tool is only available for linux-arm64 architecture");
 
-        if (Directory.Exists(destDir))
-            Directory.Delete(destDir, true);
+            if (Directory.Exists(destDir))
+                Directory.Delete(destDir, true);
 
-        Directory.CreateDirectory(destDir);
+            Directory.CreateDirectory(destDir);
 
-        var nfpmPath = Path.Combine(destDir, "nfpm");
+            var nfpmPath = Path.Combine(destDir, "nfpm");
+            var tarFilePath = Path.Combine(Constants.NetloyAppDir, "Assets", "nfpm-tool.tar.gz");
 
-        var tarFilePath = Path.Combine(Constants.NetloyAppDir, "Assets", "nfpm-tool.tar.gz");
+            await using var fileStream = File.OpenRead(tarFilePath);
+            await using var gzipStream = new GZipStream(fileStream, CompressionMode.Decompress);
+            await TarFile.ExtractToDirectoryAsync(gzipStream, destDir, overwriteFiles: true);
 
-        // Decompression taf file to dest directory
-        await using var tarFile = File.OpenRead(tarFilePath);
-        await TarFile.ExtractToDirectoryAsync(tarFile, destDir, true);
+            await SetNfpmExecutableAsync(nfpmPath);
 
-        // Set executable permission on Linux
-        File.SetUnixFileMode(nfpmPath, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-
-        _nfpmPath = nfpmPath;
-        Logger.LogSuccess("nfpm tool extracted successfully");
-        return nfpmPath;
+            _nfpmPath = nfpmPath;
+            Logger.LogSuccess("nfpm tool extracted successfully");
+            return nfpmPath;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogException(ex);
+            throw;
+        }
     }
 
     /// <summary>
@@ -58,5 +66,37 @@ public static class NfpmTool
         {
             return false;
         }
+    }
+
+    private static async Task SetNfpmExecutableAsync(string nfpmPath)
+    {
+        var processInfo = new ProcessStartInfo
+        {
+            FileName = "chmod",
+            Arguments = $"+x \"{nfpmPath}\"",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        using var process = Process.Start(processInfo) ?? throw new InvalidOperationException("Couldn't make nfpm executable.");
+
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
+
+        await process.WaitForExitAsync();
+
+        if (process.ExitCode == 0)
+            return;
+
+        var message = "Couldn't make nfpm executable.";
+        if (!error.IsStringNullOrEmpty() || !output.IsStringNullOrEmpty())
+        {
+            var errorMessage = !error.IsStringNullOrEmpty() ? error : output;
+            message += $" Error message: {errorMessage}";
+        }
+
+        throw new InvalidOperationException(message);
     }
 }

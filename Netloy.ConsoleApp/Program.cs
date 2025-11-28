@@ -24,7 +24,7 @@ internal class Program
             //const string command = "netloy -t appimage -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             //const string command = "netloy -t deb -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             //const string command = "netloy -t rpm -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            const string command = "netloy -t rpm -r linux-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
+            const string command = "netloy -t rpm -r linux-arm --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             //const string command = "netloy -t flatpak -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             //const string command = "netloy -t portable -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
             //const string command = "netloy -n all -o ../../../../NetloyDemo.App/Deploy/ --verbose";

@@ -661,6 +661,18 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         };
     }
 
+    private string GetTargetPlatform()
+    {
+        return Arguments.Runtime?.ToLowerInvariant() switch
+        {
+            "linux-x64" => "x86_64-linux",
+            "linux-arm64" => "aarch64-linux",
+            "linux-x86" => "i686-linux",
+            "linux-arm" => "armhfp-linux",
+            _ => "x86_64-linux"
+        };
+    }
+
     #endregion
 
     #region File Permissions
@@ -673,13 +685,13 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         {
             // Set all directories to 755
             await SetPermissionsForAllDirectoriesAsync();
-            
+
             // Set all regular files to 644
             await SetPermissionsForAllFilesAsync();
-            
+
             // Set executable permissions for specific files (755)
             await SetExecutablePermissionsAsync();
-            
+
             Logger.LogSuccess("File permissions set!");
         }
         catch (Exception ex)
@@ -706,7 +718,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         var mainExec = Path.Combine(PublishOutputDir, AppExecName);
         if (File.Exists(mainExec))
             await ExecuteChmodAsync($"755 \"{mainExec}\"");
-        
+
         // Launcher script
         if (!Configurations.StartCommand.IsStringNullOrEmpty())
         {
@@ -764,9 +776,10 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         arguments.Append($" --define \"_rpmdir {rpmOutputDir}\"");
         arguments.Append(" --define \"_build_id_links none\"");
         arguments.Append(" --noclean");
+        arguments.Append($" --target {GetTargetPlatform()}");
 
         if (Arguments.Verbose)
-            arguments.Append(" --verbose");
+            arguments.Append(" -v");
 
         var args = arguments.ToString();
         Logger.LogInfo($"Running: rpmbuild {args}");

@@ -50,7 +50,7 @@ public class PackageBuilderFactory
             PackageType.Dmg => new DmgPackageBuilder(_arguments, _configurations),
             PackageType.AppImage => new AppImagePackageBuilder(_arguments, _configurations),
             PackageType.Deb => new DebPackageBuilder(_arguments, _configurations),
-            PackageType.Rpm => new NewRpmPackageBuilder(_arguments, _configurations),
+            PackageType.Rpm => new RpmPackageBuilder(_arguments, _configurations),
             PackageType.Flatpak => new FlatpakPackageBuilder(_arguments, _configurations),
             PackageType.Portable => new PortablePackageBuilder(_arguments, _configurations),
             _ => throw new InvalidOperationException($"Invalid package type {_arguments.PackageType}")
@@ -118,7 +118,7 @@ public class PackageBuilderFactory
             Logger.LogError("This means self-contained deployments cannot be created for this platform.");
             Logger.LogError("Solution: Use 'linux-x64' or 'linux-arm64' instead for Linux packaging.");
             Logger.LogError("For more information, visit: https://github.com/dotnet/runtime/issues/31180");
-            
+
             return false;
         }
 

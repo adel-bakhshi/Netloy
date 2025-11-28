@@ -6,10 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="ae53800c-27fc-467d-92a5-c69bc931df4e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Netloy/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Netloy/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Assets/terminal.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Constants.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Constants.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Netloy.ConsoleApp.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Netloy.ConsoleApp.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageBuilderFactory.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/PackageBuilderFactory.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/RpmPackageBuilder.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/RpmPackageBuilder.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,6 +32,7 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="mock://D:/Programming/Projects/Netloy/Netloy.ConsoleApp/Constants.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Netloy.ConsoleApp/Helpers/LinuxDistroDetector.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Netloy.ConsoleApp/Helpers/NfpmTool.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/NewRpmPackageBuilder.cs" root0="FORCE_HIGHLIGHTING" />
@@ -131,7 +129,8 @@
       <workItem from="1763632450730" duration="11268000" />
       <workItem from="1763964592549" duration="18291000" />
       <workItem from="1764228854549" duration="826000" />
-      <workItem from="1764305977471" duration="5122000" />
+      <workItem from="1764305977471" duration="5621000" />
+      <workItem from="1764325008044" duration="883000" />
     </task>
     <task id="LOCAL-00001" summary="Generating macOS APP and DMG packages successfully finished">
       <option name="closed" value="true" />
@@ -157,7 +156,15 @@
       <option name="project" value="LOCAL" />
       <updated>1764229653312</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Generating NewRpmPackageBuilder using nFPM">
+      <option name="closed" value="true" />
+      <created>1764312110332</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1764312110332</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -181,7 +188,8 @@
     <MESSAGE value="Generating macOS APP and DMG packages successfully finished" />
     <MESSAGE value="Generate RpmPackageBuilder" />
     <MESSAGE value="Refactor codes" />
-    <option name="LAST_COMMIT_MESSAGE" value="Refactor codes" />
+    <MESSAGE value="Generating NewRpmPackageBuilder using nFPM" />
+    <option name="LAST_COMMIT_MESSAGE" value="Generating NewRpmPackageBuilder using nFPM" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -239,19 +247,6 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DotNet Breakpoints">
           <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/RpmPackageBuilder.cs</url>
-          <line>175</line>
-          <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Linux\RpmPackageBuilder.cs" containingFunctionPresentation="Method 'Validate'">
-            <startOffsets>
-              <option value="4836" />
-            </startOffsets>
-            <endOffsets>
-              <option value="4863" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="32" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/RpmPackageBuilder.cs</url>
           <line>131</line>
           <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Linux\RpmPackageBuilder.cs" containingFunctionPresentation="Method 'BuildAsync'">
             <startOffsets>
@@ -281,52 +276,13 @@
           <line>113</line>
           <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Program.cs" containingFunctionPresentation="Method 'Main'">
             <startOffsets>
-              <option value="5180" />
+              <option value="5178" />
             </startOffsets>
             <endOffsets>
-              <option value="5218" />
+              <option value="5216" />
             </endOffsets>
           </properties>
           <option name="timeStamp" value="37" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Helpers/NfpmTool.cs</url>
-          <line>15</line>
-          <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Helpers\NfpmTool.cs" containingFunctionPresentation="Method 'GetNfpmPath'">
-            <startOffsets>
-              <option value="434" />
-            </startOffsets>
-            <endOffsets>
-              <option value="435" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="38" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/NewRpmPackageBuilder.cs</url>
-          <line>110</line>
-          <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Linux\NewRpmPackageBuilder.cs" containingFunctionPresentation="Method 'BuildAsync'">
-            <startOffsets>
-              <option value="3038" />
-            </startOffsets>
-            <endOffsets>
-              <option value="3039" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="39" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DotNet Breakpoints">
-          <url>file://$PROJECT_DIR$/Netloy.ConsoleApp/Package/Linux/NewRpmPackageBuilder.cs</url>
-          <line>152</line>
-          <properties documentPath="D:\Programming\Projects\Netloy\Netloy.ConsoleApp\Package\Linux\NewRpmPackageBuilder.cs" containingFunctionPresentation="Method 'Validate'">
-            <startOffsets>
-              <option value="4178" />
-            </startOffsets>
-            <endOffsets>
-              <option value="4179" />
-            </endOffsets>
-          </properties>
-          <option name="timeStamp" value="40" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

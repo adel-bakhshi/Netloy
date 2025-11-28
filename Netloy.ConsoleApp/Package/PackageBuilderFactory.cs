@@ -50,7 +50,7 @@ public class PackageBuilderFactory
             PackageType.Dmg => new DmgPackageBuilder(_arguments, _configurations),
             PackageType.AppImage => new AppImagePackageBuilder(_arguments, _configurations),
             PackageType.Deb => new DebPackageBuilder(_arguments, _configurations),
-            PackageType.Rpm => new RpmPackageBuilder(_arguments, _configurations),
+            PackageType.Rpm => new NewRpmPackageBuilder(_arguments, _configurations),
             PackageType.Flatpak => new FlatpakPackageBuilder(_arguments, _configurations),
             PackageType.Portable => new PortablePackageBuilder(_arguments, _configurations),
             _ => throw new InvalidOperationException($"Invalid package type {_arguments.PackageType}")

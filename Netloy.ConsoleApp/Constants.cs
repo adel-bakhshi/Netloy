@@ -26,9 +26,14 @@ public static class Constants
     public static string ConfigFileDirectory => Path.GetDirectoryName(ConfigFilePath) ?? throw new InvalidOperationException("Config file path is not defined.");
     public static UTF8Encoding Utf8WithoutBom => new(false);
 
+    public static string NetloyAppDir { get; }
+
     static Constants()
     {
         Copyright = $"Copyright © Adel Bakhshi 2025-{DateTime.Now:yy}";
         Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+
+        NetloyAppDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
+                             ?? throw new InvalidOperationException("Netloy executable directory is not defined.");
     }
 }

@@ -1,10 +1,12 @@
-﻿using System.Diagnostics;
-using System.Text;
-using Netloy.ConsoleApp.Argument;
+﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
+using Netloy.ConsoleApp.Helpers;
 using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Netloy.ConsoleApp.Package.Linux;
 
@@ -172,6 +174,11 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
             Logger.LogInfo("Validating RPM package build requirements...");
             var errors = new List<string>();
 
+            // Detect distro and architecture
+            var distroType = LinuxDistroDetector.GetDistroType();
+            var isArmArch = Arguments.Runtime?.Contains("arm", StringComparison.OrdinalIgnoreCase) == true;
+            var isArmProcessor = RuntimeInformation.ProcessArchitecture is Architecture.Arm64 or Architecture.Arm or Architecture.Armv6;
+
             // Check if rpmbuild is available
             if (!IsRpmbuildAvailable())
             {
@@ -179,6 +186,20 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
                 errors.Add("On Fedora/RHEL/CentOS: sudo dnf install rpm-build");
                 errors.Add("On openSUSE: sudo zypper install rpm-build");
                 errors.Add("On Ubuntu/Debian: sudo apt-get install rpm");
+            }
+
+            // Check for cross-compile
+            if (isArmArch && !isArmProcessor && !IsQemuAvailable())
+            {
+                errors.Add("qemu-user-static not found for ARM cross-build.");
+
+                // Add distro-specific installation instructions
+                errors.Add(distroType switch
+                {
+                    LinuxDistroType.Debian => "Install it: sudo apt install qemu-user-static binfmt-support",
+                    LinuxDistroType.RedHat => "Install it: sudo dnf install qemu-user-static",
+                    _ => "Install qemu-user-static for your distribution"
+                });
             }
 
             // Check if desktop file exists
@@ -871,6 +892,28 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
                 Arguments = "rpmbuild",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+
+            process?.WaitForExit();
+            return process?.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsQemuAvailable()
+    {
+        try
+        {
+            var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = "which",
+                Arguments = "qemu-aarch64-static",
+                RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             });

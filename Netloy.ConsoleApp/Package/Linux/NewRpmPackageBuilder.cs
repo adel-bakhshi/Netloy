@@ -161,7 +161,7 @@ public class NewRpmPackageBuilder : PackageBuilderBase, IPackageBuilder
             var isArmArch = Arguments.Runtime?.Contains("arm", StringComparison.OrdinalIgnoreCase) == true;
 
             // Determine build strategy
-            if (distroType == LinuxDistroType.Rpm)
+            if (distroType == LinuxDistroType.RedHat)
             {
                 // On RPM-based distro: always use rpmbuild
                 _useNfpm = false;

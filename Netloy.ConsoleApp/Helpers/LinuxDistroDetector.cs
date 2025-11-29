@@ -6,7 +6,7 @@ public enum LinuxDistroType
 {
     Unknown,
     Debian, // Ubuntu, Mint, Debian, etc.
-    Rpm // Fedora, RHEL, openSUSE, etc.
+    RedHat // Fedora, RHEL, openSUSE, etc.
 }
 
 public static class LinuxDistroDetector
@@ -51,8 +51,8 @@ public static class LinuxDistroDetector
                 content.Contains("id_like=fedora") ||
                 content.Contains("id_like=rhel"))
             {
-                _cachedType = LinuxDistroType.Rpm;
-                return LinuxDistroType.Rpm;
+                _cachedType = LinuxDistroType.RedHat;
+                return LinuxDistroType.RedHat;
             }
         }
 

@@ -189,17 +189,24 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
             }
 
             // Check for cross-compile
-            if (isArmArch && !isArmProcessor && !IsQemuAvailable())
+            if (isArmArch && !isArmProcessor)
             {
-                errors.Add("qemu-user-static not found for ARM cross-build.");
-
-                // Add distro-specific installation instructions
-                errors.Add(distroType switch
+                if (!IsQemuAvailable())
                 {
-                    LinuxDistroType.Debian => "Install it: sudo apt install qemu-user-static binfmt-support",
-                    LinuxDistroType.RedHat => "Install it: sudo dnf install qemu-user-static",
-                    _ => "Install qemu-user-static for your distribution"
-                });
+                    errors.Add("qemu-user-static not found for ARM cross-build.");
+
+                    // Add distro-specific installation instructions
+                    errors.Add(distroType switch
+                    {
+                        LinuxDistroType.Debian => "Install it: sudo apt install qemu-user-static binfmt-support",
+                        LinuxDistroType.RedHat => "Install it: sudo dnf install qemu-user-static",
+                        _ => "Install qemu-user-static for your distribution"
+                    });
+                }
+                else if (!IsBinfmtConfigured())
+                {
+                    Logger.LogWarning("binfmt_misc not configured for ARM64. Run: sudo systemctl restart systemd-binfmt");
+                }
             }
 
             // Check if desktop file exists
@@ -920,6 +927,23 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
 
             process?.WaitForExit();
             return process?.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool IsBinfmtConfigured()
+    {
+        try
+        {
+            const string binfmtPath = "/proc/sys/fs/binfmt_misc/qemu-aarch64";
+            if (!File.Exists(binfmtPath))
+                return false;
+
+            var content = File.ReadAllText(binfmtPath);
+            return content.Contains("enabled");
         }
         catch
         {

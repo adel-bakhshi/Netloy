@@ -21,10 +21,5 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
             <CopyToPublishDirectory>Always</CopyToPublishDirectory>
         </Content>
-        <None Remove="Assets\nfpm-tool.tar.gz"/>
-        <Content Include="Assets\nfpm-tool.tar.gz">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-            <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-        </Content>
     </ItemGroup>
 </Project>

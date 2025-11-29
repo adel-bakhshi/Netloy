@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
@@ -539,6 +540,12 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         if (Arguments.Verbose && !Configurations.AppImageArgs.Contains("--verbose") && !Configurations.AppImageArgs.Contains("-v"))
             arguments = "--verbose " + arguments;
 
+        var shouldUserExtractAndRun = await ShouldUseExtractAndRunAsync();
+        if (shouldUserExtractAndRun)
+            arguments = "--appimage-extract-and-run " + arguments;
+
+        Logger.LogInfo($"Running: appimagetool {arguments}");
+
         var processInfo = new ProcessStartInfo
         {
             FileName = "appimagetool",
@@ -654,6 +661,83 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
     private bool HasRequiredIcons()
     {
         return Configurations.IconsCollection.Any(icon => icon.EndsWith(".png", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static async Task<bool> ShouldUseExtractAndRunAsync()
+    {
+        try
+        {
+            // Check if we're on Ubuntu/Debian with only FUSE3 (known issue)
+            var osRelease = await File.ReadAllTextAsync("/etc/os-release");
+            if (osRelease.Contains("Ubuntu") || osRelease.Contains("Debian"))
+            {
+                // Check if fusermount is symlink to fusermount3 (FUSE3 only)
+                if (File.Exists("/usr/bin/fusermount"))
+                {
+                    var fusermountTarget = await GetSymlinkTargetAsync("/usr/bin/fusermount");
+                    if (fusermountTarget?.Contains("fusermount3") == true)
+                    {
+                        Logger.LogInfo("Detected FUSE3-only system. Using extract-and-run mode.");
+                        return true;
+                    }
+                }
+                
+                // Check Ubuntu version (24.04+ has FUSE issues)
+                var versionId = ExtractVersion(osRelease);
+                if (osRelease.Contains("Ubuntu") && versionId >= 24)
+                {
+                    Logger.LogInfo("Detected Ubuntu {0}+. Using extract-and-run mode.", versionId);
+                    return true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning("Could not detect FUSE status: {0}. Using extract-and-run as safe default.", ex.Message);
+            return true; // Safe default
+        }
+        
+        return false;
+    }
+
+    private static async Task<string> GetSymlinkTargetAsync(string symlinkPath)
+    {
+        try
+        {
+            var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = "readlink",
+                Arguments = $"-f \"{symlinkPath}\"",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+
+            if (process == null)
+                return symlinkPath;
+            
+            var output = await process.StandardOutput.ReadToEndAsync();
+            await process.WaitForExitAsync();
+
+            return !output.IsStringNullOrEmpty() ? output.Trim() : symlinkPath;
+        }
+        catch
+        {
+            return symlinkPath;
+        }
+    }
+
+    private static int ExtractVersion(string osRelease)
+    {
+        try
+        {
+            var versionMatch = Regex.Match(osRelease, @"VERSION_ID=""(\d+)");
+            return versionMatch.Success ? int.Parse(versionMatch.Groups[1].Value) : 0;
+        }
+        catch
+        {
+            return 0;
+        }
     }
 
     #endregion

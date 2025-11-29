@@ -30,6 +30,40 @@ public class PackageBuilderFactory
 
         _arguments.Runtime = _arguments.Runtime?.ToLowerInvariant();
 
+        var isArmProcessor = RuntimeInformation.ProcessArchitecture is Architecture.Arm or Architecture.Arm64 or Architecture.Armv6;
+        var isArmPackage = _arguments.Runtime?.Contains("arm", StringComparison.OrdinalIgnoreCase) == true;
+        var requiredAccept = false;
+
+        if (!isArmProcessor && isArmPackage)
+        {
+            Logger.LogWarning("You are building an ARM package ({0}) on a non-ARM system ({1}). This may cause compatibility issues and require emulation.", 
+                _arguments.Runtime, 
+                RuntimeInformation.ProcessArchitecture);
+
+            requiredAccept = true;
+        }
+        else if (isArmProcessor && !isArmPackage)
+        {
+            Logger.LogWarning("You are building a non-ARM package ({0}) on an ARM system ({1}). Make sure this is intentional.", 
+                _arguments.Runtime ?? "default", 
+                RuntimeInformation.ProcessArchitecture);
+
+            requiredAccept = true;
+        }
+
+        if (requiredAccept)
+        {
+            if (!_arguments.SkipAll)
+            {
+                if (!Confirm.ShowConfirm("Are you sure you want to continue?"))
+                    throw new OperationCanceledException("Operation cancelled by user");
+            }
+            else
+            {
+                Logger.LogWarning("Cross-architecture build detected. Proceeding with build due to --skip-all flag...");
+            }
+        }
+
         return _arguments.PackageType switch
         {
             PackageType.Exe or PackageType.Msi => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && IsWindowsRuntimeValid(),

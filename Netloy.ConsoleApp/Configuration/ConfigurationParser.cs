@@ -295,7 +295,6 @@ public class ConfigurationParser
         config.DotnetPublishArgs = GetValue(nameof(config.DotnetPublishArgs));
         config.DotnetPostPublish = GetValue(nameof(config.DotnetPostPublish));
         config.DotnetPostPublishOnWindows = GetValue(nameof(config.DotnetPostPublishOnWindows));
-        config.DotnetPostPublishArguments = GetValue(nameof(config.DotnetPostPublishArguments));
 
         // PACKAGE OUTPUT
         config.PackageName = GetValue(nameof(config.PackageName));
@@ -343,9 +342,6 @@ public class ConfigurationParser
         config.MsiUiDialog = GetValue(nameof(config.MsiUiDialog));
         config.SetupCloseApplications = GetBoolValue(nameof(config.SetupCloseApplications));
         config.SetupRestartIfNeeded = GetBoolValue(nameof(config.SetupRestartIfNeeded));
-        config.SetupUninstallDisplayName = GetValue(nameof(config.SetupUninstallDisplayName));
-        config.ExeVersionInfoCompany = GetValue(nameof(config.ExeVersionInfoCompany));
-        config.ExeVersionInfoDescription = GetValue(nameof(config.ExeVersionInfoDescription));
         config.AssociateFiles = GetBoolValue(nameof(config.AssociateFiles));
         config.FileExtension = GetValue(nameof(config.FileExtension));
         config.ContextMenuIntegration = GetBoolValue(nameof(config.ContextMenuIntegration));
@@ -1036,16 +1032,6 @@ public class ConfigurationParser
 
         AppendKeyValue(sb, nameof(config.DotnetPostPublishOnWindows), config.DotnetPostPublishOnWindows);
         sb.AppendLine();
-
-        if (includeComments)
-        {
-            AppendComment(sb, "Optional arguments supplied to the post-publish command. This value is optional and is only used if");
-            AppendComment(sb, "DotnetPostPublish or DotnetPostPublishOnWindows is specified. Note. This value may use macro variables.");
-            AppendComment(sb, "Use 'netloy --help macro' for reference.");
-        }
-
-        AppendKeyValue(sb, nameof(config.DotnetPostPublishArguments), config.DotnetPostPublishArguments);
-        sb.AppendLine();
     }
 
     private static void AppendPackageOutputSection(StringBuilder sb, Configurations config, bool includeComments)
@@ -1418,41 +1404,6 @@ public class ConfigurationParser
         }
 
         AppendKeyValue(sb, nameof(config.SetupRestartIfNeeded), config.SetupRestartIfNeeded);
-        sb.AppendLine();
-
-        // Uninstall Configuration
-        if (includeComments)
-        {
-            AppendComment(sb, "Optional custom display name for the uninstaller as shown in Windows 'Add or Remove Programs'.");
-            AppendComment(sb, "If empty, the AppFriendlyName value will be used automatically.");
-            AppendComment(sb, "You can customize this to differentiate multiple versions or provide additional context.");
-            AppendComment(sb, "Example: 'MyApp 2024 Edition' or 'MyApp (Commercial License)'");
-        }
-
-        AppendKeyValue(sb, nameof(config.SetupUninstallDisplayName), config.SetupUninstallDisplayName);
-        sb.AppendLine();
-
-        // Version Information
-        if (includeComments)
-        {
-            AppendComment(sb, "Optional company name embedded in the version information of the installer executable.");
-            AppendComment(sb, "This appears in the file properties when users right-click the installer and select 'Properties'.");
-            AppendComment(sb, "If empty, no company information will be embedded in the installer executable metadata.");
-            AppendComment(sb, "Example: 'Acme Corporation' or 'John Doe Software'");
-        }
-
-        AppendKeyValue(sb, nameof(config.ExeVersionInfoCompany), config.ExeVersionInfoCompany);
-        sb.AppendLine();
-
-        if (includeComments)
-        {
-            AppendComment(sb, "Optional description text embedded in the version information of the installer executable.");
-            AppendComment(sb, "This appears in the file properties 'Details' tab under 'File description'.");
-            AppendComment(sb, "Helps users identify the purpose of the installer file.");
-            AppendComment(sb, "Example: 'MyApp Setup' or 'MyApp Installation Package'");
-        }
-
-        AppendKeyValue(sb, nameof(config.ExeVersionInfoDescription), config.ExeVersionInfoDescription);
         sb.AppendLine();
 
         // File Association & Integration

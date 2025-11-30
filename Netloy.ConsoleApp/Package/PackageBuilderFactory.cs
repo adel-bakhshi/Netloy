@@ -36,16 +36,16 @@ public class PackageBuilderFactory
 
         if (!isArmProcessor && isArmPackage)
         {
-            Logger.LogWarning("You are building an ARM package ({0}) on a non-ARM system ({1}). This may cause compatibility issues and require emulation.", 
-                _arguments.Runtime, 
+            Logger.LogWarning("You are building an ARM package ({0}) on a non-ARM system ({1}). This may cause compatibility issues and require emulation.",
+                _arguments.Runtime,
                 RuntimeInformation.ProcessArchitecture);
 
             requiredAccept = true;
         }
         else if (isArmProcessor && !isArmPackage)
         {
-            Logger.LogWarning("You are building a non-ARM package ({0}) on an ARM system ({1}). Make sure this is intentional.", 
-                _arguments.Runtime ?? "default", 
+            Logger.LogWarning("You are building a non-ARM package ({0}) on an ARM system ({1}). Make sure this is intentional.",
+                _arguments.Runtime ?? "default",
                 RuntimeInformation.ProcessArchitecture);
 
             requiredAccept = true;
@@ -144,13 +144,15 @@ public class PackageBuilderFactory
             return false;
         }
 
-        if (_arguments.Runtime?.Equals("linux-x86", StringComparison.OrdinalIgnoreCase) == true
+        if ((_arguments.Runtime?.Equals("linux-x86", StringComparison.OrdinalIgnoreCase) == true
             || _arguments.Runtime?.Contains("x86", StringComparison.OrdinalIgnoreCase) == true)
+            && _arguments.BinaryPath.IsStringNullOrEmpty())
         {
             Logger.LogError("The runtime identifier 'linux-x86' is not supported by Netloy.");
             Logger.LogError("Reason: Microsoft .NET does not provide an application host for 32-bit Linux systems (linux-x86) since .NET Core 3.0.");
             Logger.LogError("This means self-contained deployments cannot be created for this platform.");
             Logger.LogError("Solution: Use 'linux-x64' or 'linux-arm64' instead for Linux packaging.");
+            Logger.LogError("To package linux-x86 binaries, build them manually and use --binary-path <path>.");
             Logger.LogError("For more information, visit: https://github.com/dotnet/runtime/issues/31180");
 
             return false;

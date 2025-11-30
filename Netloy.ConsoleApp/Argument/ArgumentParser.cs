@@ -159,6 +159,7 @@ public class ArgumentParser
             helpText.AppendLine("  -p, --project-path <PATH>");
             helpText.AppendLine("  -c, --publish-config <CONFIG>");
             helpText.AppendLine("      --config-path <PATH>");
+            helpText.AppendLine("  -b, --binary-path <PATH>");
             helpText.AppendLine("      --clean");
             helpText.AppendLine("  -n, --new <TYPE>");
             helpText.AppendLine("      --upgrade-config");
@@ -205,6 +206,10 @@ public class ArgumentParser
             helpText.AppendLine("                                   Release");
             helpText.AppendLine("                                   Debug");
             helpText.AppendLine("      --config-path <PATH>       Netloy configuration file path");
+            helpText.AppendLine("  -b, --binary-path <PATH>       Directory containing pre-built binaries");
+            helpText.AppendLine("                                   Skips automatic dotnet publish step");
+            helpText.AppendLine("                                   Use for custom builds, cross-compilation");
+            helpText.AppendLine("                                   or unsupported RIDs like linux-x86");
             helpText.AppendLine("      --clean                    Clean project before building:");
             helpText.AppendLine("                                   Also clean directories and files created by Netloy");
             helpText.AppendLine();
@@ -346,9 +351,31 @@ public class ArgumentParser
             Logger.LogDebug("Config path is: '{0}'", configPath);
             arguments.ConfigPath = configPath;
         }
+
+        // Normalize binary path
+        if (!arguments.BinaryPath.IsStringNullOrEmpty())
+        {
+            var binaryPath = arguments.BinaryPath!.NormalizePath();
+            if (binaryPath.IsStringNullOrEmpty())
+                throw new ArgumentException("Invalid binary path: contains disallowed characters.");
+
+            if (!binaryPath.IsAbsolutePath())
+                binaryPath = Path.Combine(Directory.GetCurrentDirectory(), binaryPath);
+
+            binaryPath = Path.GetFullPath(binaryPath);
+            if (!Directory.Exists(binaryPath))
+                throw new DirectoryNotFoundException($"Binary directory not found: '{binaryPath}'. Ensure the path exists and contains your built files.");
+
+            var binaryFiles = Directory.GetFiles(binaryPath, "*", SearchOption.AllDirectories);
+            if (binaryFiles.Length == 0)
+                throw new FileNotFoundException($"No .config files found in '{binaryPath}'. Checked all subdirectories. Add config files or check your build output.");
+
+            Logger.LogDebug("Binary path set: '{0}' (skipping publish, using pre-built files)", binaryPath);
+            arguments.BinaryPath = binaryPath;
+        }
     }
 
-    private static void ValidateArguments(Arguments arguments)
+    private void ValidateArguments(Arguments arguments)
     {
         // TODO: Complete validations
 
@@ -397,7 +424,7 @@ public class ArgumentParser
         }
     }
 
-    private static void ValidateNoOtherArgumentsProvided(Arguments arguments)
+    private void ValidateNoOtherArgumentsProvided(Arguments arguments)
     {
         var conflictingArgs = new List<string>();
 
@@ -407,14 +434,14 @@ public class ArgumentParser
         if (!arguments.Runtime.IsStringNullOrEmpty())
             conflictingArgs.Add("--runtime");
 
+        if (arguments.Framework != null)
+            conflictingArgs.Add("--framework");
+
         if (arguments.SkipAll)
             conflictingArgs.Add("--skip-all");
 
         if (!arguments.OutputPath.IsStringNullOrEmpty())
             conflictingArgs.Add("--output-path");
-
-        if (arguments is { ShowVersion: true, Verbose: true })
-            conflictingArgs.Add("--verbose");
 
         if (arguments.NewType != null)
             conflictingArgs.Add("--new");
@@ -425,6 +452,9 @@ public class ArgumentParser
         if (arguments.UpgradeConfiguration)
             conflictingArgs.Add("--upgrade-config");
 
+        if (_appArgs.Contains("--publish-config"))
+            conflictingArgs.Add("--publish-config");
+
         if (arguments.CleanProject)
             conflictingArgs.Add("--clean");
 
@@ -434,7 +464,22 @@ public class ArgumentParser
         if (!arguments.ConfigPath.IsStringNullOrEmpty())
             conflictingArgs.Add("--config-path");
 
-        if (conflictingArgs.Count <= 0)
+        if (!arguments.BinaryPath.IsStringNullOrEmpty())
+            conflictingArgs.Add("--binary-path");
+
+        if (!arguments.MacOsSigningIdentity.IsStringNullOrEmpty())
+            conflictingArgs.Add("--signing-identity");
+
+        if (!arguments.AppleId.IsStringNullOrEmpty())
+            conflictingArgs.Add("--apple-id");
+
+        if (!arguments.AppleTeamId.IsStringNullOrEmpty())
+            conflictingArgs.Add("--apple-team-id");
+
+        if (!arguments.ApplePassword.IsStringNullOrEmpty())
+            conflictingArgs.Add("--apple-password");
+
+        if (conflictingArgs.Count == 0)
             return;
 
         var argsList = string.Join(", ", conflictingArgs);

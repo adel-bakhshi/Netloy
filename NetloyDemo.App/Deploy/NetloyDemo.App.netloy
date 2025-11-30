@@ -187,19 +187,14 @@ DotnetPublishArgs = -p:Version=${APP_VERSION} -p:FileVersion=${APP_VERSION} -p:A
 # the location of this file. This value is optional, but becomes mandatory if DotnetProjectPath equals
 # 'NONE'. Note. This value may use macro variables. Additionally, scripts may use these as environment
 # variables. Use 'netloy --help macro' for reference.
-DotnetPostPublish = Scripts/script.sh
+DotnetPostPublish = Scripts/post-publish-script.sh
 
 # Post-publish (or standalone build) command on Windows (ignored on Linux). This should perform
 # the equivalent operation, as required, as DotnetPostPublish, but using DOS commands and batch
 # scripts. Multiple commands may be specified, separated by semicolon or given in multi-line form.
 # Note. This value may use macro variables. Additionally, scripts may use these as environment
 # variables. Use 'netloy --help macro' for reference.
-DotnetPostPublishOnWindows = Scripts/script.bat
-
-# Optional arguments supplied to the post-publish command. This value is optional and is only used if
-# DotnetPostPublish or DotnetPostPublishOnWindows is specified. Note. This value may use macro variables.
-# Use 'netloy --help macro' for reference.
-DotnetPostPublishArguments = Adel ${APP_VERSION} Neh-City
+DotnetPostPublishOnWindows = Scripts/post-publish-script.bat
 
 ########################################
 # PACKAGE OUTPUT
@@ -436,24 +431,6 @@ SetupCloseApplications = true
 # The user will be prompted to restart immediately or defer until later.
 # Default is false. Enable only if your application requires system-level components that need restart.
 SetupRestartIfNeeded = true
-
-# Optional custom display name for the uninstaller as shown in Windows 'Add or Remove Programs'.
-# If empty, the AppFriendlyName value will be used automatically.
-# You can customize this to differentiate multiple versions or provide additional context.
-# Example: 'MyApp 2024 Edition' or 'MyApp (Commercial License)'
-SetupUninstallDisplayName = Uninstall Very Important Demo App
-
-# Optional company name embedded in the version information of the installer executable.
-# This appears in the file properties when users right-click the installer and select 'Properties'.
-# If empty, no company information will be embedded in the installer executable metadata.
-# Example: 'Acme Corporation' or 'John Doe Software'
-ExeVersionInfoCompany = Netloy Demo Software
-
-# Optional description text embedded in the version information of the installer executable.
-# This appears in the file properties 'Details' tab under 'File description'.
-# Helps users identify the purpose of the installer file.
-# Example: 'MyApp Setup' or 'MyApp Installation Package'
-ExeVersionInfoDescription = Netloy Demo Setup
 
 # Boolean (true or false). When enabled, allows your application to be associated with specific file types.
 # This means files with the specified extension (see FileExtension) will open with your application

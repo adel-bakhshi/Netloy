@@ -542,7 +542,15 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
 
         var shouldUserExtractAndRun = await ShouldUseExtractAndRunAsync();
         if (shouldUserExtractAndRun)
+        {
+            // AppImage runtime (type 2) uses FUSE to mount the embedded SquashFS filesystem.
+            // Modern Linux distributions (Ubuntu 24.04+, Fedora 40+) have migrated from FUSE2 (libfuse2)
+            // to FUSE3 (libfuse3), which causes compatibility issues with older AppImage runtimes.
+            // The --appimage-extract-and-run flag bypasses FUSE entirely by extracting the AppImage
+            // contents to a temporary directory, running it, and cleaning up afterward.
+            // This ensures appimagetool works on all systems without requiring FUSE2 installation.
             arguments = "--appimage-extract-and-run " + arguments;
+        }
 
         Logger.LogInfo($"Running: appimagetool {arguments}");
 
@@ -681,7 +689,7 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
                         return true;
                     }
                 }
-                
+
                 // Check Ubuntu version (24.04+ has FUSE issues)
                 var versionId = ExtractVersion(osRelease);
                 if (osRelease.Contains("Ubuntu") && versionId >= 24)
@@ -696,7 +704,7 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
             Logger.LogWarning("Could not detect FUSE status: {0}. Using extract-and-run as safe default.", ex.Message);
             return true; // Safe default
         }
-        
+
         return false;
     }
 
@@ -715,7 +723,7 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
 
             if (process == null)
                 return symlinkPath;
-            
+
             var output = await process.StandardOutput.ReadToEndAsync();
             await process.WaitForExitAsync();
 

@@ -33,7 +33,6 @@ public static class Constants
         Copyright = $"Copyright © Adel Bakhshi 2025-{DateTime.Now:yy}";
         Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
 
-        NetloyAppDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
-                             ?? throw new InvalidOperationException("Netloy executable directory is not defined.");
+        NetloyAppDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? throw new InvalidOperationException("Netloy executable directory is not defined.");
     }
 }

@@ -55,6 +55,9 @@ public class Arguments
     [Option("config-path")]
     public string? ConfigPath { get; set; }
 
+    [Option('b', "binary-path")]
+    public string? BinaryPath { get; set; }
+
     [Option("signing-identity")]
     public string? MacOsSigningIdentity { get; set; }
 

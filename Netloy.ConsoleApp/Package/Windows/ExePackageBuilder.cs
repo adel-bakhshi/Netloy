@@ -27,7 +27,7 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
 
     public ExePackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {
-        TerminalIcon = Path.Combine(StartupDirectory, "Assets", "terminal.ico");
+        TerminalIcon = Path.Combine(Constants.NetloyAppDir, "Assets", "terminal.ico");
         InnoSetupScriptPath = Path.Combine(RootDirectory, $"{Configurations.AppBaseName}.iss");
     }
 
@@ -205,17 +205,6 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
 
         if (Configurations.SetupRestartIfNeeded)
             sb.AppendLine("RestartIfNeededByRun=yes");
-
-        // Uninstall & Registry
-        if (!Configurations.SetupUninstallDisplayName.IsStringNullOrEmpty())
-            sb.AppendLine($"UninstallDisplayName={Configurations.SetupUninstallDisplayName}");
-
-        // Version Info
-        if (!Configurations.ExeVersionInfoCompany.IsStringNullOrEmpty())
-            sb.AppendLine($"VersionInfoCompany={Configurations.ExeVersionInfoCompany}");
-
-        if (!Configurations.ExeVersionInfoDescription.IsStringNullOrEmpty())
-            sb.AppendLine($"VersionInfoDescription={Configurations.ExeVersionInfoDescription}");
 
         // File Association
         if (Configurations.AssociateFiles && !Configurations.FileExtension.IsStringNullOrEmpty())

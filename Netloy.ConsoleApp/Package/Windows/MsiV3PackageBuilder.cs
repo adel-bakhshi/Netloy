@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Netloy.ConsoleApp.Argument;
@@ -48,6 +49,8 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
     public string WixSourcePath { get; }
     public string WixToolsPath { get; }
     public string IntermediatesPath { get; }
+    public string TerminalIcon { get; }
+    public string RegistryKeyPathRoot { get; }
 
     #endregion
 
@@ -58,6 +61,8 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         WixToolsPath = Path.Combine(NetloyTempPath, "wix-v3");
         IntermediatesPath = Path.Combine(RootDirectory, "wix-intermediates");
         WixSourcePath = Path.Combine(IntermediatesPath, $"{Configurations.AppBaseName}.wxs");
+        TerminalIcon = Path.Combine(Constants.NetloyAppDir, "Assets", "terminal.ico");
+        RegistryKeyPathRoot = Configurations.SetupAdminInstall ? "HKLM" : "HKCU";
     }
 
     public async Task BuildAsync()
@@ -103,6 +108,11 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         // File association and context menu require admin
         if ((Configurations.AssociateFiles || Configurations.ContextMenuIntegration) && !Configurations.SetupAdminInstall)
             errors.Add($"You must set {nameof(Configurations.SetupAdminInstall)} to true if you want to associate files or add context menu items.");
+
+        // SetupUninstallScript validation
+        if (!Configurations.SetupUninstallScript.IsStringNullOrEmpty() && !File.Exists(Configurations.SetupUninstallScript))
+            errors.Add($"Setup uninstall script file not found: {Configurations.SetupUninstallScript}");
+
 
         if (!Configurations.MsiUpgradeCode.IsStringNullOrEmpty() && !Guid.TryParse(Configurations.MsiUpgradeCode, out _))
             errors.Add($"Invalid MsiUpgradeCode: {Configurations.MsiUpgradeCode}. Must be a valid GUID.");
@@ -169,10 +179,13 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         var win64 = isWin64 ? "yes" : "no";
         var programFilesFolder = isWin64 ? "ProgramFiles64Folder" : "ProgramFilesFolder";
 
+        var product = CreateProductElement(primaryIcon);
+        GenerateAdvancedSetupFeatures(product);
+
         return new XDocument(
             new XProcessingInstruction("define", $"Win64=\"{win64}\""),
             new XProcessingInstruction("define", $"PlatformProgramFilesFolder=\"{programFilesFolder}\""),
-            new XElement(XName.Get("Wix", WixNamespace), CreateProductElement(primaryIcon)));
+            new XElement(XName.Get("Wix", WixNamespace), product));
     }
 
     private XElement CreateProductElement(string primaryIcon)
@@ -207,7 +220,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         product.Add(new XElement(XName.Get("MajorUpgrade", WixNamespace),
             new XAttribute("Schedule", "afterInstallInitialize"),
             new XAttribute("DowngradeErrorMessage", "A newer version of [ProductName] is already installed."),
-            new XAttribute("AllowSameVersionUpgrades", "yes")));
+            new XAttribute("AllowSameVersionUpgrades", "no")));
 
         // InstallExecuteSequence
         var installExec = new XElement(XName.Get("InstallExecuteSequence", WixNamespace));
@@ -409,6 +422,8 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
             installDir.Add(fileComponent);
         }
 
+        GenerateFilesSection(installDir);
+
         programFilesDir.Add(installDir);
         targetDir.Add(programFilesDir);
 
@@ -443,7 +458,6 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
         component.Add(file);
 
-        // File associations با Registry
         if (Configurations.AssociateFiles && !Configurations.FileExtension.IsStringNullOrEmpty())
         {
             var ext = Configurations.FileExtension.StartsWith('.')
@@ -516,19 +530,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
     {
         var component = new XElement(XName.Get("Component", WixNamespace),
             new XAttribute("Id", "RegistryEntriesComponent"),
-            new XAttribute("Guid", "*"));
-
-        var regKey = new XElement(XName.Get("RegistryKey", WixNamespace),
-            new XAttribute("Root", "HKCU"),
-            new XAttribute("Key", $"Software\\{Configurations.PublisherName}\\{Configurations.AppFriendlyName}"));
-
-        regKey.Add(new XElement(XName.Get("RegistryValue", WixNamespace),
-            new XAttribute("Name", "InstallDir"),
-            new XAttribute("Type", "string"),
-            new XAttribute("Value", "[INSTALLDIR]"),
-            new XAttribute("KeyPath", "yes")));
-
-        component.Add(regKey);
+            new XAttribute("Guid", GenerateComponentGuid("RegistryEntries")));
 
         if (Configurations.SetupAdminInstall)
         {
@@ -537,7 +539,22 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
                 new XAttribute("Key", $"Software\\{Configurations.PublisherName}\\{Configurations.AppFriendlyName}"),
                 new XAttribute("Name", "Installed"),
                 new XAttribute("Type", "integer"),
-                new XAttribute("Value", "1")));
+                new XAttribute("Value", "1"),
+                new XAttribute("KeyPath", "yes")));
+        }
+        else
+        {
+            var regKey = new XElement(XName.Get("RegistryKey", WixNamespace),
+                new XAttribute("Root", "HKCU"),
+                new XAttribute("Key", $"Software\\{Configurations.PublisherName}\\{Configurations.AppFriendlyName}"));
+
+            regKey.Add(new XElement(XName.Get("RegistryValue", WixNamespace),
+                new XAttribute("Name", "InstallDir"),
+                new XAttribute("Type", "string"),
+                new XAttribute("Value", "INSTALLDIR"),
+                new XAttribute("KeyPath", "yes")));
+
+            component.Add(regKey);
         }
 
         return component;
@@ -575,9 +592,8 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         component.Add(contextKey);
 
         // KeyPath
-        var keyPathRoot = Configurations.SetupAdminInstall ? "HKLM" : "HKCU";
         component.Add(new XElement(XName.Get("RegistryValue", WixNamespace),
-            new XAttribute("Root", keyPathRoot),
+            new XAttribute("Root", "HKLM"),
             new XAttribute("Key", $"Software\\{Configurations.PublisherName}\\{Configurations.AppFriendlyName}"),
             new XAttribute("Name", "ContextMenu"),
             new XAttribute("Type", "integer"),
@@ -587,16 +603,14 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         return component;
     }
 
-
     private XElement CreateStartupComponent()
     {
         var component = new XElement(XName.Get("Component", WixNamespace),
             new XAttribute("Id", "StartupComponent"),
             new XAttribute("Guid", "*"));
 
-        var startupRoot = Configurations.SetupAdminInstall ? "HKLM" : "HKCU";
         var regKey = new XElement(XName.Get("RegistryKey", WixNamespace),
-            new XAttribute("Root", startupRoot),
+            new XAttribute("Root", RegistryKeyPathRoot),
             new XAttribute("Key", "Software\\Microsoft\\Windows\\CurrentVersion\\Run"));
 
         regKey.Add(new XElement(XName.Get("RegistryValue", WixNamespace),
@@ -606,9 +620,8 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
 
         component.Add(regKey);
 
-        var keyPathRoot = Configurations.SetupAdminInstall ? "HKLM" : "HKCU";
         component.Add(new XElement(XName.Get("RegistryValue", WixNamespace),
-            new XAttribute("Root", keyPathRoot),
+            new XAttribute("Root", RegistryKeyPathRoot),
             new XAttribute("Key", $"Software\\{Configurations.PublisherName}\\{Configurations.AppFriendlyName}"),
             new XAttribute("Name", "Startup"),
             new XAttribute("Type", "integer"),
@@ -700,7 +713,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
             new XAttribute("On", "uninstall")));
 
         component.Add(new XElement(XName.Get("RegistryValue", WixNamespace),
-            new XAttribute("Root", "HKCU"),
+            new XAttribute("Root", RegistryKeyPathRoot),
             new XAttribute("Key", $"Software\\{Configurations.PublisherName}\\{Configurations.AppFriendlyName}"),
             new XAttribute("Name", "UninstallerShortcut"),
             new XAttribute("Type", "integer"),
@@ -809,6 +822,103 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         }
 
         return feature;
+    }
+
+    private void GenerateAdvancedSetupFeatures(XElement product)
+    {
+        var installExec = product.Element(XName.Get("InstallExecuteSequence", WixNamespace));
+
+        if (!Configurations.SetupPasswordEncryption.IsStringNullOrEmpty())
+            Logger.LogWarning("SetupPasswordEncryption ignored - WiX v3 doesn't support Media.Password");
+
+        if (Configurations.SetupCloseApplications)
+        {
+            product.Add(new XElement(XName.Get("Property", WixNamespace),
+                new XAttribute("Id", "CLOSEAPPLICATIONS"),
+                new XAttribute("Value", "yes")));
+        }
+
+        if (Configurations.SetupRestartIfNeeded)
+        {
+            installExec?.Add(new XElement(XName.Get("ScheduleReboot", WixNamespace),
+                new XAttribute("After", "InstallFinalize")));
+        }
+
+        if (!Configurations.SetupUninstallScript.IsStringNullOrEmpty())
+        {
+            product.Add(new XElement(XName.Get("CustomAction", WixNamespace),
+                new XAttribute("Id", "RunUninstallScript"),
+                new XAttribute("Directory", "INSTALLDIR"),
+                new XAttribute("ExeCommand", Path.GetFileName(Configurations.SetupUninstallScript)),
+                new XAttribute("Execute", "deferred"),
+                new XAttribute("Return", "ignore"),
+                new XAttribute("Impersonate", "no")));
+
+            var uninstallExec = product.Elements(XName.Get("InstallExecuteSequence", WixNamespace))
+                .FirstOrDefault(e => e.Attribute("Id")?.Value == "Uninstall")
+                ?? new XElement(XName.Get("InstallExecuteSequence", WixNamespace));
+
+            uninstallExec.Add(new XElement(XName.Get("Custom", WixNamespace),
+                new XAttribute("Action", "RunUninstallScript"),
+                new XAttribute("Before", "RemoveFiles")));
+
+            product.Add(uninstallExec);
+        }
+    }
+
+    private void GenerateFilesSection(XElement installDir)
+    {
+        // SetupCommandPrompt batch file
+        if (!Configurations.SetupCommandPrompt.IsStringNullOrEmpty())
+        {
+            var promptBatPath = Path.Combine(PublishOutputDir, "CommandPrompt.bat");
+            var script = GenerateCommandPromptScript();
+            File.WriteAllText(promptBatPath, script, Constants.Utf8WithoutBom);
+
+            var batComponent = CreateFileComponent(promptBatPath);
+            installDir.Add(batComponent);
+        }
+
+        // SetupUninstallScript file
+        if (!Configurations.SetupUninstallScript.IsStringNullOrEmpty() && File.Exists(Configurations.SetupUninstallScript))
+        {
+            var uninstallComponent = CreateFileComponent(Configurations.SetupUninstallScript);
+            installDir.Add(uninstallComponent);
+        }
+    }
+
+    private string GenerateCommandPromptScript()
+    {
+        var title = EscapeBat(Configurations.SetupCommandPrompt);
+        var cmd = EscapeBat(!Configurations.StartCommand.IsStringNullOrEmpty() ? Configurations.StartCommand : Configurations.AppBaseName);
+        var echoCopy = !Configurations.PublisherCopyright.IsStringNullOrEmpty() ? $"echo {EscapeBat(Configurations.PublisherCopyright)}" : null;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("@echo off");
+        sb.AppendLine($"start cmd /k cd /D \"%%~dp0\"");
+        sb.AppendLine($"title \"{title}\"");
+        sb.AppendLine($"echo {cmd} {AppVersion}");
+
+        if (echoCopy != null)
+            sb.AppendLine(echoCopy);
+
+        sb.AppendLine("set PATH=%PATH%;%~dp0");
+        sb.AppendLine(cmd ?? Configurations.AppBaseName);
+
+        return sb.ToString();
+    }
+
+    private static string? EscapeBat(string? command)
+    {
+        if (command.IsStringNullOrEmpty())
+            return null;
+
+        return command!.Replace("^", "^^")
+            .Replace("&", "^&")
+            .Replace("<", "^<")
+            .Replace(">", "^>")
+            .Replace("|", "^|")
+            .Replace("\"", "^\"");
     }
 
     #endregion

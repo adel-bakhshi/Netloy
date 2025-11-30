@@ -7,100 +7,123 @@ namespace Netloy.ConsoleApp.Helpers;
 
 public static class ScriptRunner
 {
-    public static async Task<int> RunScriptAsync(string scriptPath, string arguments = "")
+    public static async Task<int> RunScriptAsync(string scriptPath)
     {
+        if (!File.Exists(scriptPath))
+        {
+            Logger.LogError("Script file not found: {0}", forceLog: true, scriptPath);
+            return -1;
+        }
+
         ProcessStartInfo processInfo;
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            var command = string.IsNullOrEmpty(arguments)
-                ? $"\"{scriptPath}\""
-                : $"\"{scriptPath}\" {arguments}";
-
+            // Windows: Use cmd.exe to execute .bat or .cmd files
             processInfo = new ProcessStartInfo
             {
                 FileName = "cmd.exe",
-                Arguments = $"/c {command}",
+                Arguments = $"/c \"{scriptPath}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(scriptPath) ?? Directory.GetCurrentDirectory()
             };
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
-            await MakeProcessExecutableAsync(scriptPath);
+            // Make script executable first
+            await MakeScriptExecutableAsync(scriptPath);
 
-            var command = string.IsNullOrEmpty(arguments)
-                ? scriptPath
-                : $"{scriptPath} {arguments}";
-
+            // Unix-like: Use bash to execute shell scripts
             processInfo = new ProcessStartInfo
             {
                 FileName = "/bin/bash",
-                Arguments = $"-c \"{command}\"",
+                Arguments = $"\"{scriptPath}\"",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(scriptPath) ?? Directory.GetCurrentDirectory()
             };
         }
         else
         {
-            throw new PlatformNotSupportedException("Operating system not supported");
+            throw new PlatformNotSupportedException($"Operating system not supported: {RuntimeInformation.OSDescription}");
         }
+
+        Logger.LogInfo("Executing script: {0}", scriptPath);
 
         using var process = Process.Start(processInfo);
         if (process == null)
-            return -1;
-
-        // Get output
-        var output = await process.StandardOutput.ReadToEndAsync();
-        var error = await process.StandardError.ReadToEndAsync();
-
-        await process.WaitForExitAsync();
-
-        Logger.LogInfo("Output: \n{0}", forceLog: true, output);
-
-        if (!error.IsStringNullOrEmpty())
         {
-            Logger.LogError("Error: {0}", forceLog: true, error);
-            return process.ExitCode;
+            Logger.LogError("Failed to start script process", forceLog: true);
+            return -1;
         }
 
-        Logger.LogInfo("Exit Code: {0}", process.ExitCode);
+        // Read output and error streams
+        var output = await process.StandardOutput.ReadToEndAsync();
+        var error = await process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync();
+
+        // Log output if available
+        if (!output.IsStringNullOrEmpty())
+            Logger.LogInfo("Script output:\n{0}", forceLog: true, output.Trim());
+
+        // Log errors if available
+        if (!error.IsStringNullOrEmpty())
+        {
+            if (process.ExitCode != 0)
+            {
+                Logger.LogError("Script error:\n{0}", forceLog: true, error.Trim());
+            }
+            else
+            {
+                // Sometimes warnings come through stderr
+                Logger.LogWarning("Script warnings:\n{0}", forceLog: true, error.Trim());
+            }
+        }
+
+        Logger.LogInfo("Script exit code: {0}", process.ExitCode);
         return process.ExitCode;
     }
 
-    private static async Task MakeProcessExecutableAsync(string processPath)
+    private static async Task MakeScriptExecutableAsync(string scriptPath)
     {
-        var processInfo = new ProcessStartInfo
+        try
         {
-            FileName = "chmod",
-            Arguments = $"+x \"{processPath}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+            var processInfo = new ProcessStartInfo
+            {
+                FileName = "chmod",
+                Arguments = $"+x \"{scriptPath}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
 
-        using var process = Process.Start(processInfo);
-        if (process != null)
-        {
-            var output = await process.StandardOutput.ReadToEndAsync();
+            using var process = Process.Start(processInfo);
+            if (process == null)
+            {
+                Logger.LogWarning("Failed to start chmod process for script: {0}", scriptPath);
+                return;
+            }
+
             var error = await process.StandardError.ReadToEndAsync();
-
             await process.WaitForExitAsync();
 
-            if (process.ExitCode == 0)
-                return;
+            if (process.ExitCode != 0)
+            {
+                throw new InvalidOperationException($"Failed to make script executable: {error}");
+            }
 
-            var message = error.IsStringNullOrEmpty() ? output : error;
-            throw new InvalidOperationException(message);
+            Logger.LogDebug("Script made executable: {0}", scriptPath);
         }
-        else
+        catch (Exception ex)
         {
-            Logger.LogWarning("Couldn't make script executable. Script path: {0}", processPath);
+            Logger.LogWarning("Could not make script executable: {0}. Error: {1}", scriptPath, ex.Message);
+            // Don't throw - script might already be executable or chmod might not be available
         }
     }
 }

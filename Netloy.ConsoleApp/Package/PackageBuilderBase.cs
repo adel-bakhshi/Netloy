@@ -26,7 +26,6 @@ public class PackageBuilderBase
     protected string OutputName { get; }
     protected string IconsDirectory { get; }
     protected string ScriptsDirectory { get; set; }
-    protected string StartupDirectory { get; }
     protected string AppExecName { get; }
     protected string DotnetProjectPath { get; }
     protected IconHelper IconHelper { get; }
@@ -47,7 +46,6 @@ public class PackageBuilderBase
         OutputName = GetOutputName();
         IconsDirectory = Path.Combine(NetloyProjectTempPath, "icons");
         ScriptsDirectory = Path.Combine(NetloyProjectTempPath, "scripts");
-        StartupDirectory = Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location) ?? throw new DirectoryNotFoundException("Unable to find startup directory.");
         AppExecName = GetAppExecName();
         DotnetProjectPath = GetProjectPath();
         IconHelper = new IconHelper(Configurations, IconsDirectory);
@@ -80,26 +78,33 @@ public class PackageBuilderBase
             }
         }
 
-        // Set primary icon in macros
-        SetPrimaryIconInMacros();
-
         Directory.CreateDirectory(outputDir);
         MacroExpander.SetMacroValue(MacroId.PublishOutputDirectory, outputDir);
 
-        switch (Arguments.Framework)
-        {
-            case null:
-            case FrameworkType.NetCore:
-            {
-                await PublishWithDotnetCliAsync(outputDir);
-                break;
-            }
+        // Set primary icon in macros
+        SetPrimaryIconInMacros();
 
-            default:
+        if (Arguments.BinaryPath.IsStringNullOrEmpty())
+        {
+            switch (Arguments.Framework)
             {
-                await PublishWithMsBuildAsync(outputDir);
-                break;
+                case null:
+                case FrameworkType.NetCore:
+                {
+                    await PublishWithDotnetCliAsync(outputDir);
+                    break;
+                }
+
+                default:
+                {
+                    await PublishWithMsBuildAsync(outputDir);
+                    break;
+                }
             }
+        }
+        else
+        {
+            CopyBinaries(outputDir);
         }
 
         await RunPostPublishScriptAsync();
@@ -284,15 +289,37 @@ public class PackageBuilderBase
             sb.Append($" {customArgs}");
         }
 
+        var arguments = sb.ToString();
+
         // Add UseAppHost argument if not present and package type is App or Dmg
         // For more info visit https://docs.microsoft.com/en-us/dotnet/core/install/macos-notarization-issues
-        if (!Configurations.DotnetPostPublishArguments.Contains("UseAppHost", StringComparison.OrdinalIgnoreCase)
-            && Arguments.PackageType is PackageType.App or PackageType.Dmg)
+        if (Arguments.PackageType is PackageType.App or PackageType.Dmg)
         {
-            sb.Append(" -p:UseAppHost=true");
+            if (!arguments.Contains("UseAppHost", StringComparison.OrdinalIgnoreCase))
+            {
+                bool addAppHost;
+
+                if (!Arguments.SkipAll)
+                {
+                    Logger.LogWarning("For macOS App/DMG packaging it's recommended to publish with a native app host (-p:UseAppHost=true) so the app can be signed and notarized correctly.");
+                    addAppHost = Confirm.ShowConfirm("Do you want to add -p:UseAppHost=true to dotnet publish?");
+                }
+                else
+                {
+                    addAppHost = true;
+                    Logger.LogWarning("SkipAll is enabled. Automatically adding -p:UseAppHost=true for macOS App/DMG packaging.");
+                }
+
+                if (addAppHost)
+                    sb.Append(" -p:UseAppHost=true");
+            }
+            else if (arguments.Contains("UseAppHost=false", StringComparison.OrdinalIgnoreCase))
+            {
+                Logger.LogWarning("DotnetPublishArgs contains UseAppHost=false. macOS App/DMG packaging may fail notarization or signing if no app host is generated.");
+            }
         }
 
-        return sb.ToString();
+        return arguments;
     }
 
     private async Task CleanDotnetProjectAsync(string projectPath)
@@ -494,12 +521,49 @@ public class PackageBuilderBase
         return paths.FirstOrDefault();
     }
 
+    private void CopyBinaries(string outputDir)
+    {
+        Logger.LogInfo("Copying binaries from '{0}' to '{1}'...", Arguments.BinaryPath, outputDir);
+
+        var filesCopied = 0;
+        foreach (var binaryFile in Directory.GetFiles(Arguments.BinaryPath!, "*", SearchOption.AllDirectories))
+        {
+            var relativePath = Path.GetRelativePath(Arguments.BinaryPath!, binaryFile);
+            var targetPath = Path.Combine(outputDir, relativePath);
+            var targetDirectory = Path.GetDirectoryName(targetPath) ?? throw new DirectoryNotFoundException("Unable to find target directory.");
+
+            if (!Directory.Exists(targetDirectory))
+                Directory.CreateDirectory(targetDirectory);
+
+            File.Copy(binaryFile, targetPath, true);
+            filesCopied++;
+
+            Logger.LogDebug("Copied '{0}' binary file from '{1}' to '{2}'", Path.GetFileName(binaryFile), binaryFile, targetPath);
+        }
+
+        Logger.LogSuccess("Copied {0} file(s) from binary path.", filesCopied);
+    }
+
     private async Task RunPostPublishScriptAsync()
     {
         var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
         var postPublishScript = isWindows ? Configurations.DotnetPostPublishOnWindows : Configurations.DotnetPostPublish;
 
-        Logger.LogInfo("Running post publish script: {0}", postPublishScript);
+        // Check if post-publish script path is configured
+        if (postPublishScript.IsStringNullOrEmpty())
+        {
+            Logger.LogDebug("No post-publish script configured. Skipping post-publish step.");
+            return;
+        }
+
+        // Check if the script file exists
+        if (!File.Exists(postPublishScript))
+        {
+            Logger.LogWarning("Post-publish script file not found: {0}. Skipping post-publish step.", postPublishScript);
+            return;
+        }
+
+        Logger.LogInfo("Running post-publish script: {0}", postPublishScript);
 
         var scriptContent = await File.ReadAllTextAsync(postPublishScript);
         scriptContent = MacroExpander.ExpandMacros(scriptContent);
@@ -507,7 +571,7 @@ public class PackageBuilderBase
         if ((isWindows && scriptContent.Contains("pause")) || (!isWindows && scriptContent.Contains("read")))
         {
             var invalidCommand = isWindows ? "pause" : "read";
-            var message = $"Post publish script contains '{invalidCommand}' command. This will prevent the application from closing after running. Consider removing it.";
+            var message = $"Post-publish script contains '{invalidCommand}' command. This will prevent the application from closing after running. Consider removing it.";
             Logger.LogWarning(message, forceLog: true);
         }
 
@@ -515,22 +579,17 @@ public class PackageBuilderBase
         var scriptPath = Path.Combine(ScriptsDirectory, fileName);
         await File.WriteAllTextAsync(scriptPath, scriptContent);
 
-        var arguments = Configurations.DotnetPostPublishArguments.IsStringNullOrEmpty()
-            ? string.Empty
-            : MacroExpander.ExpandMacros(Configurations.DotnetPostPublishArguments);
-
-        var exitCode = await ScriptRunner.RunScriptAsync(scriptPath, arguments);
+        var exitCode = await ScriptRunner.RunScriptAsync(scriptPath);
         if (exitCode != 0)
-            throw new InvalidOperationException($"Post publish script failed with exit code {exitCode}");
+            throw new InvalidOperationException($"Post-publish script failed with exit code {exitCode}");
+
+        Logger.LogSuccess("Post-publish script completed successfully!");
     }
 
     private static string GetAppVersion(string version)
     {
         if (!version.Contains('['))
-        {
-            version = version.Replace("]", "");
-            return version;
-        }
+            return version.Replace("]", "");
 
         var index = version.IndexOf("[", StringComparison.OrdinalIgnoreCase);
         return version.Substring(0, index);

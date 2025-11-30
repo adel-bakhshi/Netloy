@@ -34,7 +34,6 @@ public class Configurations
     public string DotnetPublishArgs { get; set; } = string.Empty;
     public string DotnetPostPublish { get; set; } = string.Empty;
     public string DotnetPostPublishOnWindows { get; set; } = string.Empty;
-    public string DotnetPostPublishArguments { get; set; } = string.Empty;
 
     public string PackageName { get; set; } = string.Empty;
     public string OutputDirectory { get; set; } = string.Empty;
@@ -73,9 +72,6 @@ public class Configurations
     public string MsiUiDialog { get; set; } = string.Empty;
     public bool SetupCloseApplications { get; set; } = true;
     public bool SetupRestartIfNeeded { get; set; }
-    public string SetupUninstallDisplayName { get; set; } = string.Empty;
-    public string ExeVersionInfoCompany { get; set; } = string.Empty;
-    public string ExeVersionInfoDescription { get; set; } = string.Empty;
     public bool AssociateFiles { get; set; }
     public string FileExtension { get; set; } = string.Empty;
     public bool ContextMenuIntegration { get; set; }

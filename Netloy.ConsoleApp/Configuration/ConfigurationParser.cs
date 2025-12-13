@@ -321,6 +321,10 @@ public class ConfigurationParser
         // DEBIAN OPTIONS
         config.DebianRecommends = GetValue(nameof(config.DebianRecommends));
 
+        // ARCH OPTIONS
+        config.ArchDepends = GetValue(nameof(config.ArchDepends));
+        config.ArchOptDepends = GetValue(nameof(config.ArchOptDepends));
+
         // MACOS OPTIONS
         config.MacOsInfoPlist = GetValue(nameof(config.MacOsInfoPlist));
         config.MacOsEntitlements = GetValue(nameof(config.MacOsEntitlements));
@@ -707,6 +711,9 @@ public class ConfigurationParser
 
         // DEBIAN OPTIONS
         AppendDebianSection(sb, config, includeComments);
+
+        // ARCH OPTIONS
+        AppendArchSection(sb, config, includeComments);
 
         // MACOS OPTIONS
         AppendMacOsSection(sb, config, includeComments);
@@ -1211,6 +1218,34 @@ public class ConfigurationParser
         sb.AppendLine();
     }
 
+    private static void AppendArchSection(StringBuilder sb, Configurations config, bool includeComments)
+    {
+        if (includeComments)
+        {
+            AppendSection(sb, "ARCH LINUX PACKAGE");
+
+            AppendComment(sb, "Optional list of runtime dependencies for Arch Linux packages.");
+            AppendComment(sb, "The list may include multiple values separated with semicolon or given");
+            AppendComment(sb, "in multi-line form. If empty, a self-contained dotnet package will successfully run on many but not all");
+            AppendComment(sb, "Linux distros. In some cases, it will be necessary to explicitly specify additional dependencies.");
+            AppendComment(sb, "See: https://wiki.archlinux.org/title/PKGBUILD#depends");
+        }
+
+        AppendMultiLineValue(sb, nameof(config.ArchDepends), config.ArchDepends);
+        sb.AppendLine();
+
+        if (includeComments)
+        {
+            AppendComment(sb, "Optional list of optional runtime dependencies for Arch Linux packages.");
+            AppendComment(sb, "The list may include multiple values separated with semicolon or given in multi-line form.");
+            AppendComment(sb, "Each entry should be in the format: 'package: description' as expected by PKGBUILD optdepends.");
+            AppendComment(sb, "See: https://wiki.archlinux.org/title/PKGBUILD#optdepends");
+        }
+
+        AppendMultiLineValue(sb, nameof(config.ArchOptDepends), config.ArchOptDepends);
+        sb.AppendLine();
+    }
+
     private static void AppendMacOsSection(StringBuilder sb, Configurations config, bool includeComments)
     {
         if (includeComments)
@@ -1494,14 +1529,12 @@ public class ConfigurationParser
         sb.AppendLine("A detailed description of your application.");
         sb.AppendLine("You can use multiple lines here.");
         sb.AppendLine("Describe the features and functionality of your software.");
-
         var appDescription = sb.ToString();
 
         sb.Clear();
 
         sb.Append("-p:Version=${APP_VERSION} -p:FileVersion=${APP_VERSION} -p:AssemblyVersion=${APP_VERSION} ");
         sb.Append("--self-contained true -p:DebugType=None -p:DebugSymbols=false -p:PublishSingleFile=true");
-
         var dotnetPublishArgs = sb.ToString();
 
         sb.Clear();
@@ -1513,7 +1546,6 @@ public class ConfigurationParser
         sb.AppendLine("--share=network");
         sb.AppendLine("--share=ipc");
         sb.AppendLine("--device=dri");
-
         var flatpackFinishArgs = sb.ToString();
 
         sb.Clear();
@@ -1522,7 +1554,6 @@ public class ConfigurationParser
         sb.AppendLine("libicu");
         sb.AppendLine("openssl-libs");
         sb.AppendLine("zlib");
-
         var rpmRequires = sb.ToString();
 
         sb.Clear();
@@ -1533,8 +1564,12 @@ public class ConfigurationParser
         sb.AppendLine("libicu");
         sb.AppendLine("libssl");
         sb.AppendLine("zlib1g");
-
         var debianRecommends = sb.ToString();
+
+        sb.Clear();
+
+        sb.AppendLine("dotnet-runtime");
+        var archDepends = sb.ToString();
 
         return new Configurations
         {
@@ -1562,6 +1597,7 @@ public class ConfigurationParser
             RpmAutoProv = true,
             RpmRequires = rpmRequires,
             DebianRecommends = debianRecommends,
+            ArchDepends = archDepends,
             SetupMinWindowsVersion = "10",
             ConfigVersion = Constants.Version
         };

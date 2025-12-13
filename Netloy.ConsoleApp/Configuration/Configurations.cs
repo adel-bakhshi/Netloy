@@ -55,6 +55,9 @@ public class Configurations
 
     public string DebianRecommends { get; set; } = string.Empty;
 
+    public string ArchDepends { get; set; } = string.Empty;
+    public string ArchOptDepends { get; set; } = string.Empty;
+
     public string MacOsInfoPlist { get; set; } = string.Empty;
     public string MacOsEntitlements { get; set; } = string.Empty;
 

@@ -37,7 +37,7 @@ public class ConfigurationParser
 
         await ParseFileAsync(Constants.ConfigFilePath);
 
-        var config = MapToConfiguration();
+        var config = MapToConfiguration(useDefaultConfig: false);
 
         await ValidateConfigurationAsync(config);
 
@@ -87,7 +87,7 @@ public class ConfigurationParser
 
         await ParseFileAsync(Constants.ConfigFilePath);
 
-        var currentVersion = GetValue("ConfigVersion");
+        var currentVersion = GetValue(nameof(Configurations.ConfigVersion));
         var latestVersion = Constants.Version;
 
         if (!currentVersion.IsStringNullOrEmpty() && currentVersion.Equals(latestVersion))
@@ -121,7 +121,7 @@ public class ConfigurationParser
         File.Copy(Constants.ConfigFilePath, backupPath);
         Logger.LogSuccess("Backup created: {0}", backupPath);
 
-        var existingConfig = MapToConfiguration();
+        var existingConfig = MapToConfiguration(useDefaultConfig: true);
         var newContent = GenerateConfigurationFile(existingConfig, includeUpgradeHeader: true, includeComments: arguments.Verbose);
 
         await File.WriteAllTextAsync(Constants.ConfigFilePath, newContent);
@@ -257,103 +257,104 @@ public class ConfigurationParser
         Logger.LogDebug("Parsed {0} configuration entries", _settings.Count);
     }
 
-    private Configurations MapToConfiguration()
+    private Configurations MapToConfiguration(bool useDefaultConfig)
     {
         var config = new Configurations();
+        var defaultConfig = useDefaultConfig ? GetDefaultConfiguration() : null;
 
         // APP PREAMBLE
-        config.AppBaseName = GetValue(nameof(config.AppBaseName));
-        config.AppFriendlyName = GetValue(nameof(config.AppFriendlyName));
-        config.AppId = GetValue(nameof(config.AppId));
-        config.AppVersionRelease = GetValue(nameof(config.AppVersionRelease));
-        config.AppShortSummary = GetValue(nameof(config.AppShortSummary));
-        config.AppDescription = GetValue(nameof(config.AppDescription));
-        config.AppLicenseId = GetValue(nameof(config.AppLicenseId));
-        config.AppLicenseFile = GetValue(nameof(config.AppLicenseFile));
-        config.AppChangeFile = GetValue(nameof(config.AppChangeFile));
+        config.AppBaseName = GetValueOrDefault(nameof(config.AppBaseName), defaultConfig?.AppBaseName);
+        config.AppFriendlyName = GetValueOrDefault(nameof(config.AppFriendlyName), defaultConfig?.AppFriendlyName);
+        config.AppId = GetValueOrDefault(nameof(config.AppId), defaultConfig?.AppId);
+        config.AppVersionRelease = GetValueOrDefault(nameof(config.AppVersionRelease), defaultConfig?.AppVersionRelease);
+        config.AppShortSummary = GetValueOrDefault(nameof(config.AppShortSummary), defaultConfig?.AppShortSummary);
+        config.AppDescription = GetValueOrDefault(nameof(config.AppDescription), defaultConfig?.AppDescription);
+        config.AppLicenseId = GetValueOrDefault(nameof(config.AppLicenseId), defaultConfig?.AppLicenseId);
+        config.AppLicenseFile = GetValueOrDefault(nameof(config.AppLicenseFile), defaultConfig?.AppLicenseFile);
+        config.AppChangeFile = GetValueOrDefault(nameof(config.AppChangeFile), defaultConfig?.AppChangeFile);
 
         // PUBLISHER
-        config.PublisherName = GetValue(nameof(config.PublisherName));
-        config.PublisherId = GetValue(nameof(config.PublisherId));
-        config.PublisherCopyright = GetValue(nameof(config.PublisherCopyright));
-        config.PublisherLinkName = GetValue(nameof(config.PublisherLinkName));
-        config.PublisherLinkUrl = GetValue(nameof(config.PublisherLinkUrl));
-        config.PublisherEmail = GetValue(nameof(config.PublisherEmail));
+        config.PublisherName = GetValueOrDefault(nameof(config.PublisherName), defaultConfig?.PublisherName);
+        config.PublisherId = GetValueOrDefault(nameof(config.PublisherId), defaultConfig?.PublisherId);
+        config.PublisherCopyright = GetValueOrDefault(nameof(config.PublisherCopyright), defaultConfig?.PublisherCopyright);
+        config.PublisherLinkName = GetValueOrDefault(nameof(config.PublisherLinkName), defaultConfig?.PublisherLinkName);
+        config.PublisherLinkUrl = GetValueOrDefault(nameof(config.PublisherLinkUrl), defaultConfig?.PublisherLinkUrl);
+        config.PublisherEmail = GetValueOrDefault(nameof(config.PublisherEmail), defaultConfig?.PublisherEmail);
 
         // DESKTOP INTEGRATION
-        config.DesktopNoDisplay = GetBoolValue(nameof(config.DesktopNoDisplay));
-        config.DesktopTerminal = GetBoolValue(nameof(config.DesktopTerminal));
-        config.DesktopFile = GetValue(nameof(config.DesktopFile));
-        config.StartCommand = GetValue(nameof(config.StartCommand));
-        config.PrimeCategory = GetValue(nameof(config.PrimeCategory));
-        config.MetaFile = GetValue(nameof(config.MetaFile));
-        config.IconFiles = GetValue(nameof(config.IconFiles));
-        config.AutoGenerateIcons = GetBoolValue(nameof(config.AutoGenerateIcons));
+        config.DesktopNoDisplay = GetBoolValueOrDefault(nameof(config.DesktopNoDisplay), defaultConfig?.DesktopNoDisplay);
+        config.DesktopTerminal = GetBoolValueOrDefault(nameof(config.DesktopTerminal), defaultConfig?.DesktopTerminal);
+        config.DesktopFile = GetValueOrDefault(nameof(config.DesktopFile), defaultConfig?.DesktopFile);
+        config.StartCommand = GetValueOrDefault(nameof(config.StartCommand), defaultConfig?.StartCommand);
+        config.PrimeCategory = GetValueOrDefault(nameof(config.PrimeCategory), defaultConfig?.PrimeCategory);
+        config.MetaFile = GetValueOrDefault(nameof(config.MetaFile), defaultConfig?.MetaFile);
+        config.IconFiles = GetValueOrDefault(nameof(config.IconFiles), defaultConfig?.IconFiles);
+        config.AutoGenerateIcons = GetBoolValueOrDefault(nameof(config.AutoGenerateIcons), defaultConfig?.AutoGenerateIcons);
 
         // DOTNET PUBLISH
-        config.DotnetProjectPath = GetValue(nameof(config.DotnetProjectPath));
-        config.DotnetPublishArgs = GetValue(nameof(config.DotnetPublishArgs));
-        config.DotnetPostPublish = GetValue(nameof(config.DotnetPostPublish));
-        config.DotnetPostPublishOnWindows = GetValue(nameof(config.DotnetPostPublishOnWindows));
+        config.DotnetProjectPath = GetValueOrDefault(nameof(config.DotnetProjectPath), defaultConfig?.DotnetProjectPath);
+        config.DotnetPublishArgs = GetValueOrDefault(nameof(config.DotnetPublishArgs), defaultConfig?.DotnetPublishArgs);
+        config.DotnetPostPublish = GetValueOrDefault(nameof(config.DotnetPostPublish), defaultConfig?.DotnetPostPublish);
+        config.DotnetPostPublishOnWindows = GetValueOrDefault(nameof(config.DotnetPostPublishOnWindows), defaultConfig?.DotnetPostPublishOnWindows);
 
         // PACKAGE OUTPUT
-        config.PackageName = GetValue(nameof(config.PackageName));
-        config.OutputDirectory = GetValue(nameof(config.OutputDirectory));
+        config.PackageName = GetValueOrDefault(nameof(config.PackageName), defaultConfig?.PackageName);
+        config.OutputDirectory = GetValueOrDefault(nameof(config.OutputDirectory), defaultConfig?.OutputDirectory);
 
         // APPIMAGE OPTIONS
-        config.AppImageArgs = GetValue(nameof(config.AppImageArgs));
+        config.AppImageArgs = GetValueOrDefault(nameof(config.AppImageArgs), defaultConfig?.AppImageArgs);
 
         // FLATPAK OPTIONS
-        config.FlatpakPlatformRuntime = GetValue(nameof(config.FlatpakPlatformRuntime));
-        config.FlatpakPlatformSdk = GetValue(nameof(config.FlatpakPlatformSdk));
-        config.FlatpakPlatformVersion = GetValue(nameof(config.FlatpakPlatformVersion));
-        config.FlatpakFinishArgs = GetValue(nameof(config.FlatpakFinishArgs));
-        config.FlatpakBuilderArgs = GetValue(nameof(config.FlatpakBuilderArgs));
-        config.FlatpakRuntimeRepo = GetValue(nameof(config.FlatpakRuntimeRepo));
-        config.FlatpakGpgSign = GetValue(nameof(config.FlatpakGpgSign));
-        config.FlatpakGpgHomedir = GetValue(nameof(config.FlatpakGpgHomedir));
+        config.FlatpakPlatformRuntime = GetValueOrDefault(nameof(config.FlatpakPlatformRuntime), defaultConfig?.FlatpakPlatformRuntime);
+        config.FlatpakPlatformSdk = GetValueOrDefault(nameof(config.FlatpakPlatformSdk), defaultConfig?.FlatpakPlatformSdk);
+        config.FlatpakPlatformVersion = GetValueOrDefault(nameof(config.FlatpakPlatformVersion), defaultConfig?.FlatpakPlatformVersion);
+        config.FlatpakFinishArgs = GetValueOrDefault(nameof(config.FlatpakFinishArgs), defaultConfig?.FlatpakFinishArgs);
+        config.FlatpakBuilderArgs = GetValueOrDefault(nameof(config.FlatpakBuilderArgs), defaultConfig?.FlatpakBuilderArgs);
+        config.FlatpakRuntimeRepo = GetValueOrDefault(nameof(config.FlatpakRuntimeRepo), defaultConfig?.FlatpakRuntimeRepo);
+        config.FlatpakGpgSign = GetValueOrDefault(nameof(config.FlatpakGpgSign), defaultConfig?.FlatpakGpgSign);
+        config.FlatpakGpgHomedir = GetValueOrDefault(nameof(config.FlatpakGpgHomedir), defaultConfig?.FlatpakGpgHomedir);
 
         // RPM OPTIONS
-        config.RpmAutoReq = GetBoolValue(nameof(config.RpmAutoReq));
-        config.RpmAutoProv = GetBoolValue(nameof(config.RpmAutoProv));
-        config.RpmRequires = GetValue(nameof(config.RpmRequires));
+        config.RpmAutoReq = GetBoolValueOrDefault(nameof(config.RpmAutoReq), defaultConfig?.RpmAutoReq);
+        config.RpmAutoProv = GetBoolValueOrDefault(nameof(config.RpmAutoProv), defaultConfig?.RpmAutoProv);
+        config.RpmRequires = GetValueOrDefault(nameof(config.RpmRequires), defaultConfig?.RpmRequires);
 
         // DEBIAN OPTIONS
-        config.DebianRecommends = GetValue(nameof(config.DebianRecommends));
+        config.DebianRecommends = GetValueOrDefault(nameof(config.DebianRecommends), defaultConfig?.DebianRecommends);
 
         // ARCH OPTIONS
-        config.ArchDepends = GetValue(nameof(config.ArchDepends));
-        config.ArchOptDepends = GetValue(nameof(config.ArchOptDepends));
+        config.ArchDepends = GetValueOrDefault(nameof(config.ArchDepends), defaultConfig?.ArchDepends);
+        config.ArchOptDepends = GetValueOrDefault(nameof(config.ArchOptDepends), defaultConfig?.ArchOptDepends);
 
         // MACOS OPTIONS
-        config.MacOsInfoPlist = GetValue(nameof(config.MacOsInfoPlist));
-        config.MacOsEntitlements = GetValue(nameof(config.MacOsEntitlements));
+        config.MacOsInfoPlist = GetValueOrDefault(nameof(config.MacOsInfoPlist), defaultConfig?.MacOsInfoPlist);
+        config.MacOsEntitlements = GetValueOrDefault(nameof(config.MacOsEntitlements), defaultConfig?.MacOsEntitlements);
 
         // WINDOWS SETUP OPTIONS
-        config.SetupGroupName = GetValue(nameof(config.SetupGroupName));
-        config.SetupAdminInstall = GetBoolValue(nameof(config.SetupAdminInstall));
-        config.SetupCommandPrompt = GetValue(nameof(config.SetupCommandPrompt));
-        config.SetupMinWindowsVersion = GetValue(nameof(config.SetupMinWindowsVersion));
-        config.SetupSignTool = GetValue(nameof(config.SetupSignTool));
-        config.MsiUpgradeCode = GetValue(nameof(config.MsiUpgradeCode));
-        config.SetupUninstallScript = GetValue(nameof(config.SetupUninstallScript));
+        config.SetupGroupName = GetValueOrDefault(nameof(config.SetupGroupName), defaultConfig?.SetupGroupName);
+        config.SetupAdminInstall = GetBoolValueOrDefault(nameof(config.SetupAdminInstall), defaultConfig?.SetupAdminInstall);
+        config.SetupCommandPrompt = GetValueOrDefault(nameof(config.SetupCommandPrompt), defaultConfig?.SetupCommandPrompt);
+        config.SetupMinWindowsVersion = GetValueOrDefault(nameof(config.SetupMinWindowsVersion), defaultConfig?.SetupMinWindowsVersion);
+        config.SetupSignTool = GetValueOrDefault(nameof(config.SetupSignTool), defaultConfig?.SetupSignTool);
+        config.MsiUpgradeCode = GetValueOrDefault(nameof(config.MsiUpgradeCode), defaultConfig?.MsiUpgradeCode);
+        config.SetupUninstallScript = GetValueOrDefault(nameof(config.SetupUninstallScript), defaultConfig?.SetupUninstallScript);
 
         // Windows SETUP - ADVANCED OPTIONS
-        config.SetupPasswordEncryption = GetValue(nameof(config.SetupPasswordEncryption));
-        config.ExeWizardImageFile = GetValue(nameof(config.ExeWizardImageFile));
-        config.ExeWizardSmallImageFile = GetValue(nameof(config.ExeWizardSmallImageFile));
-        config.MsiUiBanner = GetValue(nameof(config.MsiUiBanner));
-        config.MsiUiDialog = GetValue(nameof(config.MsiUiDialog));
-        config.SetupCloseApplications = GetBoolValue(nameof(config.SetupCloseApplications));
-        config.SetupRestartIfNeeded = GetBoolValue(nameof(config.SetupRestartIfNeeded));
-        config.AssociateFiles = GetBoolValue(nameof(config.AssociateFiles));
-        config.FileExtension = GetValue(nameof(config.FileExtension));
-        config.ContextMenuIntegration = GetBoolValue(nameof(config.ContextMenuIntegration));
-        config.ContextMenuText = GetValue(nameof(config.ContextMenuText));
-        config.SetupStartOnWindowsStartup = GetBoolValue(nameof(config.SetupStartOnWindowsStartup));
+        config.SetupPasswordEncryption = GetValueOrDefault(nameof(config.SetupPasswordEncryption), defaultConfig?.SetupPasswordEncryption);
+        config.ExeWizardImageFile = GetValueOrDefault(nameof(config.ExeWizardImageFile), defaultConfig?.ExeWizardImageFile);
+        config.ExeWizardSmallImageFile = GetValueOrDefault(nameof(config.ExeWizardSmallImageFile), defaultConfig?.ExeWizardSmallImageFile);
+        config.MsiUiBanner = GetValueOrDefault(nameof(config.MsiUiBanner), defaultConfig?.MsiUiBanner);
+        config.MsiUiDialog = GetValueOrDefault(nameof(config.MsiUiDialog), defaultConfig?.MsiUiDialog);
+        config.SetupCloseApplications = GetBoolValueOrDefault(nameof(config.SetupCloseApplications), defaultConfig?.SetupCloseApplications);
+        config.SetupRestartIfNeeded = GetBoolValueOrDefault(nameof(config.SetupRestartIfNeeded), defaultConfig?.SetupRestartIfNeeded);
+        config.AssociateFiles = GetBoolValueOrDefault(nameof(config.AssociateFiles), defaultConfig?.AssociateFiles);
+        config.FileExtension = GetValueOrDefault(nameof(config.FileExtension), defaultConfig?.FileExtension);
+        config.ContextMenuIntegration = GetBoolValueOrDefault(nameof(config.ContextMenuIntegration), defaultConfig?.ContextMenuIntegration);
+        config.ContextMenuText = GetValueOrDefault(nameof(config.ContextMenuText), defaultConfig?.ContextMenuText);
+        config.SetupStartOnWindowsStartup = GetBoolValueOrDefault(nameof(config.SetupStartOnWindowsStartup), defaultConfig?.SetupStartOnWindowsStartup);
 
         // CONFIGURATION OPTIONS
-        config.ConfigVersion = GetValue(nameof(config.ConfigVersion));
+        config.ConfigVersion = GetValueOrDefault(nameof(config.ConfigVersion), defaultConfig?.ConfigVersion);
 
         return config;
     }
@@ -366,6 +367,27 @@ public class ConfigurationParser
     private bool GetBoolValue(string key)
     {
         return _settings.TryGetValue(key, out var value) && value.Equals("true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string GetValueOrDefault(string key, string? defaultValue)
+    {
+        // If key exists in file, return the value from file
+        if (_settings.ContainsKey(key))
+            return GetValue(key);
+
+        // Key doesn't exist - return default value if provided
+        return defaultValue ?? string.Empty;
+    }
+
+    // Helper method for bool properties
+    private bool GetBoolValueOrDefault(string key, bool? defaultValue)
+    {
+        // If key exists in file, return the value from file
+        if (_settings.ContainsKey(key))
+            return GetBoolValue(key);
+
+        // Key doesn't exist - return default value if provided, otherwise false
+        return defaultValue ?? false;
     }
 
     private async Task ValidateConfigurationAsync(Configurations config)

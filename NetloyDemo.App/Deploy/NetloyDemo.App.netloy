@@ -1,6 +1,6 @@
 ################################################################################
 # Netloy 1.0.0 - .NET Application Packaging Tool
-# Configuration upgraded on: 2025-12-13 10:34:21
+# Configuration upgraded on: 2025-12-13 13:41:30
 ################################################################################
 
 ########################################
@@ -151,7 +151,7 @@ IconFiles = """
 # automatically generate all required PNG icon sizes for different platforms (16x16, 24x24, 32x32,
 # 48x48, 64x64, 96x96, 128x128, 256x256, 512x512). Note: SVG (Linux), ICO (Windows) and ICNS (macOS) formats are NOT
 # generated automatically and must be provided separately by the user. This feature simplifies PNG icon
-# management for Linux packages (DEB, RPM, AppImage, Flatpak) while maintaining consistent sizing.
+# management for Linux packages (DEB, RPM, AppImage, Flatpak, Pacman) while maintaining consistent sizing.
 # Default is false.
 # Example usage:
 #   AutoGenerateIcons = true
@@ -321,7 +321,7 @@ DebianRecommends = """
 """
 
 ########################################
-# ARCH LINUX PACKAGE
+# ARCH LINUX OPTIONS
 ########################################
 
 # Optional list of runtime dependencies for Arch Linux packages.

@@ -392,7 +392,6 @@ public class ConfigurationParser
 
     private async Task ValidateConfigurationAsync(Configurations config)
     {
-        // TODO: Complete this method
         var errors = new List<string>();
 
         if (config.AppBaseName.IsStringNullOrEmpty())

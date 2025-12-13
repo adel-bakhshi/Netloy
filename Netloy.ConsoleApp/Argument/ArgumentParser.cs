@@ -305,65 +305,17 @@ public class ArgumentParser
 
     private static void CheckPathFormat(Arguments arguments)
     {
-        // TODO: All these validation should be checked
-        // TODO: Path validations are the same. Just names are different. Need to refactor this.
-
-        // Validate and sanitize output name
-        if (!arguments.OutputPath.IsStringNullOrEmpty())
-        {
-            var outputPath = arguments.OutputPath!.NormalizePath();
-            if (outputPath.IsStringNullOrEmpty())
-                throw new ArgumentException("Output path contains invalid characters.");
-
-            if (!outputPath.IsAbsolutePath())
-                outputPath = Path.Combine(Directory.GetCurrentDirectory(), outputPath);
-
-            outputPath = Path.GetFullPath(outputPath);
-            Logger.LogDebug("Output path is: '{0}'", outputPath);
-            arguments.OutputPath = outputPath;
-        }
-
+        // Validate output path
+        arguments.OutputPath = GetNormalizedArgumentPath(arguments.OutputPath, nameof(arguments.OutputPath));
         // Normalize project path
-        if (!arguments.ProjectPath.IsStringNullOrEmpty())
-        {
-            var projectPath = arguments.ProjectPath!.NormalizePath();
-            if (projectPath.IsStringNullOrEmpty())
-                throw new ArgumentException("Project path contains invalid characters.");
-
-            if (!projectPath.IsAbsolutePath())
-                projectPath = Path.Combine(Directory.GetCurrentDirectory(), projectPath);
-
-            projectPath = Path.GetFullPath(projectPath);
-            Logger.LogDebug("Project path is: '{0}'", projectPath);
-            arguments.ProjectPath = projectPath;
-        }
-
+        arguments.ProjectPath = GetNormalizedArgumentPath(arguments.ProjectPath, nameof(arguments.ProjectPath));
         // Normalize config path
-        if (!arguments.ConfigPath.IsStringNullOrEmpty())
-        {
-            var configPath = arguments.ConfigPath!.NormalizePath();
-            if (configPath.IsStringNullOrEmpty())
-                throw new ArgumentException("Config path contains invalid characters.");
-
-            if (!configPath.IsAbsolutePath())
-                configPath = Path.Combine(Directory.GetCurrentDirectory(), configPath);
-
-            configPath = Path.GetFullPath(configPath);
-            Logger.LogDebug("Config path is: '{0}'", configPath);
-            arguments.ConfigPath = configPath;
-        }
+        arguments.ConfigPath = GetNormalizedArgumentPath(arguments.ConfigPath, nameof(arguments.ConfigPath));
 
         // Normalize binary path
         if (!arguments.BinaryPath.IsStringNullOrEmpty())
         {
-            var binaryPath = arguments.BinaryPath!.NormalizePath();
-            if (binaryPath.IsStringNullOrEmpty())
-                throw new ArgumentException("Invalid binary path: contains disallowed characters.");
-
-            if (!binaryPath.IsAbsolutePath())
-                binaryPath = Path.Combine(Directory.GetCurrentDirectory(), binaryPath);
-
-            binaryPath = Path.GetFullPath(binaryPath);
+            var binaryPath = GetNormalizedArgumentPath(arguments.BinaryPath, nameof(arguments.BinaryPath));
             if (!Directory.Exists(binaryPath))
                 throw new DirectoryNotFoundException($"Binary directory not found: '{binaryPath}'. Ensure the path exists and contains your built files.");
 
@@ -376,10 +328,25 @@ public class ArgumentParser
         }
     }
 
+    private static string? GetNormalizedArgumentPath(string? path, string argumentName)
+    {
+        if (path.IsStringNullOrEmpty())
+            return path;
+
+        var normalizedPath = path!.NormalizePath();
+        if (normalizedPath.IsStringNullOrEmpty())
+            throw new ArgumentException($"{argumentName} contains invalid characters.");
+
+        if (!normalizedPath.IsAbsolutePath())
+            normalizedPath = Path.Combine(Directory.GetCurrentDirectory(), normalizedPath);
+
+        normalizedPath = Path.GetFullPath(normalizedPath);
+        Logger.LogDebug($"{argumentName} is: '{0}'", normalizedPath);
+        return normalizedPath;
+    }
+
     private void ValidateArguments(Arguments arguments)
     {
-        // TODO: Complete validations
-
         // Check for conflicting flags
         if (arguments is { ShowHelp: true, ShowVersion: true })
             throw new ArgumentException("Cannot specify both --help and --version");

@@ -1,11 +1,10 @@
-﻿using System.Diagnostics;
-using System.Text;
-using System.Xml.Linq;
-using Netloy.ConsoleApp.Argument;
+﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
+using System.Xml.Linq;
 
 namespace Netloy.ConsoleApp.Package.Windows;
 
@@ -16,14 +15,14 @@ public class MsiPackageBuilder : PackageBuilderBase, IPackageBuilder
     private const string WixCompiler = "wix";
     private const string WixNamespace = "http://wixtoolset.org/schemas/v4/wxs";
 
-    #endregion
+    #endregion Constants
 
     #region Properties
 
     public string PublishOutputDir { get; private set; } = string.Empty;
     public string WixSourcePath { get; }
 
-    #endregion
+    #endregion Properties
 
     public MsiPackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {

@@ -1,7 +1,6 @@
 ﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
-using Netloy.ConsoleApp.Helpers;
 using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
 using System.Diagnostics;
@@ -12,7 +11,7 @@ namespace Netloy.ConsoleApp.Package.Linux;
 /// <summary>
 /// Package builder for Arch Linux packages (PKGBUILD/makepkg)
 /// </summary>
-public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
+public class PacmanPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
 {
     #region Constants
 
@@ -47,51 +46,6 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
     public string PublishOutputDir { get; private set; } = string.Empty;
 
     /// <summary>
-    /// usr directory inside package
-    /// </summary>
-    public string UsrDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/bin directory (for launcher script)
-    /// </summary>
-    public string UsrBinDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share directory
-    /// </summary>
-    public string UsrShareDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/applications directory
-    /// </summary>
-    public string ApplicationsDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/metainfo directory
-    /// </summary>
-    public string MetaInfoDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/icons directory
-    /// </summary>
-    public string IconsShareDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// Pixmaps directory for backward compatibility
-    /// </summary>
-    public string PixmapsDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// Desktop file path in usr/share/applications
-    /// </summary>
-    public string DesktopFilePath { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// MetaInfo file path in usr/share/metainfo
-    /// </summary>
-    public string MetaInfoFilePath { get; private set; } = string.Empty;
-
-    /// <summary>
     /// PKGBUILD file path
     /// </summary>
     public string PkgBuildFilePath { get; private set; } = string.Empty;
@@ -101,10 +55,7 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
     /// </summary>
     public string OutputPath { get; }
 
-    /// <summary>
-    /// Install path for the executable
-    /// </summary>
-    public string InstallExec => $"/opt/{Configurations.AppId}/{AppExecName}";
+    protected override string InstallExec => $"/opt/{Configurations.AppId}/{AppExecName}";
 
     #endregion Properties
 
@@ -146,7 +97,7 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
         await CopyMetaInfoFileAsync();
 
         // Copy and organize icons
-        CopyAndOrganizeIcons();
+        CopyAndOrganizeIcons(includePixmaps: true);
 
         // Copy license and changelog files
         CopyLicenseAndChangelogFiles();
@@ -224,24 +175,8 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
         OptDirectory = Path.Combine(PackageStructure, "opt", Configurations.AppId);
         PublishOutputDir = OptDirectory;
 
-        // usr directory structure
-        UsrDirectory = Path.Combine(PackageStructure, "usr");
-        UsrBinDirectory = Path.Combine(UsrDirectory, "bin");
-        UsrShareDirectory = Path.Combine(UsrDirectory, "share");
-
-        // Subdirectories under usr/share
-        ApplicationsDirectory = Path.Combine(UsrShareDirectory, "applications");
-        MetaInfoDirectory = Path.Combine(UsrShareDirectory, "metainfo");
-        IconsShareDirectory = Path.Combine(UsrShareDirectory, "icons", "hicolor");
-
-        // usr/share/pixmaps (for backward compatibility)
-        PixmapsDirectory = Path.Combine(UsrShareDirectory, "pixmaps");
-
-        // File paths
-        var desktopFileName = $"{Configurations.AppId}.desktop";
-        var metaInfoFileName = $"{Configurations.AppId}.appdata.xml";
-        DesktopFilePath = Path.Combine(ApplicationsDirectory, desktopFileName);
-        MetaInfoFilePath = Path.Combine(MetaInfoDirectory, metaInfoFileName);
+        // Initialize common linux directories
+        InitializeCommonLinuxDirectories(PackageStructure);
 
         // PKGBUILD file
         PkgBuildFilePath = Path.Combine(RootDirectory, PkgBuildFileName);
@@ -253,27 +188,11 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
 
         // Create package structure directory
         Directory.CreateDirectory(PackageStructure);
-
         // Create opt directory (for application binaries)
         Directory.CreateDirectory(OptDirectory);
 
-        // Create usr directory structure
-        Directory.CreateDirectory(UsrDirectory);
-        Directory.CreateDirectory(UsrBinDirectory);
-        Directory.CreateDirectory(UsrShareDirectory);
-
-        // Create subdirectories under usr/share
-        Directory.CreateDirectory(ApplicationsDirectory);
-        Directory.CreateDirectory(MetaInfoDirectory);
-        Directory.CreateDirectory(IconsShareDirectory);
-
-        // Create pixmaps directory
-        Directory.CreateDirectory(PixmapsDirectory);
-
-        // Create icon directories for different sizes
-        IconHelper.GetIconSizes()
-            .ConvertAll(size => Path.Combine(IconsShareDirectory, size, "apps"))
-            .ForEach(dir => Directory.CreateDirectory(dir));
+        // Create common linux directories
+        CreateCommonLinuxDirectories();
 
         Logger.LogSuccess("Arch package structure created at: {0}", PackageStructure);
     }
@@ -282,158 +201,13 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
 
     #region File Operations
 
-    private async Task CopyDesktopFileAsync()
-    {
-        Logger.LogInfo("Copying desktop file...");
-
-        // Read desktop file content and expand macros
-        var desktopContent = await File.ReadAllTextAsync(Configurations.DesktopFile);
-        desktopContent = MacroExpander.ExpandMacros(desktopContent);
-
-        // Write to applications directory
-        await File.WriteAllTextAsync(DesktopFilePath, desktopContent, Constants.Utf8WithoutBom);
-
-        Logger.LogSuccess("Desktop file copied: {0}", Path.GetFileName(DesktopFilePath));
-    }
-
-    private async Task CopyMetaInfoFileAsync()
-    {
-        // MetaInfo file is optional
-        if (Configurations.MetaFile.IsStringNullOrEmpty() || !File.Exists(Configurations.MetaFile))
-        {
-            Logger.LogInfo("MetaInfo file not provided. Skipping...");
-            return;
-        }
-
-        Logger.LogInfo("Copying metainfo file...");
-
-        // Read metainfo content and expand macros
-        var metaInfoContent = await File.ReadAllTextAsync(Configurations.MetaFile);
-        metaInfoContent = MacroExpander.ExpandMacros(metaInfoContent);
-
-        // Write to metainfo directory
-        await File.WriteAllTextAsync(MetaInfoFilePath, metaInfoContent, Constants.Utf8WithoutBom);
-
-        Logger.LogSuccess("MetaInfo file copied: {0}", Path.GetFileName(MetaInfoFilePath));
-    }
-
-    private void CopyAndOrganizeIcons()
-    {
-        Logger.LogInfo("Copying and organizing icons...");
-
-        // Get all PNG icons
-        var pngIcons = Configurations.IconsCollection
-            .Where(ico => Path.GetExtension(ico).Equals(".png", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        // Copy all icons to appropriate size directories
-        foreach (var iconPath in pngIcons)
-        {
-            if (!File.Exists(iconPath))
-            {
-                Logger.LogWarning("Icon file not found: {0}", iconPath);
-                continue;
-            }
-
-            var fileName = Path.GetFileName(iconPath);
-            var sizeDir = DetermineIconSize(iconPath);
-            var targetDir = Path.Combine(IconsShareDirectory, sizeDir, "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.png");
-
-            Directory.CreateDirectory(targetDir);
-            File.Copy(iconPath, targetPath, true);
-
-            if (Arguments.Verbose)
-                Logger.LogDebug("Icon copied to {0}: {1}", sizeDir, fileName);
-        }
-
-        // Also copy SVG icons if available
-        var svgIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".svg", StringComparison.OrdinalIgnoreCase));
-        if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
-        {
-            var targetDir = Path.Combine(IconsShareDirectory, "scalable", "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.svg");
-            Directory.CreateDirectory(targetDir);
-            File.Copy(svgIcon, targetPath, true);
-            Logger.LogInfo("SVG icon copied to scalable directory");
-        }
-
-        // Copy the largest icon to pixmaps (for backward compatibility)
-        var largestIcon = Configurations.IconsCollection
-            .Where(ico => Path.GetExtension(ico).Equals(".png", StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(ico =>
-            {
-                var fileName = Path.GetFileName(ico);
-                if (fileName.Contains("1024x1024"))
-                    return 1024;
-
-                if (fileName.Contains("512x512"))
-                    return 512;
-
-                if (fileName.Contains("256x256"))
-                    return 256;
-
-                return 0;
-            })
-            .FirstOrDefault();
-
-        if (!largestIcon.IsStringNullOrEmpty() && File.Exists(largestIcon))
-        {
-            var pixmapPath = Path.Combine(PixmapsDirectory, $"{Configurations.AppId}.png");
-            File.Copy(largestIcon, pixmapPath, true);
-            Logger.LogInfo("Icon copied to pixmaps directory");
-        }
-
-        Logger.LogSuccess("Icons organized successfully!");
-    }
-
-    private static string DetermineIconSize(string iconPath)
-    {
-        var fileName = Path.GetFileName(iconPath);
-
-        // Try to extract size from filename (e.g., icon.128x128.png)
-        if (fileName.Contains("1024x1024"))
-            return "1024x1024";
-        if (fileName.Contains("512x512"))
-            return "512x512";
-        if (fileName.Contains("256x256"))
-            return "256x256";
-        if (fileName.Contains("128x128"))
-            return "128x128";
-        if (fileName.Contains("96x96"))
-            return "96x96";
-        if (fileName.Contains("64x64"))
-            return "64x64";
-        if (fileName.Contains("48x48"))
-            return "48x48";
-        if (fileName.Contains("32x32"))
-            return "32x32";
-        if (fileName.Contains("24x24"))
-            return "24x24";
-        if (fileName.Contains("16x16"))
-            return "16x16";
-
-        throw new InvalidOperationException($"Unable to determine icon size for {fileName}");
-    }
-
     /// <summary>
     /// Copy license and changelog files to the package
     /// </summary>
     private void CopyLicenseAndChangelogFiles()
     {
-        // Copy license file if exists
-        if (!Configurations.AppLicenseFile.IsStringNullOrEmpty() && File.Exists(Configurations.AppLicenseFile))
-        {
-            Logger.LogInfo("Copying license file...");
-            var licenseFileName = Path.GetFileName(Configurations.AppLicenseFile);
-            var licenseDest = Path.Combine(OptDirectory, licenseFileName);
-            File.Copy(Configurations.AppLicenseFile, licenseDest, true);
-            Logger.LogSuccess("License file copied: {0}", licenseFileName);
-        }
-        else
-        {
-            Logger.LogInfo("License file not provided. Skipping...");
-        }
+        // Copy license file
+        CopyLicenseFile();
 
         // Copy changelog/readme file if exists
         if (!Configurations.AppChangeFile.IsStringNullOrEmpty() && File.Exists(Configurations.AppChangeFile))
@@ -450,22 +224,10 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    private async Task CreateLauncherScriptAsync()
+    protected override string GetLicenseTargetPath()
     {
-        if (Configurations.StartCommand.IsStringNullOrEmpty())
-        {
-            Logger.LogInfo("Start command not configured. Skipping launcher script...");
-            return;
-        }
-
-        Logger.LogInfo("Creating launcher script...");
-
-        var scriptPath = Path.Combine(UsrBinDirectory, Configurations.StartCommand);
-        var scriptContent = $"#!/bin/sh\nexec {InstallExec} \"$@\"";
-
-        await File.WriteAllTextAsync(scriptPath, scriptContent, new UTF8Encoding(false));
-
-        Logger.LogSuccess("Launcher script created: {0}", scriptPath);
+        var licenseFileName = Path.GetFileName(Configurations.AppLicenseFile);
+        return Path.Combine(OptDirectory, licenseFileName);
     }
 
     #endregion File Operations
@@ -487,7 +249,7 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
         sb.AppendLine($"pkgver={AppVersion.Replace("-", "_")}"); // Arch doesn't allow hyphens in version
         sb.AppendLine($"pkgrel={PackageRelease}");
         sb.AppendLine($"pkgdesc=\"{Configurations.AppShortSummary}\"");
-        sb.AppendLine($"arch=('{GetArchArch()}')");
+        sb.AppendLine($"arch=('{GetLinuxArchitecture("arch")}')");
         sb.AppendLine($"url=\"{Configurations.PublisherLinkUrl}\"");
         sb.AppendLine($"license=('{(!Configurations.AppLicenseId.IsStringNullOrEmpty() ? Configurations.AppLicenseId : "custom")}')");
 
@@ -550,19 +312,6 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
         Logger.LogSuccess("PKGBUILD file generated: {0}", PkgBuildFilePath);
     }
 
-    private string GetArchArch()
-    {
-        // Map .NET runtime to Arch architecture names
-        return Arguments.Runtime?.ToLowerInvariant() switch
-        {
-            "linux-x64" => "x86_64",
-            "linux-arm64" => "aarch64",
-            "linux-x86" => "i686",
-            "linux-arm" => "armv7h",
-            _ => "x86_64" // default
-        };
-    }
-
     #endregion PKGBUILD Generation
 
     #region File Permissions
@@ -615,30 +364,6 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
             var launcherPath = Path.Combine(UsrBinDirectory, Configurations.StartCommand);
             if (File.Exists(launcherPath))
                 await ExecuteChmodAsync($"755 \"{launcherPath}\"");
-        }
-    }
-
-    private async Task ExecuteChmodAsync(string arguments)
-    {
-        var processInfo = new ProcessStartInfo
-        {
-            FileName = "chmod",
-            Arguments = arguments,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using var process = Process.Start(processInfo);
-        if (process != null)
-        {
-            await process.WaitForExitAsync();
-            if (process.ExitCode != 0 && Arguments.Verbose)
-            {
-                var error = await process.StandardError.ReadToEndAsync();
-                Logger.LogDebug("chmod warning: {0}", error);
-            }
         }
     }
 
@@ -707,28 +432,39 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
 
     private void MoveGeneratedPackage()
     {
-        // makepkg creates a file like: pkgname-pkgver-pkgrel-arch.pkg.tar.zst
-        var packagePattern = $"{_archPackageName}-{AppVersion.Replace("-", "_")}-{PackageRelease}-{GetArchArch()}.pkg.tar.zst";
-        var packageFiles = Directory.GetFiles(RootDirectory, packagePattern, SearchOption.TopDirectoryOnly);
+        Logger.LogInfo("Searching for generated Arch package...");
 
-        if (packageFiles.Length == 0)
-        {
-            // Try with wildcard
-            packagePattern = $"{_archPackageName}-*.pkg.tar.zst";
-            packageFiles = Directory.GetFiles(RootDirectory, packagePattern, SearchOption.TopDirectoryOnly);
-        }
+        // Search for all .pkg.tar.* files (zst, xz, gz, etc.)
+        // Exclude signature files
+        var packageFiles = Directory.GetFiles(RootDirectory, "*.pkg.tar.*", SearchOption.TopDirectoryOnly)
+            .Where(f => !f.EndsWith(".sig", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
 
         switch (packageFiles.Length)
         {
             case 0:
-                throw new FileNotFoundException($"No package file found in: {RootDirectory}");
-            case > 1:
-                throw new InvalidOperationException($"Multiple package files found in: {RootDirectory}. Expected only one.");
-        }
+            {
+                throw new FileNotFoundException($"No Arch package file found in: {RootDirectory}\n" +
+                    $"Expected pattern: {_archPackageName}-*.pkg.tar.*");
+            }
 
-        var sourcePackage = packageFiles[0];
-        File.Move(sourcePackage, OutputPath, true);
-        Logger.LogInfo("Package moved from {0} to {1}", sourcePackage, OutputPath);
+            case > 1:
+            {
+                var fileList = string.Join("\n  - ", packageFiles.Select(Path.GetFileName));
+                throw new InvalidOperationException($"Multiple Arch package files found in: {RootDirectory}\n" +
+                    $"Found files:\n  - {fileList}\n" +
+                    "Expected only one package file. Please clean the build directory.");
+            }
+
+            default:
+            {
+                var sourcePackage = packageFiles[0];
+                Logger.LogInfo("Found package: {0}", Path.GetFileName(sourcePackage));
+                File.Move(sourcePackage, OutputPath, true);
+                Logger.LogSuccess("Package moved to: {0}", OutputPath);
+                break;
+            }
+        }
     }
 
     #endregion Package Building

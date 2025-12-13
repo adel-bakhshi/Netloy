@@ -13,7 +13,7 @@ public class MacroExpander
     private readonly Dictionary<MacroId, string> _macros;
     private readonly Arguments _arguments;
 
-    #endregion
+    #endregion Private Fields
 
     public MacroExpander(Arguments arguments)
     {

@@ -14,13 +14,13 @@ public class ArgumentParser
     private readonly string[] _appArgs;
     private Arguments? _arguments;
 
-    #endregion
+    #endregion Private fields
 
     #region Properties
 
     public List<Error>? Errors { get; private set; }
 
-    #endregion
+    #endregion Properties
 
     #region Constructor
 
@@ -29,7 +29,7 @@ public class ArgumentParser
         _appArgs = args;
     }
 
-    #endregion
+    #endregion Constructor
 
     #region Public Methods
 
@@ -260,7 +260,7 @@ public class ArgumentParser
         Console.WriteLine(helpText.ToString());
     }
 
-    #endregion
+    #endregion Public Methods
 
     #region Helpers
 
@@ -454,5 +454,5 @@ public class ArgumentParser
         throw new ArgumentException($"Cannot specify {argsList} with --help or --version");
     }
 
-    #endregion
+    #endregion Helpers
 }

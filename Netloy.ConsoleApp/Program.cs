@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using CommandLine;
 using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
@@ -6,6 +5,7 @@ using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyFiles;
 using Netloy.ConsoleApp.NetloyLogger;
 using Netloy.ConsoleApp.Package;
+using System.Runtime.InteropServices;
 
 namespace Netloy.ConsoleApp;
 

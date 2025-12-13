@@ -1,7 +1,6 @@
 ﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
-using Netloy.ConsoleApp.Helpers;
 using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
 using System.Diagnostics;
@@ -12,13 +11,13 @@ namespace Netloy.ConsoleApp.Package.Linux;
 /// <summary>
 /// Package builder for RPM packages on Linux
 /// </summary>
-public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
+public class RpmPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
 {
     #region Constants
 
     private const string SpecFileExtension = ".spec";
 
-    #endregion
+    #endregion Constants
 
     #region Private Fields
 
@@ -27,7 +26,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
     /// </summary>
     private readonly string _rpmPackageName;
 
-    #endregion
+    #endregion Private Fields
 
     #region Properties
 
@@ -47,51 +46,6 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
     public string PublishOutputDir { get; private set; } = string.Empty;
 
     /// <summary>
-    /// usr directory inside package
-    /// </summary>
-    public string UsrDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/bin directory (for launcher script)
-    /// </summary>
-    public string UsrBinDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share directory
-    /// </summary>
-    public string UsrShareDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/applications directory
-    /// </summary>
-    public string ApplicationsDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/metainfo directory
-    /// </summary>
-    public string MetaInfoDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/icons directory
-    /// </summary>
-    public string IconsShareDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// Pixmaps directory for backward compatibility
-    /// </summary>
-    public string PixmapsDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// Desktop file path in usr/share/applications
-    /// </summary>
-    public string DesktopFilePath { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// MetaInfo file path in usr/share/metainfo
-    /// </summary>
-    public string MetaInfoFilePath { get; private set; } = string.Empty;
-
-    /// <summary>
     /// Spec file path
     /// </summary>
     public string SpecFilePath { get; private set; } = string.Empty;
@@ -101,12 +55,9 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
     /// </summary>
     public string OutputPath { get; }
 
-    /// <summary>
-    /// Install path for the executable
-    /// </summary>
-    public string InstallExec => $"/opt/{Configurations.AppId}/{AppExecName}";
+    protected override string InstallExec => $"/opt/{Configurations.AppId}/{AppExecName}";
 
-    #endregion
+    #endregion Properties
 
     public RpmPackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {
@@ -146,7 +97,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         await CopyMetaInfoFileAsync();
 
         // Copy and organize icons
-        CopyAndOrganizeIcons();
+        CopyAndOrganizeIcons(includePixmaps: true);
 
         // Copy license and changelog files
         CopyLicenseAndChangelogFiles();
@@ -212,7 +163,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    #endregion
+    #endregion IPackageBuilder Implementation
 
     #region Directory Structure Creation
 
@@ -225,27 +176,11 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         OptDirectory = Path.Combine(RpmStructure, "opt", Configurations.AppId);
         PublishOutputDir = OptDirectory;
 
-        // usr directory structure
-        UsrDirectory = Path.Combine(RpmStructure, "usr");
-        UsrBinDirectory = Path.Combine(UsrDirectory, "bin");
-        UsrShareDirectory = Path.Combine(UsrDirectory, "share");
-
-        // Subdirectories under usr/share
-        ApplicationsDirectory = Path.Combine(UsrShareDirectory, "applications");
-        MetaInfoDirectory = Path.Combine(UsrShareDirectory, "metainfo");
-        IconsShareDirectory = Path.Combine(UsrShareDirectory, "icons", "hicolor");
-
-        // usr/share/pixmaps (for backward compatibility)
-        PixmapsDirectory = Path.Combine(UsrShareDirectory, "pixmaps");
-
-        // File paths
-        var desktopFileName = $"{Configurations.AppId}.desktop";
-        var metaInfoFileName = $"{Configurations.AppId}.appdata.xml";
-        DesktopFilePath = Path.Combine(ApplicationsDirectory, desktopFileName);
-        MetaInfoFilePath = Path.Combine(MetaInfoDirectory, metaInfoFileName);
+        // Initialize common linux directories
+        InitializeCommonLinuxDirectories(RpmStructure);
 
         // RPM spec file
-        SpecFilePath = Path.Combine(RootDirectory, $"{_rpmPackageName}{SpecFileExtension}");
+        SpecFilePath = Path.Combine(RootDirectory, _rpmPackageName + SpecFileExtension);
     }
 
     private void CreateRpmStructure()
@@ -254,187 +189,26 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
 
         // Create RPM structure directory
         Directory.CreateDirectory(RpmStructure);
-
         // Create opt directory (for application binaries)
         Directory.CreateDirectory(OptDirectory);
 
-        // Create usr directory structure
-        Directory.CreateDirectory(UsrDirectory);
-        Directory.CreateDirectory(UsrBinDirectory);
-        Directory.CreateDirectory(UsrShareDirectory);
-
-        // Create subdirectories under usr/share
-        Directory.CreateDirectory(ApplicationsDirectory);
-        Directory.CreateDirectory(MetaInfoDirectory);
-        Directory.CreateDirectory(IconsShareDirectory);
-
-        // Create pixmaps directory
-        Directory.CreateDirectory(PixmapsDirectory);
-
-        // Create icon directories for different sizes
-        IconHelper.GetIconSizes()
-            .ConvertAll(size => Path.Combine(IconsShareDirectory, size, "apps"))
-            .ForEach(dir => Directory.CreateDirectory(dir));
+        // Create common linux directories
+        CreateCommonLinuxDirectories();
 
         Logger.LogSuccess("RPM package structure created at: {0}", RpmStructure);
     }
 
-    #endregion
+    #endregion Directory Structure Creation
 
     #region File Operations
-
-    private async Task CopyDesktopFileAsync()
-    {
-        Logger.LogInfo("Copying desktop file...");
-
-        // Read desktop file content and expand macros
-        var desktopContent = await File.ReadAllTextAsync(Configurations.DesktopFile);
-        desktopContent = MacroExpander.ExpandMacros(desktopContent);
-
-        // Write to applications directory
-        await File.WriteAllTextAsync(DesktopFilePath, desktopContent, Constants.Utf8WithoutBom);
-
-        Logger.LogSuccess("Desktop file copied: {0}", Path.GetFileName(DesktopFilePath));
-    }
-
-    private async Task CopyMetaInfoFileAsync()
-    {
-        // MetaInfo file is optional
-        if (Configurations.MetaFile.IsStringNullOrEmpty() || !File.Exists(Configurations.MetaFile))
-        {
-            Logger.LogInfo("MetaInfo file not provided. Skipping...");
-            return;
-        }
-
-        Logger.LogInfo("Copying metainfo file...");
-
-        // Read metainfo content and expand macros
-        var metaInfoContent = await File.ReadAllTextAsync(Configurations.MetaFile);
-        metaInfoContent = MacroExpander.ExpandMacros(metaInfoContent);
-
-        // Write to metainfo directory
-        await File.WriteAllTextAsync(MetaInfoFilePath, metaInfoContent, Constants.Utf8WithoutBom);
-
-        Logger.LogSuccess("MetaInfo file copied: {0}", Path.GetFileName(MetaInfoFilePath));
-    }
-
-    private void CopyAndOrganizeIcons()
-    {
-        Logger.LogInfo("Copying and organizing icons...");
-
-        // Get all PNG icons
-        var pngIcons = Configurations.IconsCollection
-            .Where(ico => Path.GetExtension(ico).Equals(".png", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        // Copy all icons to appropriate size directories
-        foreach (var iconPath in pngIcons)
-        {
-            if (!File.Exists(iconPath))
-            {
-                Logger.LogWarning("Icon file not found: {0}", iconPath);
-                continue;
-            }
-
-            var fileName = Path.GetFileName(iconPath);
-            var sizeDir = DetermineIconSize(iconPath);
-            var targetDir = Path.Combine(IconsShareDirectory, sizeDir, "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.png");
-
-            Directory.CreateDirectory(targetDir);
-            File.Copy(iconPath, targetPath, true);
-
-            if (Arguments.Verbose)
-                Logger.LogDebug("Icon copied to {0}: {1}", sizeDir, fileName);
-        }
-
-        // Also copy SVG icons if available
-        var svgIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".svg", StringComparison.OrdinalIgnoreCase));
-        if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
-        {
-            var targetDir = Path.Combine(IconsShareDirectory, "scalable", "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.svg");
-            Directory.CreateDirectory(targetDir);
-            File.Copy(svgIcon, targetPath, true);
-            Logger.LogInfo("SVG icon copied to scalable directory");
-        }
-
-        // Copy the largest icon to pixmaps (for backward compatibility)
-        var largestIcon = Configurations.IconsCollection
-            .Where(ico => Path.GetExtension(ico).Equals(".png", StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(ico =>
-            {
-                var fileName = Path.GetFileName(ico);
-                if (fileName.Contains("1024x1024"))
-                    return 1024;
-                if (fileName.Contains("512x512"))
-                    return 512;
-                if (fileName.Contains("256x256"))
-                    return 256;
-                return 0;
-            })
-            .FirstOrDefault();
-
-        if (!largestIcon.IsStringNullOrEmpty() && File.Exists(largestIcon))
-        {
-            var pixmapPath = Path.Combine(PixmapsDirectory, $"{Configurations.AppId}.png");
-            File.Copy(largestIcon, pixmapPath, true);
-            Logger.LogInfo("Icon copied to pixmaps directory");
-        }
-
-        Logger.LogSuccess("Icons organized successfully!");
-    }
-
-    private static string DetermineIconSize(string iconPath)
-    {
-        var fileName = Path.GetFileName(iconPath);
-
-        // Try to extract size from filename (e.g., icon.128x128.png)
-        if (fileName.Contains("1024x1024"))
-            return "1024x1024";
-        if (fileName.Contains("512x512"))
-            return "512x512";
-        if (fileName.Contains("256x256"))
-            return "256x256";
-        if (fileName.Contains("128x128"))
-            return "128x128";
-        if (fileName.Contains("96x96"))
-            return "96x96";
-        if (fileName.Contains("64x64"))
-            return "64x64";
-        if (fileName.Contains("48x48"))
-            return "48x48";
-        if (fileName.Contains("32x32"))
-            return "32x32";
-        if (fileName.Contains("24x24"))
-            return "24x24";
-        if (fileName.Contains("16x16"))
-            return "16x16";
-
-        throw new InvalidOperationException($"Unable to determine icon size for {fileName}");
-    }
 
     /// <summary>
     /// Copy license and changelog files to the package (similar to PupNet's approach)
     /// </summary>
     private void CopyLicenseAndChangelogFiles()
     {
-        // Copy license file if exists
-        if (!Configurations.AppLicenseFile.IsStringNullOrEmpty() && File.Exists(Configurations.AppLicenseFile))
-        {
-            Logger.LogInfo("Copying license file...");
-
-            var licenseFileName = Path.GetFileName(Configurations.AppLicenseFile);
-            var licenseDest = Path.Combine(OptDirectory, licenseFileName);
-
-            File.Copy(Configurations.AppLicenseFile, licenseDest, true);
-
-            Logger.LogSuccess("License file copied: {0}", licenseFileName);
-        }
-        else
-        {
-            Logger.LogInfo("License file not provided. Skipping...");
-        }
+        // Copy license file
+        CopyLicenseFile();
 
         // Copy changelog/readme file if exists
         if (!Configurations.AppChangeFile.IsStringNullOrEmpty() && File.Exists(Configurations.AppChangeFile))
@@ -454,25 +228,13 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    private async Task CreateLauncherScriptAsync()
+    protected override string GetLicenseTargetPath()
     {
-        if (Configurations.StartCommand.IsStringNullOrEmpty())
-        {
-            Logger.LogInfo("Start command not configured. Skipping launcher script...");
-            return;
-        }
-
-        Logger.LogInfo("Creating launcher script...");
-
-        var scriptPath = Path.Combine(UsrBinDirectory, Configurations.StartCommand);
-        var scriptContent = $"#!/bin/sh\nexec {InstallExec} \"$@\"";
-
-        await File.WriteAllTextAsync(scriptPath, scriptContent, new UTF8Encoding(false));
-
-        Logger.LogSuccess("Launcher script created: {0}", scriptPath);
+        var licenseFileName = Path.GetFileName(Configurations.AppLicenseFile);
+        return Path.Combine(OptDirectory, licenseFileName);
     }
 
-    #endregion
+    #endregion File Operations
 
     #region Spec File Generation
 
@@ -516,11 +278,19 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
 
         sb.AppendLine();
 
-        var description = !Configurations.AppDescription.IsStringNullOrEmpty()
-            ? Configurations.AppDescription
-            : !Configurations.AppShortSummary.IsStringNullOrEmpty()
-                ? Configurations.AppShortSummary
-                : "No description available.";
+        string description;
+        if (!Configurations.AppDescription.IsStringNullOrEmpty())
+        {
+            description = Configurations.AppDescription;
+        }
+        else if (!Configurations.AppShortSummary.IsStringNullOrEmpty())
+        {
+            description = Configurations.AppShortSummary;
+        }
+        else
+        {
+            description = "No description available.";
+        }
 
         // Description section
         sb.AppendLine("%description");
@@ -531,8 +301,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         sb.AppendLine("%files");
 
         // Get all files from RpmStructure and mark license/doc files appropriately
-        var allFiles = GetAllFilesRelativeToRoot();
-        foreach (var file in allFiles)
+        foreach (var file in GetAllFilesRelativeToRoot())
         {
             var fileName = Path.GetFileNameWithoutExtension(file).ToLowerInvariant();
 
@@ -609,9 +378,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         if (!Directory.Exists(RpmStructure))
             return files;
 
-        var allFiles = Directory.GetFiles(RpmStructure, "*", SearchOption.AllDirectories);
-
-        foreach (var file in allFiles)
+        foreach (var file in Directory.GetFiles(RpmStructure, "*", SearchOption.AllDirectories))
         {
             // Get relative path from RpmStructure
             var relativePath = Path.GetRelativePath(RpmStructure, file);
@@ -653,20 +420,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         return changeFileName.Equals(currentFileName, StringComparison.OrdinalIgnoreCase);
     }
 
-    private string GetRpmArch()
-    {
-        // Map .NET runtime to RPM architecture names
-        return Arguments.Runtime?.ToLowerInvariant() switch
-        {
-            "linux-x64" => "x86_64",
-            "linux-arm64" => "aarch64",
-            "linux-x86" => "i686",
-            "linux-arm" => "armhfp",
-            _ => "x86_64" // default
-        };
-    }
-
-    #endregion
+    #endregion Spec File Generation
 
     #region File Permissions
 
@@ -721,31 +475,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    private async Task ExecuteChmodAsync(string arguments)
-    {
-        var processInfo = new ProcessStartInfo
-        {
-            FileName = "chmod",
-            Arguments = arguments,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using var process = Process.Start(processInfo);
-        if (process != null)
-        {
-            await process.WaitForExitAsync();
-            if (process.ExitCode != 0 && Arguments.Verbose)
-            {
-                var error = await process.StandardError.ReadToEndAsync();
-                Logger.LogDebug("chmod warning: {0}", error);
-            }
-        }
-    }
-
-    #endregion
+    #endregion File Permissions
 
     #region Package Building
 
@@ -769,7 +499,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         arguments.Append($" --define \"_rpmdir {rpmOutputDir}\"");
         arguments.Append(" --define \"_build_id_links none\"");
         arguments.Append(" --noclean");
-        arguments.Append($" --target {GetRpmArch()}");
+        arguments.Append($" --target {GetLinuxArchitecture("rpm")}");
 
         if (Arguments.Verbose)
             arguments.Append(" -v");
@@ -820,7 +550,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
     private void MoveGeneratedRpm(string rpmOutputDir)
     {
         // rpmbuild creates a subdirectory by architecture (e.g., RPMS/x86_64/)
-        var archDir = Path.Combine(rpmOutputDir, GetRpmArch());
+        var archDir = Path.Combine(rpmOutputDir, GetLinuxArchitecture("rpm"));
 
         if (!Directory.Exists(archDir))
         {
@@ -850,7 +580,7 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         Logger.LogInfo("RPM moved from {0} to {1}", sourceRpm, OutputPath);
     }
 
-    #endregion
+    #endregion Package Building
 
     #region Validation Helpers
 
@@ -877,5 +607,5 @@ public class RpmPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    #endregion
+    #endregion Validation Helpers
 }

@@ -1,10 +1,10 @@
-﻿using System.Diagnostics;
-using System.Text;
-using Netloy.ConsoleApp.Argument;
+﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
+using System.Text;
 
 namespace Netloy.ConsoleApp.Package.Mac;
 
@@ -18,7 +18,7 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
     private const string InfoPlistFileName = "Info.plist";
     private const string PkgInfoFileName = "PkgInfo";
 
-    #endregion
+    #endregion Constants
 
     #region Properties
 
@@ -29,7 +29,7 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
     public string ResourcesDirectory { get; protected set; }
     public string InfoPlistPath { get; protected set; }
 
-    #endregion
+    #endregion Properties
 
     protected MacOsPackageBuilderBase(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {
@@ -59,7 +59,7 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
         Logger.LogInfo("App bundle structure created at: {0}", AppBundlePath);
     }
 
-    #endregion
+    #endregion App Bundle Structure
 
     #region File Operations
 
@@ -163,7 +163,7 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
         }
     }
 
-    #endregion
+    #endregion File Operations
 
     #region Code Signing
 
@@ -332,7 +332,7 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
         }
     }
 
-    #endregion
+    #endregion Code Signing
 
     #region Notarization
 
@@ -587,7 +587,7 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
         }
     }
 
-    #endregion
+    #endregion Notarization
 
     #region Security Helpers
 
@@ -620,7 +620,7 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
         return sanitized;
     }
 
-    #endregion
+    #endregion Security Helpers
 
     #region Validation
 
@@ -650,5 +650,5 @@ public abstract class MacOsPackageBuilderBase : PackageBuilderBase
         throw new InvalidOperationException(errorMessage);
     }
 
-    #endregion
+    #endregion Validation
 }

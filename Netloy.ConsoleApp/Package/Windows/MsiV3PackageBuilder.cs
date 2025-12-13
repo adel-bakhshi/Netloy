@@ -1,14 +1,14 @@
-﻿using System.Diagnostics;
+﻿using Netloy.ConsoleApp.Argument;
+using Netloy.ConsoleApp.Configuration;
+using Netloy.ConsoleApp.Extensions;
+using Netloy.ConsoleApp.Macro;
+using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using Netloy.ConsoleApp.Argument;
-using Netloy.ConsoleApp.Configuration;
-using Netloy.ConsoleApp.Extensions;
-using Netloy.ConsoleApp.Macro;
-using Netloy.ConsoleApp.NetloyLogger;
 
 namespace Netloy.ConsoleApp.Package.Windows;
 
@@ -35,13 +35,13 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         "WixUtilExtension.dll"
     ];
 
-    #endregion
+    #endregion Constants
 
     #region Private Fields
 
     private readonly List<string> _fileComponentIds;
 
-    #endregion
+    #endregion Private Fields
 
     #region Properties
 
@@ -52,7 +52,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
     public string TerminalIcon { get; }
     public string RegistryKeyPathRoot { get; }
 
-    #endregion
+    #endregion Properties
 
     public MsiV3PackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {
@@ -113,7 +113,6 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         if (!Configurations.SetupUninstallScript.IsStringNullOrEmpty() && !File.Exists(Configurations.SetupUninstallScript))
             errors.Add($"Setup uninstall script file not found: {Configurations.SetupUninstallScript}");
 
-
         if (!Configurations.MsiUpgradeCode.IsStringNullOrEmpty() && !Guid.TryParse(Configurations.MsiUpgradeCode, out _))
             errors.Add($"Invalid MsiUpgradeCode: {Configurations.MsiUpgradeCode}. Must be a valid GUID.");
 
@@ -156,7 +155,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         Logger.LogSuccess("WiX v3 tools installed successfully!");
     }
 
-    #endregion
+    #endregion WiX Tools Management
 
     #region WiX Source Generation
 
@@ -921,7 +920,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
             .Replace("\"", "^\"");
     }
 
-    #endregion
+    #endregion WiX Source Generation
 
     #region Helper Methods
 
@@ -972,7 +971,7 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         return rtfPath;
     }
 
-    #endregion
+    #endregion Helper Methods
 
     #region Candle & Light Execution
 
@@ -1079,5 +1078,5 @@ public class MsiV3PackageBuilder : PackageBuilderBase, IPackageBuilder
         processInfo.Environment.Remove("DOTNET_STARTUP_HOOKS");
     }
 
-    #endregion
+    #endregion Candle & Light Execution
 }

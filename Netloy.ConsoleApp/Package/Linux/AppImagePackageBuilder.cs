@@ -1,33 +1,26 @@
-﻿using System.Diagnostics;
-using System.Text;
-using System.Text.RegularExpressions;
-using Netloy.ConsoleApp.Argument;
+﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Netloy.ConsoleApp.Package.Linux;
 
 /// <summary>
 /// Package builder for AppImage format on Linux
 /// </summary>
-public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
+public partial class AppImagePackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
 {
     #region Constants
 
     private const string AppRunFileName = "AppRun";
-    private const string DesktopFileExtension = ".desktop";
-    private const string MetaInfoFileExtension = ".appdata.xml";
 
-    #endregion
+    #endregion Constants
 
     #region Properties
-
-    /// <summary>
-    /// usr directory inside AppDir
-    /// </summary>
-    public string UsrDirectory { get; private set; } = string.Empty;
 
     /// <summary>
     /// usr/bin directory inside AppDir (where dotnet publish output goes)
@@ -35,44 +28,14 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
     public string PublishOutputDir { get; private set; } = string.Empty;
 
     /// <summary>
-    /// usr/share directory inside AppDir
-    /// </summary>
-    public string UsrShareDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/applications directory
-    /// </summary>
-    public string ApplicationsDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/metainfo directory
-    /// </summary>
-    public string MetaInfoDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/icons directory
-    /// </summary>
-    public string IconsShareDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
     /// Desktop file path in AppDir root
     /// </summary>
     public string RootDesktopFile { get; private set; } = string.Empty;
 
     /// <summary>
-    /// Desktop file path in usr/share/applications
-    /// </summary>
-    public string ShareDesktopFile { get; private set; } = string.Empty;
-
-    /// <summary>
     /// MetaInfo file path in AppDir root
     /// </summary>
     public string RootMetaInfoFile { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// MetaInfo file path in usr/share/metainfo
-    /// </summary>
-    public string ShareMetaInfoFile { get; private set; } = string.Empty;
 
     /// <summary>
     /// AppRun script path in AppDir root
@@ -84,7 +47,9 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
     /// </summary>
     public string OutputPath { get; }
 
-    #endregion
+    protected override string InstallExec => $"/usr/bin/{AppExecName}";
+
+    #endregion Properties
 
     public AppImagePackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {
@@ -95,7 +60,7 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         OutputPath = Path.Combine(OutputDirectory, OutputName);
 
         // Set install exec
-        MacroExpander.SetMacroValue(MacroId.InstallExec, $"/usr/bin/{AppExecName}");
+        MacroExpander.SetMacroValue(MacroId.InstallExec, InstallExec);
     }
 
     #region IPackageBuilder Implementation
@@ -169,31 +134,24 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    #endregion
+    #endregion IPackageBuilder Implementation
 
     #region Directory Structure Creation
 
     private void InitializeDirectoryPaths()
     {
-        // usr directory structure
-        UsrDirectory = Path.Combine(RootDirectory, "usr");
-        PublishOutputDir = Path.Combine(UsrDirectory, "bin");
-        UsrShareDirectory = Path.Combine(UsrDirectory, "share");
+        // Initialize common linux directories
+        InitializeCommonLinuxDirectories(RootDirectory);
 
-        // Subdirectories under usr/share
-        ApplicationsDirectory = Path.Combine(UsrShareDirectory, "applications");
-        MetaInfoDirectory = Path.Combine(UsrShareDirectory, "metainfo");
-        IconsShareDirectory = Path.Combine(UsrShareDirectory, "icons", "hicolor");
+        // usr directory structure
+        PublishOutputDir = UsrBinDirectory;
 
         // File paths
-        var desktopFileName = $"{Configurations.AppId}{DesktopFileExtension}";
-        var metaInfoFileName = $"{Configurations.AppId}{MetaInfoFileExtension}";
+        var desktopFileName = Configurations.AppId + DesktopFileExtension;
+        var metaInfoFileName = Configurations.AppId + MetaInfoFileExtension;
 
         RootDesktopFile = Path.Combine(RootDirectory, desktopFileName);
-        ShareDesktopFile = Path.Combine(ApplicationsDirectory, desktopFileName);
-
         RootMetaInfoFile = Path.Combine(RootDirectory, metaInfoFileName);
-        ShareMetaInfoFile = Path.Combine(MetaInfoDirectory, metaInfoFileName);
 
         AppRunPath = Path.Combine(RootDirectory, AppRunFileName);
     }
@@ -202,27 +160,13 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
     {
         Logger.LogInfo("Creating AppDir structure...");
 
-        // Create usr directory structure
-        Directory.CreateDirectory(UsrDirectory);
-        Directory.CreateDirectory(PublishOutputDir);
-        Directory.CreateDirectory(UsrShareDirectory);
-
-        // Create subdirectories under usr/share
-        Directory.CreateDirectory(ApplicationsDirectory);
-        Directory.CreateDirectory(MetaInfoDirectory);
-        Directory.CreateDirectory(IconsShareDirectory);
-
-        // Create icon directories for different sizes
-        foreach (var size in IconHelper.GetIconSizes())
-        {
-            var sizeDir = Path.Combine(IconsShareDirectory, size, "apps");
-            Directory.CreateDirectory(sizeDir);
-        }
+        // Create common linux directories
+        CreateCommonLinuxDirectories();
 
         Logger.LogSuccess("AppDir structure created at: {0}", RootDirectory);
     }
 
-    #endregion
+    #endregion Directory Structure Creation
 
     #region File Operations
 
@@ -230,13 +174,10 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
     {
         Logger.LogInfo("Copying desktop file...");
 
-        // Read desktop file content and expand macros
-        var desktopContent = await File.ReadAllTextAsync(Configurations.DesktopFile);
-        desktopContent = MacroExpander.ExpandMacros(desktopContent);
+        await CopyDesktopFileAsync();
 
         // Write to both root and share locations (required for AppImage validation)
-        await File.WriteAllTextAsync(RootDesktopFile, desktopContent, Constants.Utf8WithoutBom);
-        await File.WriteAllTextAsync(ShareDesktopFile, desktopContent, Constants.Utf8WithoutBom);
+        File.Copy(DesktopFilePath, RootDesktopFile, true);
 
         Logger.LogSuccess("Desktop file copied to root and share: {0}", Path.GetFileName(RootDesktopFile));
     }
@@ -252,13 +193,10 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
 
         Logger.LogInfo("Copying metainfo file...");
 
-        // Read metainfo content and expand macros
-        var metaInfoContent = await File.ReadAllTextAsync(Configurations.MetaFile);
-        metaInfoContent = MacroExpander.ExpandMacros(metaInfoContent);
+        await CopyMetaInfoFileAsync();
 
         // Write to both root and share locations
-        await File.WriteAllTextAsync(RootMetaInfoFile, metaInfoContent, Constants.Utf8WithoutBom);
-        await File.WriteAllTextAsync(ShareMetaInfoFile, metaInfoContent, Constants.Utf8WithoutBom);
+        File.Copy(MetaInfoFilePath, RootMetaInfoFile, true);
 
         Logger.LogSuccess("MetaInfo file copied to root and share: {0}", Path.GetFileName(RootMetaInfoFile));
     }
@@ -294,74 +232,9 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
             Logger.LogInfo("Root icon copied: {0}", Path.GetFileName(rootIconPath));
         }
 
-        // Copy all icons to appropriate size directories in usr/share/icons
-        foreach (var iconPath in pngIcons)
-        {
-            var fileName = Path.GetFileName(iconPath);
-            var sizeDir = DetermineIconSize(iconPath);
-
-            var targetDir = Path.Combine(IconsShareDirectory, sizeDir, "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.png");
-
-            Directory.CreateDirectory(targetDir);
-            File.Copy(iconPath, targetPath, true);
-
-            if (Arguments.Verbose)
-                Logger.LogDebug("Icon copied to {0}: {1}", sizeDir, fileName);
-        }
-
-        // Also copy SVG icons if available
-        var svgIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".svg", StringComparison.OrdinalIgnoreCase));
-        if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
-        {
-            var targetDir = Path.Combine(IconsShareDirectory, "scalable", "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.svg");
-
-            Directory.CreateDirectory(targetDir);
-            File.Copy(svgIcon, targetPath, true);
-
-            Logger.LogInfo("SVG icon copied to scalable directory");
-        }
+        CopyAndOrganizeIcons(includePixmaps: false);
 
         Logger.LogSuccess("Icons organized successfully!");
-    }
-
-    private static string DetermineIconSize(string iconPath)
-    {
-        var fileName = Path.GetFileName(iconPath);
-
-        // Try to extract size from filename (e.g., icon.128x128.png)
-        if (fileName.Contains("1024x1024"))
-            return "1024x1024";
-
-        if (fileName.Contains("512x512"))
-            return "512x512";
-
-        if (fileName.Contains("256x256"))
-            return "256x256";
-
-        if (fileName.Contains("128x128"))
-            return "128x128";
-
-        if (fileName.Contains("96x96"))
-            return "96x96";
-
-        if (fileName.Contains("64x64"))
-            return "64x64";
-
-        if (fileName.Contains("48x48"))
-            return "48x48";
-
-        if (fileName.Contains("32x32"))
-            return "32x32";
-
-        if (fileName.Contains("24x24"))
-            return "24x24";
-
-        if (fileName.Contains("16x16"))
-            return "16x16";
-
-        throw new InvalidOperationException($"Unable to determine icon size for {fileName}");
     }
 
     private async Task CreateAppRunScriptAsync()
@@ -403,18 +276,6 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         await File.WriteAllTextAsync(AppRunPath, appRunContent, new UTF8Encoding(false)); // UTF8 without BOM
 
         Logger.LogSuccess("AppRun script created: {0}", AppRunPath);
-    }
-
-    private string GetArchLibPath()
-    {
-        return Arguments.Runtime?.ToLowerInvariant() switch
-        {
-            "linux-x64" => "x86_64-linux-gnu",
-            "linux-arm64" => "aarch64-linux-gnu",
-            "linux-arm" => "arm-linux-gnueabihf",
-            "linux-x86" => "i386-linux-gnu",
-            _ => "x86_64-linux-gnu" // default fallback
-        };
     }
 
     private async Task SetExecutablePermissionsAsync()
@@ -521,7 +382,7 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    #endregion
+    #endregion File Operations
 
     #region AppImage Building
 
@@ -529,7 +390,7 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
     {
         Logger.LogInfo("Building AppImage with appimagetool...");
 
-        var arch = GetAppImageArch();
+        var arch = GetLinuxArchitecture("appimage");
 
         // Prepare appimagetool arguments
         var arguments = $"\"{RootDirectory}\" \"{OutputPath}\"";
@@ -627,19 +488,7 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    private string GetAppImageArch()
-    {
-        return Arguments.Runtime?.ToLowerInvariant() switch
-        {
-            "linux-x64" => "x86_64",
-            "linux-x86" => "i686",
-            "linux-arm64" => "arm_aarch64",
-            "linux-arm" => "arm",
-            _ => throw new InvalidOperationException($"Unsupported runtime for AppImage: {Arguments.Runtime}")
-        };
-    }
-
-    #endregion
+    #endregion AppImage Building
 
     #region Validation Helpers
 
@@ -664,11 +513,6 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         {
             return false;
         }
-    }
-
-    private bool HasRequiredIcons()
-    {
-        return Configurations.IconsCollection.Any(icon => icon.EndsWith(".png", StringComparison.OrdinalIgnoreCase));
     }
 
     private static async Task<bool> ShouldUseExtractAndRunAsync()
@@ -739,7 +583,7 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
     {
         try
         {
-            var versionMatch = Regex.Match(osRelease, @"VERSION_ID=""(\d+)");
+            var versionMatch = ExtractFuseVersionRegex().Match(osRelease);
             return versionMatch.Success ? int.Parse(versionMatch.Groups[1].Value) : 0;
         }
         catch
@@ -748,5 +592,8 @@ public class AppImagePackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    #endregion
+    [GeneratedRegex(@"VERSION_ID=""(\d+)")]
+    private static partial Regex ExtractFuseVersionRegex();
+
+    #endregion Validation Helpers
 }

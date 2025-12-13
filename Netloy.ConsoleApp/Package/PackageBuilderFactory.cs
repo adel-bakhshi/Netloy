@@ -1,11 +1,11 @@
-﻿using System.Runtime.InteropServices;
-using Netloy.ConsoleApp.Argument;
+﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.NetloyLogger;
 using Netloy.ConsoleApp.Package.Linux;
 using Netloy.ConsoleApp.Package.Mac;
 using Netloy.ConsoleApp.Package.Windows;
+using System.Runtime.InteropServices;
 
 namespace Netloy.ConsoleApp.Package;
 
@@ -16,7 +16,7 @@ public class PackageBuilderFactory
     private readonly Arguments _arguments;
     private readonly Configurations _configurations;
 
-    #endregion
+    #endregion Private Fields
 
     public PackageBuilderFactory(Arguments arguments, Configurations configurations)
     {

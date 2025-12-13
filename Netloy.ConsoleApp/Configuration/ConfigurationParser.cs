@@ -1,8 +1,8 @@
 ﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Extensions;
+using Netloy.ConsoleApp.Helpers;
 using Netloy.ConsoleApp.NetloyLogger;
 using System.Text;
-using Netloy.ConsoleApp.Helpers;
 
 namespace Netloy.ConsoleApp.Configuration;
 
@@ -13,7 +13,7 @@ public class ConfigurationParser
     private readonly Arguments _arguments;
     private readonly Dictionary<string, string> _settings = new(StringComparer.OrdinalIgnoreCase);
 
-    #endregion
+    #endregion Private Fields
 
     #region Public Methods
 
@@ -24,7 +24,7 @@ public class ConfigurationParser
         _arguments = arguments;
     }
 
-    #endregion
+    #endregion Constructor
 
     public async Task<Configurations> ParseAsync()
     {
@@ -130,7 +130,7 @@ public class ConfigurationParser
         Logger.LogInfo("Original file backed up to: {0}", backupPath);
     }
 
-    #endregion
+    #endregion Public Methods
 
     #region Private Methods - Parsing
 
@@ -683,7 +683,7 @@ public class ConfigurationParser
             property.SetValue(config, value);
     }
 
-    #endregion
+    #endregion Private Methods - Parsing
 
     #region Private Methods - Generation
 
@@ -1624,7 +1624,7 @@ public class ConfigurationParser
         };
     }
 
-    #endregion
+    #endregion Private Methods - Generation
 
     #region Helper Methods
 
@@ -1670,5 +1670,5 @@ public class ConfigurationParser
         }
     }
 
-    #endregion
+    #endregion Helper Methods
 }

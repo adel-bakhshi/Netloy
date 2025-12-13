@@ -1,11 +1,11 @@
-﻿using System.Diagnostics;
-using System.Text;
-using Netloy.ConsoleApp.Argument;
+﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.Helpers;
 using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
+using System.Text;
 
 namespace Netloy.ConsoleApp.Package.Linux;
 
@@ -20,7 +20,7 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
     private const string MetaInfoFileExtension = ".appdata.xml";
     private const string ManifestFileName = "manifest.yml";
 
-    #endregion
+    #endregion Constants
 
     #region Properties
 
@@ -84,7 +84,7 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
     /// </summary>
     public string StateDirectory { get; private set; } = string.Empty;
 
-    #endregion
+    #endregion Properties
 
     public FlatpakPackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {
@@ -190,7 +190,7 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    #endregion
+    #endregion IPackageBuilder Implementation
 
     #region Directory Structure Creation
 
@@ -246,7 +246,7 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
         Logger.LogSuccess("Flatpak directory structure created at: {0}", RootDirectory);
     }
 
-    #endregion
+    #endregion Directory Structure Creation
 
     #region File Operations
 
@@ -508,7 +508,7 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
         };
     }
 
-    #endregion
+    #endregion File Operations
 
     #region Validation Helpers
 
@@ -543,5 +543,5 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
             icon.EndsWith(".svg", StringComparison.OrdinalIgnoreCase));
     }
 
-    #endregion
+    #endregion Validation Helpers
 }

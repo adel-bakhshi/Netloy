@@ -288,7 +288,7 @@ public static partial class AppStreamMetadataHelper
             .Replace("'", "&apos;");
     }
 
-    #endregion
+    #endregion Private Helper Methods
 
     #region Helper Classes
 
@@ -298,7 +298,7 @@ public static partial class AppStreamMetadataHelper
     [GeneratedRegex(@"\+\s*Version\s+([\d.]+)\s*;\s*(\d{4})-(\d{2})-(\d{2})")]
     private static partial Regex ReleaseHeaderRegex();
 
-    #endregion
+    #endregion Helper Classes
 }
 
 internal class ReleaseInfo

@@ -1,25 +1,23 @@
-﻿using System.Diagnostics;
-using System.Text;
-using Netloy.ConsoleApp.Argument;
+﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
+using System.Text;
 
 namespace Netloy.ConsoleApp.Package.Linux;
 
 /// <summary>
 /// Package builder for Debian (.deb) packages on Linux
 /// </summary>
-public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
+public class DebPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
 {
     #region Constants
 
     private const string ControlFileName = "control";
-    private const string DesktopFileExtension = ".desktop";
-    private const string MetaInfoFileExtension = ".appdata.xml";
 
-    #endregion
+    #endregion Constants
 
     #region Private Fields
 
@@ -28,12 +26,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
     /// </summary>
     private readonly string _debianPackageName;
 
-    /// <summary>
-    /// Install path for the executable
-    /// </summary>
-    private string InstallExec => $"/opt/{Configurations.AppId}/{AppExecName}";
-
-    #endregion
+    #endregion Private Fields
 
     #region Properties
 
@@ -53,44 +46,9 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
     public string PublishOutputDir { get; private set; } = string.Empty;
 
     /// <summary>
-    /// usr directory inside package
-    /// </summary>
-    public string UsrDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/bin directory (for launcher script)
-    /// </summary>
-    public string UsrBinDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share directory
-    /// </summary>
-    public string UsrShareDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/applications directory
-    /// </summary>
-    public string ApplicationsDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/metainfo directory
-    /// </summary>
-    public string MetaInfoDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// usr/share/icons directory
-    /// </summary>
-    public string IconsShareDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
     /// usr/share/doc/{PackageName} directory
     /// </summary>
     public string DocDirectory { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// Pixmaps directory for backward compatibility
-    /// </summary>
-    public string PixmapsDirectory { get; private set; } = string.Empty;
 
     /// <summary>
     /// Control file path
@@ -98,21 +56,14 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
     public string ControlFilePath { get; private set; } = string.Empty;
 
     /// <summary>
-    /// Desktop file path in usr/share/applications
-    /// </summary>
-    public string DesktopFilePath { get; private set; } = string.Empty;
-
-    /// <summary>
-    /// MetaInfo file path in usr/share/metainfo
-    /// </summary>
-    public string MetaInfoFilePath { get; private set; } = string.Empty;
-
-    /// <summary>
     /// Final .deb output path
     /// </summary>
     public string OutputPath { get; }
 
-    #endregion
+    /// <inheritdoc/>
+    protected override string InstallExec => $"/opt/{Configurations.AppId}/{AppExecName}";
+
+    #endregion Properties
 
     public DebPackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {
@@ -152,7 +103,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         await CopyMetaInfoFileAsync();
 
         // Copy and organize icons
-        CopyAndOrganizeIcons();
+        CopyAndOrganizeIcons(includePixmaps: true);
 
         // Copy license file if exists
         CopyLicenseFile();
@@ -217,7 +168,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    #endregion
+    #endregion IPackageBuilder Implementation
 
     #region Directory Structure Creation
 
@@ -231,26 +182,10 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         OptDirectory = Path.Combine(RootDirectory, "opt", Configurations.AppId);
         PublishOutputDir = OptDirectory;
 
-        // usr directory structure
-        UsrDirectory = Path.Combine(RootDirectory, "usr");
-        UsrBinDirectory = Path.Combine(UsrDirectory, "bin");
-        UsrShareDirectory = Path.Combine(UsrDirectory, "share");
+        // Initialize common linux directories
+        InitializeCommonLinuxDirectories(RootDirectory);
 
-        // Subdirectories under usr/share
-        ApplicationsDirectory = Path.Combine(UsrShareDirectory, "applications");
-        MetaInfoDirectory = Path.Combine(UsrShareDirectory, "metainfo");
-        IconsShareDirectory = Path.Combine(UsrShareDirectory, "icons", "hicolor");
         DocDirectory = Path.Combine(UsrShareDirectory, "doc", _debianPackageName);
-
-        // usr/share/pixmaps (for backward compatibility)
-        PixmapsDirectory = Path.Combine(UsrShareDirectory, "pixmaps");
-
-        // File paths
-        var desktopFileName = $"{Configurations.AppId}{DesktopFileExtension}";
-        var metaInfoFileName = $"{Configurations.AppId}{MetaInfoFileExtension}";
-
-        DesktopFilePath = Path.Combine(ApplicationsDirectory, desktopFileName);
-        MetaInfoFilePath = Path.Combine(MetaInfoDirectory, metaInfoFileName);
     }
 
     private void CreateDebianStructure()
@@ -259,213 +194,25 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
 
         // Create DEBIAN directory
         Directory.CreateDirectory(DebianDirectory);
-
         // Create opt directory (for application binaries)
         Directory.CreateDirectory(OptDirectory);
 
-        // Create usr directory structure
-        Directory.CreateDirectory(UsrDirectory);
-        Directory.CreateDirectory(UsrBinDirectory);
-        Directory.CreateDirectory(UsrShareDirectory);
+        // Create common linux directories
+        CreateCommonLinuxDirectories();
 
-        // Create subdirectories under usr/share
-        Directory.CreateDirectory(ApplicationsDirectory);
-        Directory.CreateDirectory(MetaInfoDirectory);
-        Directory.CreateDirectory(IconsShareDirectory);
+        // Create doc directory
         Directory.CreateDirectory(DocDirectory);
-
-        // Create pixmaps directory
-        Directory.CreateDirectory(PixmapsDirectory);
-
-        // Create icon directories for different sizes
-        IconHelper.GetIconSizes()
-            .ConvertAll(size => Path.Combine(IconsShareDirectory, size, "apps"))
-            .ForEach(dir => Directory.CreateDirectory(dir));
 
         Logger.LogSuccess("Debian package structure created at: {0}", RootDirectory);
     }
 
-    #endregion
+    #endregion Directory Structure Creation
 
     #region File Operations
 
-    private async Task CopyDesktopFileAsync()
+    protected override string GetLicenseTargetPath()
     {
-        Logger.LogInfo("Copying desktop file...");
-
-        // Read desktop file content and expand macros
-        var desktopContent = await File.ReadAllTextAsync(Configurations.DesktopFile);
-        desktopContent = MacroExpander.ExpandMacros(desktopContent);
-
-        // Write to applications directory
-        await File.WriteAllTextAsync(DesktopFilePath, desktopContent, Constants.Utf8WithoutBom);
-
-        Logger.LogSuccess("Desktop file copied: {0}", Path.GetFileName(DesktopFilePath));
-    }
-
-    private async Task CopyMetaInfoFileAsync()
-    {
-        // MetaInfo file is optional
-        if (Configurations.MetaFile.IsStringNullOrEmpty() || !File.Exists(Configurations.MetaFile))
-        {
-            Logger.LogInfo("MetaInfo file not provided. Skipping...");
-            return;
-        }
-
-        Logger.LogInfo("Copying metainfo file...");
-
-        // Read metainfo content and expand macros
-        var metaInfoContent = await File.ReadAllTextAsync(Configurations.MetaFile);
-        metaInfoContent = MacroExpander.ExpandMacros(metaInfoContent);
-
-        // Write to metainfo directory
-        await File.WriteAllTextAsync(MetaInfoFilePath, metaInfoContent, Constants.Utf8WithoutBom);
-
-        Logger.LogSuccess("MetaInfo file copied: {0}", Path.GetFileName(MetaInfoFilePath));
-    }
-
-    private void CopyAndOrganizeIcons()
-    {
-        Logger.LogInfo("Copying and organizing icons...");
-
-        // Get all PNG icons
-        var pngIcons = Configurations.IconsCollection
-            .Where(ico => Path.GetExtension(ico).Equals(".png", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        // Copy all icons to appropriate size directories
-        foreach (var iconPath in pngIcons)
-        {
-            if (!File.Exists(iconPath))
-            {
-                Logger.LogWarning("Icon file not found: {0}", iconPath);
-                continue;
-            }
-
-            var fileName = Path.GetFileName(iconPath);
-            var sizeDir = DetermineIconSize(iconPath);
-            var targetDir = Path.Combine(IconsShareDirectory, sizeDir, "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.png");
-
-            Directory.CreateDirectory(targetDir);
-            File.Copy(iconPath, targetPath, true);
-
-            if (Arguments.Verbose)
-                Logger.LogDebug("Icon copied to {0}: {1}", sizeDir, fileName);
-        }
-
-        // Also copy SVG icons if available
-        var svgIcon = Configurations.IconsCollection.Find(ico => Path.GetExtension(ico).Equals(".svg", StringComparison.OrdinalIgnoreCase));
-        if (!svgIcon.IsStringNullOrEmpty() && File.Exists(svgIcon))
-        {
-            var targetDir = Path.Combine(IconsShareDirectory, "scalable", "apps");
-            var targetPath = Path.Combine(targetDir, $"{Configurations.AppId}.svg");
-
-            Directory.CreateDirectory(targetDir);
-            File.Copy(svgIcon, targetPath, true);
-
-            Logger.LogInfo("SVG icon copied to scalable directory");
-        }
-
-        // Copy the largest icon to pixmaps (for backward compatibility)
-        var largestIcon = Configurations.IconsCollection
-            .Where(ico => Path.GetExtension(ico).Equals(".png", StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(ico =>
-            {
-                var fileName = Path.GetFileName(ico);
-                if (fileName.Contains("1024x1024"))
-                    return 1024;
-
-                if (fileName.Contains("512x512"))
-                    return 512;
-
-                if (fileName.Contains("256x256"))
-                    return 256;
-
-                return 0;
-            })
-            .FirstOrDefault();
-
-        if (!largestIcon.IsStringNullOrEmpty() && File.Exists(largestIcon))
-        {
-            var pixmapPath = Path.Combine(PixmapsDirectory, $"{Configurations.AppId}.png");
-            File.Copy(largestIcon, pixmapPath, true);
-            Logger.LogInfo("Icon copied to pixmaps directory");
-        }
-
-        Logger.LogSuccess("Icons organized successfully!");
-    }
-
-    private static string DetermineIconSize(string iconPath)
-    {
-        var fileName = Path.GetFileName(iconPath);
-
-        // Try to extract size from filename (e.g., icon.128x128.png)
-        if (fileName.Contains("1024x1024"))
-            return "1024x1024";
-
-        if (fileName.Contains("512x512"))
-            return "512x512";
-
-        if (fileName.Contains("256x256"))
-            return "256x256";
-
-        if (fileName.Contains("128x128"))
-            return "128x128";
-
-        if (fileName.Contains("96x96"))
-            return "96x96";
-
-        if (fileName.Contains("64x64"))
-            return "64x64";
-
-        if (fileName.Contains("48x48"))
-            return "48x48";
-
-        if (fileName.Contains("32x32"))
-            return "32x32";
-
-        if (fileName.Contains("24x24"))
-            return "24x24";
-
-        if (fileName.Contains("16x16"))
-            return "16x16";
-
-        throw new InvalidOperationException($"Unable to determine icon size for {fileName}");
-    }
-
-    private void CopyLicenseFile()
-    {
-        if (Configurations.AppLicenseFile.IsStringNullOrEmpty() || !File.Exists(Configurations.AppLicenseFile))
-        {
-            Logger.LogInfo("License file not provided. Skipping...");
-            return;
-        }
-
-        Logger.LogInfo("Copying license file...");
-
-        var dest = Path.Combine(DocDirectory, "copyright");
-        File.Copy(Configurations.AppLicenseFile, dest, true);
-
-        Logger.LogSuccess("License file copied to: {0}", dest);
-    }
-
-    private async Task CreateLauncherScriptAsync()
-    {
-        if (Configurations.StartCommand.IsStringNullOrEmpty())
-        {
-            Logger.LogInfo("Start command not configured. Skipping launcher script...");
-            return;
-        }
-
-        Logger.LogInfo("Creating launcher script...");
-
-        var scriptPath = Path.Combine(UsrBinDirectory, Configurations.StartCommand);
-        var scriptContent = $"#!/bin/sh\nexec {InstallExec} \"$@\"";
-
-        await File.WriteAllTextAsync(scriptPath, scriptContent, new UTF8Encoding(false));
-
-        Logger.LogSuccess("Launcher script created: {0}", scriptPath);
+        return Path.Combine(DocDirectory, "copyright");
     }
 
     private async Task GenerateControlFileAsync()
@@ -477,7 +224,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         // Required fields
         sb.AppendLine($"Package: {_debianPackageName}");
         sb.AppendLine($"Version: {AppVersion}-{PackageRelease}");
-        sb.AppendLine($"Architecture: {GetDebianArch()}");
+        sb.AppendLine($"Architecture: {GetLinuxArchitecture("debian")}");
 
         // Optional but recommended fields
         sb.AppendLine($"Maintainer: {Configurations.PublisherEmail}");
@@ -543,20 +290,6 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         Logger.LogSuccess("Control file generated: {0}", ControlFilePath);
     }
 
-    private string GetDebianArch()
-    {
-        // Map .NET runtime to Debian architecture names
-        // https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-architecture
-        return Arguments.Runtime?.ToLowerInvariant() switch
-        {
-            "linux-x64" => "amd64",
-            "linux-arm64" => "arm64",
-            "linux-x86" => "i386",
-            "linux-arm" => "armhf",
-            _ => "amd64" // default
-        };
-    }
-
     private string GetDebianSection()
     {
         var linuxCategory = MacroExpander.GetMacroValue(MacroId.PrimeCategory);
@@ -591,7 +324,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
                 .Sum(f => new FileInfo(f).Length);
 
             // Convert to KB (rounded up)
-            return totalBytes / 1024 + 1;
+            return (totalBytes / 1024) + 1;
         }
         catch (Exception ex)
         {
@@ -708,31 +441,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    private async Task ExecuteChmodAsync(string arguments)
-    {
-        var processInfo = new ProcessStartInfo
-        {
-            FileName = "chmod",
-            Arguments = arguments,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using var process = Process.Start(processInfo);
-        if (process != null)
-        {
-            await process.WaitForExitAsync();
-            if (process.ExitCode != 0 && Arguments.Verbose)
-            {
-                var error = await process.StandardError.ReadToEndAsync();
-                Logger.LogDebug("chmod warning: {0}", error);
-            }
-        }
-    }
-
-    #endregion
+    #endregion File Operations
 
     #region Package Building
 
@@ -780,7 +489,7 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         Logger.LogSuccess(".deb package built: {0}", Path.GetFileName(OutputPath));
     }
 
-    #endregion
+    #endregion Package Building
 
     #region Validation Helpers
 
@@ -807,5 +516,5 @@ public class DebPackageBuilder : PackageBuilderBase, IPackageBuilder
         }
     }
 
-    #endregion
+    #endregion Validation Helpers
 }

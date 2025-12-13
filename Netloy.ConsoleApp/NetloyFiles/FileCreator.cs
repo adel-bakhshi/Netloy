@@ -1,8 +1,8 @@
 ﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
+using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.NetloyLogger;
 using System.Text;
-using Netloy.ConsoleApp.Extensions;
 
 namespace Netloy.ConsoleApp.NetloyFiles;
 
@@ -12,7 +12,7 @@ public class FileCreator
 
     private readonly Arguments _arguments;
 
-    #endregion
+    #endregion Private Fields
 
     #region Constructor
 
@@ -21,7 +21,7 @@ public class FileCreator
         _arguments = arguments;
     }
 
-    #endregion
+    #endregion Constructor
 
     #region Public Methods
 
@@ -122,7 +122,7 @@ public class FileCreator
         }
     }
 
-    #endregion
+    #endregion Public Methods
 
     #region File Generator
 
@@ -538,5 +538,5 @@ public class FileCreator
         Logger.LogSuccess("macOS entitlements file created: {0}", entitlementsPath);
     }
 
-    #endregion
+    #endregion File Generator
 }

@@ -1,10 +1,10 @@
-﻿using System.Diagnostics;
-using System.Text;
-using Netloy.ConsoleApp.Argument;
+﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
+using System.Text;
 
 namespace Netloy.ConsoleApp.Package.Windows;
 
@@ -15,7 +15,7 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
     private const string InnoSetupCompiler = "iscc";
     private const string PromptBat = "CommandPrompt.bat";
 
-    #endregion
+    #endregion Constants
 
     #region Properties
 
@@ -23,7 +23,7 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
     public string TerminalIcon { get; }
     public string InnoSetupScriptPath { get; }
 
-    #endregion
+    #endregion Properties
 
     public ExePackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {

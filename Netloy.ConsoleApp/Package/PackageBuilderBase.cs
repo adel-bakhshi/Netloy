@@ -639,7 +639,7 @@ public class PackageBuilderBase
             PackageType.Deb => ".deb",
             PackageType.Rpm => ".rpm",
             PackageType.Flatpak => ".flatpak",
-            PackageType.Pacman   => ".pkg.tar.zst",
+            PackageType.Pacman => ".pkg.tar.zst",
             PackageType.Portable => RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ".zip" : ".tar.gz",
             _ => throw new InvalidOperationException("Invalid package type.")
         };

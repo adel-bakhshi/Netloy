@@ -1,8 +1,8 @@
-﻿using System.Diagnostics;
-using Netloy.ConsoleApp.Argument;
+﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
 
 namespace Netloy.ConsoleApp.Package.Mac;
 
@@ -12,7 +12,7 @@ public class DmgPackageBuilder : MacOsPackageBuilderBase, IPackageBuilder
 
     public string DmgPath { get; }
 
-    #endregion
+    #endregion Properties
 
     public DmgPackageBuilder(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {
@@ -219,7 +219,7 @@ public class DmgPackageBuilder : MacOsPackageBuilderBase, IPackageBuilder
         }
     }
 
-    #endregion
+    #endregion DMG Creation
 
     #region DMG Signing
 
@@ -262,7 +262,7 @@ public class DmgPackageBuilder : MacOsPackageBuilderBase, IPackageBuilder
             Logger.LogDebug("codesign output: {0}", output);
     }
 
-    #endregion
+    #endregion DMG Signing
 
     #region DMG Notarization
 
@@ -420,5 +420,5 @@ public class DmgPackageBuilder : MacOsPackageBuilderBase, IPackageBuilder
         Logger.LogSuccess("DMG notarization ticket stapled successfully!");
     }
 
-    #endregion
+    #endregion DMG Notarization
 }

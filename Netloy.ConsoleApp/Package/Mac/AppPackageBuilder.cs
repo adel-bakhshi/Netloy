@@ -1,9 +1,9 @@
-﻿using System.Diagnostics;
-using System.IO.Compression;
-using Netloy.ConsoleApp.Argument;
+﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
 using Netloy.ConsoleApp.NetloyLogger;
+using System.Diagnostics;
+using System.IO.Compression;
 
 namespace Netloy.ConsoleApp.Package.Mac;
 
@@ -203,5 +203,5 @@ public class AppPackageBuilder : MacOsPackageBuilderBase, IPackageBuilder
         }
     }
 
-    #endregion
+    #endregion Zip Archive Creation
 }

@@ -1,6 +1,6 @@
-﻿using System.Reflection;
+﻿using Netloy.ConsoleApp.Extensions;
+using System.Reflection;
 using System.Text;
-using Netloy.ConsoleApp.Extensions;
 
 namespace Netloy.ConsoleApp;
 

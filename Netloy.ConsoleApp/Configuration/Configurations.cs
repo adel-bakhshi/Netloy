@@ -85,5 +85,5 @@ public class Configurations
 
     public List<string> IconsCollection { get; set; } = [];
 
-    #endregion
+    #endregion Properties
 }

@@ -523,6 +523,10 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
             }
         }
 
+        // Add options to disable stripping for .NET self-contained apps
+        sb.AppendLine("options=('!strip')");
+        sb.AppendLine();
+
         // Source (we're using local files that are already in the pkg directory)
         sb.AppendLine("source=()");
         sb.AppendLine("sha256sums=()");
@@ -652,6 +656,7 @@ public class PacmanPackageBuilder : PackageBuilderBase, IPackageBuilder
         arguments.Append(" --skipinteg"); // Skip integrity checks (no source downloads)
         arguments.Append(" --skippgpcheck"); // Skip PGP checks
         arguments.Append(" --skipchecksums"); // Skip checksum verification
+        arguments.Append(" --ignorearch"); // Skip arch check
 
         if (Arguments.Verbose)
             arguments.Append(" --nocolor");

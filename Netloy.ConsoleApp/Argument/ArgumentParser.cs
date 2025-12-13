@@ -189,6 +189,7 @@ public class ArgumentParser
             helpText.AppendLine("                                   deb       - Debian/Ubuntu package");
             helpText.AppendLine("                                   rpm       - RedHat/Fedora package");
             helpText.AppendLine("                                   flatpak   - Flatpak package");
+            helpText.AppendLine("                                   pacman    - Arch package");
             helpText.AppendLine("                                   portable  - Compressed archive");
             helpText.AppendLine("  -r, --runtime <RID>            Target runtime identifier:");
             helpText.AppendLine("                                   linux-x64, linux-arm64, win-x64, osx-x64, osx-arm64");

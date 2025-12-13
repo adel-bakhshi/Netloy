@@ -77,7 +77,7 @@ public class MacroExpander
             return _arguments.PackageType switch
             {
                 PackageType.App or PackageType.Dmg => GetMacOsCategoryType(value),
-                PackageType.AppImage or PackageType.Flatpak or PackageType.Rpm or PackageType.Deb => GetLinuxCategoryType(value),
+                PackageType.AppImage or PackageType.Flatpak or PackageType.Rpm or PackageType.Deb or PackageType.Pacman => GetLinuxCategoryType(value),
                 _ => value
             };
         }
@@ -284,7 +284,7 @@ public class MacroExpander
         AppendMacro(sb, MacroId.InstallExec,
             "Installation path for executable (Linux only)",
             verbose ? "The absolute installation path where the application executable will be installed on Linux.\n" +
-                "This macro is only populated during Linux package builds (DEB, RPM, AppImage, Flatpak).\n" +
+                "This macro is only populated during Linux package builds (DEB, RPM, AppImage, Flatpak, Pacman).\n" +
                 "Use this in desktop files and scripts to reference the installed executable location.\n" +
                 "Example: /usr/bin/myapp or /opt/myapp/bin/myapp" : null,
             verbose);
@@ -298,7 +298,7 @@ public class MacroExpander
             "Type of package being built",
             verbose ? "The target package format specified via --package-type or -t argument. Used to determine\n" +
                 "platform-specific build steps and output format.\n" +
-                "Values: exe, msi, app, dmg, appimage, deb, rpm, flatpak, portable" : null,
+                "Values: exe, msi, app, dmg, appimage, deb, rpm, flatpak, pacman, portable" : null,
             verbose);
 
         AppendMacro(sb, MacroId.PackageArch,

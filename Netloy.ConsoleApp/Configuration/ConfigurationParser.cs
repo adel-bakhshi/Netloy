@@ -971,7 +971,7 @@ public class ConfigurationParser
             AppendComment(sb, "automatically generate all required PNG icon sizes for different platforms (16x16, 24x24, 32x32,");
             AppendComment(sb, "48x48, 64x64, 96x96, 128x128, 256x256, 512x512). Note: SVG (Linux), ICO (Windows) and ICNS (macOS) formats are NOT");
             AppendComment(sb, "generated automatically and must be provided separately by the user. This feature simplifies PNG icon");
-            AppendComment(sb, "management for Linux packages (DEB, RPM, AppImage, Flatpak) while maintaining consistent sizing.");
+            AppendComment(sb, "management for Linux packages (DEB, RPM, AppImage, Flatpak, Pacman) while maintaining consistent sizing.");
             AppendComment(sb, "Default is false.");
             AppendComment(sb, "Example usage:");
             AppendComment(sb, "  AutoGenerateIcons = true");
@@ -1222,7 +1222,7 @@ public class ConfigurationParser
     {
         if (includeComments)
         {
-            AppendSection(sb, "ARCH LINUX PACKAGE");
+            AppendSection(sb, "ARCH LINUX OPTIONS");
 
             AppendComment(sb, "Optional list of runtime dependencies for Arch Linux packages.");
             AppendComment(sb, "The list may include multiple values separated with semicolon or given");

@@ -10,5 +10,6 @@ public enum PackageType : byte
     Deb,
     Rpm,
     Flatpak,
+    Pacman,
     Portable,
 }

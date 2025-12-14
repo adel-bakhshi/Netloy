@@ -95,6 +95,9 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
         var desktopContent = await File.ReadAllTextAsync(Configurations.DesktopFile);
         desktopContent = MacroExpander.ExpandMacros(desktopContent);
 
+        // Convert CRLF to LF for Linux
+        desktopContent = desktopContent.Replace("\r\n", "\n");
+
         // Write to applications directory
         await File.WriteAllTextAsync(DesktopFilePath, desktopContent, Constants.Utf8WithoutBom);
 
@@ -122,6 +125,9 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
         // Read metainfo content and expand macros
         var metaInfoContent = await File.ReadAllTextAsync(Configurations.MetaFile);
         metaInfoContent = MacroExpander.ExpandMacros(metaInfoContent);
+
+        // Convert CRLF to LF for Linux
+        metaInfoContent = metaInfoContent.Replace("\r\n", "\n");
 
         // Write to metainfo directory
         await File.WriteAllTextAsync(MetaInfoFilePath, metaInfoContent, Constants.Utf8WithoutBom);

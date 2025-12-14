@@ -341,7 +341,7 @@ public class ArgumentParser
             normalizedPath = Path.Combine(Directory.GetCurrentDirectory(), normalizedPath);
 
         normalizedPath = Path.GetFullPath(normalizedPath);
-        Logger.LogDebug($"{argumentName} is: '{0}'", normalizedPath);
+        Logger.LogDebug("{0} is: '{1}'", argumentName, normalizedPath);
         return normalizedPath;
     }
 

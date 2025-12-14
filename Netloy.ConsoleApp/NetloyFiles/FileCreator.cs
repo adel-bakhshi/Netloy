@@ -204,7 +204,7 @@ public class FileCreator
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine("<!-- ${PUBLISHER_COPYRIGHT} -->");
         sb.AppendLine("<component type=\"desktop-application\">");
-        sb.AppendLine("  <metadata_license>${APP_LICENSE_ID}</metadata_license>");
+        sb.AppendLine("  <metadata_license>CC0-1.0</metadata_license>");
         sb.AppendLine();
 
         // Note about macros

@@ -37,8 +37,7 @@ public class FileCreator
                 ? outputPath
                 : Path.Combine(currentDir, outputPath!);
 
-            directoryPath = Path.GetDirectoryName(combinedPath)
-                            ?? throw new InvalidOperationException("Cannot detect directory from output path.");
+            directoryPath = Path.GetDirectoryName(combinedPath) ?? throw new InvalidOperationException("Cannot detect directory from output path.");
         }
         else
         {
@@ -64,7 +63,7 @@ public class FileCreator
         {
             var isMultiple = _arguments.NewType == NewFileType.All;
             var message = $"File name{(isMultiple ? "s" : "")} {(isMultiple ? "are" : "is")} " +
-                          $"set to \"{fileName}\" and {(isMultiple ? "they" : "it")} will be saved in \"{directoryPath}\"";
+                $"set to \"{fileName}\" and {(isMultiple ? "they" : "it")} will be saved in \"{directoryPath}\"";
 
             Logger.LogWarning(message);
         }
@@ -162,16 +161,20 @@ public class FileCreator
         sb.AppendLine("[Desktop Entry]");
         sb.AppendLine("Type=Application");
         sb.AppendLine("Name=${APP_FRIENDLY_NAME}");
-        sb.AppendLine("GenericName=${APP_FRIENDLY_NAME}");
         sb.AppendLine("Icon=${APP_ID}");
+        sb.AppendLine("StartupWMClass=${APP_BASE_NAME}");
         sb.AppendLine("Comment=${APP_SHORT_SUMMARY}");
+        sb.AppendLine("GenericName=${APP_FRIENDLY_NAME}");
         sb.AppendLine("Exec=${INSTALL_EXEC}");
         sb.AppendLine("TryExec=${INSTALL_EXEC}");
-        sb.AppendLine("StartupWMClass=${APP_BASE_NAME}");
         sb.AppendLine("NoDisplay=${DESKTOP_NODISPLAY}");
-        sb.AppendLine("X-AppImage-Integrate=${DESKTOP_INTEGRATE}");
         sb.AppendLine("Terminal=${DESKTOP_TERMINAL}");
         sb.AppendLine("Categories=${PRIME_CATEGORY};");
+        sb.AppendLine("X-AppImage-Name=${APP_ID}");
+        sb.AppendLine("X-AppImage-Version=${APP_VERSION}");
+        sb.AppendLine("X-AppImage-Arch=${PACKAGE_ARCH}");
+        sb.AppendLine("MimeType=");
+        sb.AppendLine("Keywords=");
 
         await File.WriteAllTextAsync(desktopFilePath, sb.ToString());
         Logger.LogSuccess("Desktop file created: {0}", desktopFilePath);

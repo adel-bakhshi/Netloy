@@ -212,7 +212,7 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
 
         // Architecture
         var packageArch = GetWindowsPackageArch();
-        if (packageArch is "x64" or "arm64")
+        if (packageArch is "x64compatible" or "arm64")
         {
             // https://jrsoftware.org/ishelp/index.php?topic=setup_architecturesallowed
             sb.AppendLine($"ArchitecturesAllowed={packageArch}");
@@ -335,7 +335,7 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
 
         // Quick Launch Icon
         sb.AppendLine(
-            $"Name: \"{{userappdata}}\\Microsoft\\Internet Explorer\\Quick Launch\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: quicklaunchicon");
+            $"Name: \"{{autoappdata}}\\Microsoft\\Internet Explorer\\Quick Launch\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: quicklaunchicon");
 
         if (!Configurations.DesktopNoDisplay)
         {
@@ -344,13 +344,15 @@ public class ExePackageBuilder : PackageBuilderBase, IPackageBuilder
 
             // Desktop Icon
             sb.AppendLine(
-                $"Name: \"{{userdesktop}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: desktopicon");
+                $"Name: \"{{autodesktop}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: desktopicon");
         }
 
         // Startup Icon
         if (Configurations.SetupStartOnWindowsStartup)
+        {
             sb.AppendLine(
-                $"Name: \"{{userstartup}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: startup");
+                $"Name: \"{{autostartup}}\\{Configurations.AppFriendlyName}\"; Filename: \"{{app}}\\{AppExecName}\"; IconFilename: \"{{app}}\\{iconFileName}\"; Tasks: startup");
+        }
 
         // Uninstaller Icon
         sb.AppendLine($"Name: \"{{group}}\\Uninstall {Configurations.AppFriendlyName}\"; Filename: \"{{uninstallexe}}\"");

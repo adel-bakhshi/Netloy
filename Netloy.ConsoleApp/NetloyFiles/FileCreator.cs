@@ -29,23 +29,26 @@ public class FileCreator
     {
         string directoryPath;
         var outputPath = _arguments.OutputPath;
+        var currentDir = Directory.GetCurrentDirectory();
 
         if (!outputPath.IsStringNullOrEmpty())
         {
             var combinedPath = outputPath!.IsAbsolutePath()
                 ? outputPath
-                : Path.Combine(Constants.ConfigFileDirectory, outputPath!);
+                : Path.Combine(currentDir, outputPath!);
 
             directoryPath = Path.GetDirectoryName(combinedPath)
                             ?? throw new InvalidOperationException("Cannot detect directory from output path.");
         }
         else
         {
-            directoryPath = Constants.ConfigFileDirectory;
+            directoryPath = currentDir;
         }
 
         if (directoryPath.IsStringNullOrEmpty())
             throw new InvalidOperationException("Couldn't find directory to create file(s).");
+
+        Logger.LogInfo($"Creating file(s) in \"{directoryPath}\"");
 
         var fileName = Path.GetFileName(outputPath) ?? string.Empty;
         if (fileName.IsStringNullOrEmpty())

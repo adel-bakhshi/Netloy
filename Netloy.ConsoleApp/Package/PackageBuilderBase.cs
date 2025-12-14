@@ -117,7 +117,8 @@ public class PackageBuilderBase
         {
             return Arguments.Runtime?.ToLowerInvariant() switch
             {
-                "win-x64" => "x64",
+                // Use x64compatible instead of x64 to avoid deprecation warning
+                "win-x64" => Arguments.PackageType == PackageType.Exe ? "x64compatible" : "x64",
                 "win-x86" => "x86",
                 "win-arm64" => "arm64",
                 _ => throw new InvalidOperationException($"Unsupported runtime: {Arguments.Runtime}")

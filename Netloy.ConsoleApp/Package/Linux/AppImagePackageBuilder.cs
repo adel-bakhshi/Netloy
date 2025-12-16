@@ -61,6 +61,8 @@ public partial class AppImagePackageBuilder : LinuxPackageBuilderBase, IPackageB
 
         // Set install exec
         MacroExpander.SetMacroValue(MacroId.InstallExec, InstallExec);
+        // Change package arch macro for AppImage package
+        MacroExpander.SetMacroValue(MacroId.PackageArch, GetLinuxArchitecture());
     }
 
     #region IPackageBuilder Implementation
@@ -390,7 +392,7 @@ public partial class AppImagePackageBuilder : LinuxPackageBuilderBase, IPackageB
     {
         Logger.LogInfo("Building AppImage with appimagetool...");
 
-        var arch = GetLinuxArchitecture("appimage");
+        var arch = GetLinuxArchitecture();
 
         // Prepare appimagetool arguments
         var arguments = $"\"{RootDirectory}\" \"{OutputPath}\"";

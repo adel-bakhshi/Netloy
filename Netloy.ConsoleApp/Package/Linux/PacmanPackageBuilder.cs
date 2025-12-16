@@ -249,7 +249,7 @@ public class PacmanPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
         sb.AppendLine($"pkgver={AppVersion.Replace("-", "_")}"); // Arch doesn't allow hyphens in version
         sb.AppendLine($"pkgrel={PackageRelease}");
         sb.AppendLine($"pkgdesc=\"{Configurations.AppShortSummary}\"");
-        sb.AppendLine($"arch=('{GetLinuxArchitecture("arch")}')");
+        sb.AppendLine($"arch=('{GetLinuxArchitecture()}')");
         sb.AppendLine($"url=\"{Configurations.PublisherLinkUrl}\"");
         sb.AppendLine($"license=('{(!Configurations.AppLicenseId.IsStringNullOrEmpty() ? Configurations.AppLicenseId : "custom")}')");
 

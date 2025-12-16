@@ -499,7 +499,7 @@ public class RpmPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
         arguments.Append($" --define \"_rpmdir {rpmOutputDir}\"");
         arguments.Append(" --define \"_build_id_links none\"");
         arguments.Append(" --noclean");
-        arguments.Append($" --target {GetLinuxArchitecture("rpm")}");
+        arguments.Append($" --target {GetLinuxArchitecture()}");
 
         if (Arguments.Verbose)
             arguments.Append(" -v");
@@ -550,7 +550,7 @@ public class RpmPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
     private void MoveGeneratedRpm(string rpmOutputDir)
     {
         // rpmbuild creates a subdirectory by architecture (e.g., RPMS/x86_64/)
-        var archDir = Path.Combine(rpmOutputDir, GetLinuxArchitecture("rpm"));
+        var archDir = Path.Combine(rpmOutputDir, GetLinuxArchitecture());
 
         if (!Directory.Exists(archDir))
         {

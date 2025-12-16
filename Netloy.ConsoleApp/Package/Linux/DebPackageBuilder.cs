@@ -224,7 +224,7 @@ public class DebPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
         // Required fields
         sb.AppendLine($"Package: {_debianPackageName}");
         sb.AppendLine($"Version: {AppVersion}-{PackageRelease}");
-        sb.AppendLine($"Architecture: {GetLinuxArchitecture("debian")}");
+        sb.AppendLine($"Architecture: {GetLinuxArchitecture()}");
 
         // Optional but recommended fields
         sb.AppendLine($"Maintainer: {Configurations.PublisherEmail}");

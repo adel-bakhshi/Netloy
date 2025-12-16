@@ -393,13 +393,13 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
     /// <summary>
     /// Map .NET runtime identifier to Linux architecture name
     /// </summary>
-    protected string GetLinuxArchitecture(string format)
+    protected string GetLinuxArchitecture()
     {
         var runtime = Arguments.Runtime?.ToLowerInvariant() ?? "linux-x64";
 
-        return format.ToLowerInvariant() switch
+        return Arguments.PackageType switch
         {
-            "debian" => runtime switch
+            PackageType.Deb => runtime switch
             {
                 "linux-x64" => "amd64",
                 "linux-arm64" => "arm64",
@@ -407,7 +407,7 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
                 "linux-arm" => "armhf",
                 _ => "amd64"
             },
-            "rpm" => runtime switch
+            PackageType.Rpm => runtime switch
             {
                 "linux-x64" => "x86_64",
                 "linux-arm64" => "aarch64",
@@ -415,7 +415,7 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
                 "linux-arm" => "armhfp",
                 _ => "x86_64"
             },
-            "arch" => runtime switch
+            PackageType.Pacman => runtime switch
             {
                 "linux-x64" => "x86_64",
                 "linux-arm64" => "aarch64",
@@ -423,7 +423,7 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
                 "linux-arm" => "armv7h",
                 _ => "x86_64"
             },
-            "flatpak" => runtime switch
+            PackageType.Flatpak => runtime switch
             {
                 "linux-x64" => "x86_64",
                 "linux-x86" => "i386",
@@ -431,7 +431,7 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
                 "linux-arm" => "arm",
                 _ => "x86_64"
             },
-            "appimage" => runtime switch
+            PackageType.AppImage => runtime switch
             {
                 "linux-x64" => "x86_64",
                 "linux-arm64" => "arm_aarch64",
@@ -439,7 +439,7 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
                 "linux-x86" => "i686",
                 _ => "x86_64"
             },
-            _ => throw new ArgumentException($"Unknown format: {format}")
+            _ => throw new ArgumentException($"Unknown format: {Arguments.PackageType}")
         };
     }
 

@@ -381,7 +381,12 @@ public class PacmanPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
         arguments.Append(" --skipinteg"); // Skip integrity checks (no source downloads)
         arguments.Append(" --skippgpcheck"); // Skip PGP checks
         arguments.Append(" --skipchecksums"); // Skip checksum verification
-        arguments.Append(" --ignorearch"); // Skip arch check
+
+        // Use this argument only if you intentionally build a package for a different CPU architecture (cross-compile scenario).
+        // When enabled, architecture checks are skipped and the package
+        // can be installed on incompatible systems, which will make the app fail to run.
+        // For normal, user-facing packages you should keep this disabled.
+        //arguments.Append(" --ignorearch"); // Skip arch check
 
         if (Arguments.Verbose)
             arguments.Append(" --nocolor");

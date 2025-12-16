@@ -1,7 +1,6 @@
 ﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
-using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
 using System.Diagnostics;
 using System.Text;
@@ -50,11 +49,6 @@ public class PacmanPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
     /// </summary>
     public string PkgBuildFilePath { get; private set; } = string.Empty;
 
-    /// <summary>
-    /// Final package output path
-    /// </summary>
-    public string OutputPath { get; }
-
     protected override string InstallExec => $"/opt/{Configurations.AppId}/{AppExecName}";
 
     #endregion Properties
@@ -70,12 +64,6 @@ public class PacmanPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
 
         // Initialize directory paths
         InitializeDirectoryPaths();
-
-        // Set output path
-        OutputPath = Path.Combine(OutputDirectory, OutputName);
-
-        // Set install exec in macros
-        MacroExpander.SetMacroValue(MacroId.InstallExec, InstallExec);
     }
 
     #region IPackageBuilder Implementation

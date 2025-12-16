@@ -68,6 +68,11 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
     public string MetaInfoFilePath { get; protected set; } = string.Empty;
 
     /// <summary>
+    /// Final package output path
+    /// </summary>
+    public string OutputPath { get; }
+
+    /// <summary>
     /// Install path for the executable
     /// </summary>
     protected abstract string InstallExec { get; }
@@ -78,6 +83,14 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
 
     protected LinuxPackageBuilderBase(Arguments arguments, Configurations configurations) : base(arguments, configurations)
     {
+        // Set output path
+        OutputPath = Path.Combine(OutputDirectory, OutputName);
+
+        // Set install exec in macros
+        MacroExpander.SetMacroValue(MacroId.InstallExec, InstallExec);
+
+        // Change package arch macro for AppImage package
+        MacroExpander.SetMacroValue(MacroId.PackageArch, GetLinuxArchitecture());
     }
 
     #endregion Constructor
@@ -423,14 +436,6 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
                 "linux-arm" => "armv7h",
                 _ => "x86_64"
             },
-            PackageType.Flatpak => runtime switch
-            {
-                "linux-x64" => "x86_64",
-                "linux-x86" => "i386",
-                "linux-arm64" => "aarch64",
-                "linux-arm" => "arm",
-                _ => "x86_64"
-            },
             PackageType.AppImage => runtime switch
             {
                 "linux-x64" => "x86_64",
@@ -440,21 +445,6 @@ public abstract class LinuxPackageBuilderBase : PackageBuilderBase
                 _ => "x86_64"
             },
             _ => throw new ArgumentException($"Unknown format: {Arguments.PackageType}")
-        };
-    }
-
-    /// <summary>
-    /// Get architecture-specific library path for LD_LIBRARY_PATH
-    /// </summary>
-    protected string GetArchLibPath()
-    {
-        return Arguments.Runtime?.ToLowerInvariant() switch
-        {
-            "linux-x64" => "x86_64-linux-gnu",
-            "linux-arm64" => "aarch64-linux-gnu",
-            "linux-arm" => "arm-linux-gnueabihf",
-            "linux-x86" => "i386-linux-gnu",
-            _ => "x86_64-linux-gnu"
         };
     }
 

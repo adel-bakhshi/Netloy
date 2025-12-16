@@ -55,11 +55,6 @@ public class DebPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
     /// </summary>
     public string ControlFilePath { get; private set; } = string.Empty;
 
-    /// <summary>
-    /// Final .deb output path
-    /// </summary>
-    public string OutputPath { get; }
-
     /// <inheritdoc/>
     protected override string InstallExec => $"/opt/{Configurations.AppId}/{AppExecName}";
 
@@ -76,12 +71,6 @@ public class DebPackageBuilder : LinuxPackageBuilderBase, IPackageBuilder
 
         // Initialize directory paths
         InitializeDirectoryPaths();
-
-        // Set output path
-        OutputPath = Path.Combine(OutputDirectory, OutputName);
-
-        // Set install exec in macros
-        MacroExpander.SetMacroValue(MacroId.InstallExec, InstallExec);
     }
 
     #region IPackageBuilder Implementation

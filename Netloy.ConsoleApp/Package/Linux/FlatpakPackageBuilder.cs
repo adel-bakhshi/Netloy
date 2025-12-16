@@ -94,8 +94,8 @@ public class FlatpakPackageBuilder : PackageBuilderBase, IPackageBuilder
         // Set output path
         OutputPath = Path.Combine(OutputDirectory, OutputName);
 
-        // Set install exec for desktop file
-        MacroExpander.SetMacroValue(MacroId.InstallExec, AppExecName);
+        // Change package arch macro for AppImage package
+        MacroExpander.SetMacroValue(MacroId.PackageArch, GetFlatpakArch());
     }
 
     #region IPackageBuilder Implementation

@@ -1,7 +1,6 @@
 ﻿using Netloy.ConsoleApp.Argument;
 using Netloy.ConsoleApp.Configuration;
 using Netloy.ConsoleApp.Extensions;
-using Netloy.ConsoleApp.Macro;
 using Netloy.ConsoleApp.NetloyLogger;
 using System.Diagnostics;
 using System.Text;
@@ -42,11 +41,6 @@ public partial class AppImagePackageBuilder : LinuxPackageBuilderBase, IPackageB
     /// </summary>
     public string AppRunPath { get; private set; } = string.Empty;
 
-    /// <summary>
-    /// Final AppImage output path
-    /// </summary>
-    public string OutputPath { get; }
-
     protected override string InstallExec => $"/usr/bin/{AppExecName}";
 
     #endregion Properties
@@ -55,14 +49,6 @@ public partial class AppImagePackageBuilder : LinuxPackageBuilderBase, IPackageB
     {
         // Initialize directory paths
         InitializeDirectoryPaths();
-
-        // Set output path
-        OutputPath = Path.Combine(OutputDirectory, OutputName);
-
-        // Set install exec
-        MacroExpander.SetMacroValue(MacroId.InstallExec, InstallExec);
-        // Change package arch macro for AppImage package
-        MacroExpander.SetMacroValue(MacroId.PackageArch, GetLinuxArchitecture());
     }
 
     #region IPackageBuilder Implementation
@@ -278,6 +264,21 @@ public partial class AppImagePackageBuilder : LinuxPackageBuilderBase, IPackageB
         await File.WriteAllTextAsync(AppRunPath, appRunContent, Constants.Utf8WithoutBom);
 
         Logger.LogSuccess("AppRun script created: {0}", AppRunPath);
+    }
+
+    /// <summary>
+    /// Get architecture-specific library path for LD_LIBRARY_PATH
+    /// </summary>
+    private string GetArchLibPath()
+    {
+        return Arguments.Runtime?.ToLowerInvariant() switch
+        {
+            "linux-x64" => "x86_64-linux-gnu",
+            "linux-arm64" => "aarch64-linux-gnu",
+            "linux-arm" => "arm-linux-gnueabihf",
+            "linux-x86" => "i386-linux-gnu",
+            _ => "x86_64-linux-gnu"
+        };
     }
 
     private async Task SetExecutablePermissionsAsync()

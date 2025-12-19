@@ -1,25 +1,61 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net9.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ApplicationIcon>Assets\netloy.ico</ApplicationIcon>
+    <PackageProjectUrl>https://github.com/adel-bakhshi/Netloy</PackageProjectUrl>
+    <PackageIcon>netloy.128x128.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
 
-    <ItemGroup>
-        <PackageReference Include="CommandLineParser" Version="2.9.1"/>
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12"/>
-    </ItemGroup>
+    <RepositoryUrl>https://github.com/adel-bakhshi/Netloy</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
 
-    <ItemGroup>
-        <Folder Include="Assets\"/>
-    </ItemGroup>
+    <PackageTags>package;packaging;windows;linux;macos;exe;msi;app;dmg;appimage;deb;rpm;flatpak;pacman;zip;tar.gz;portable;dotnet-tool</PackageTags>
 
-    <ItemGroup>
-        <None Remove="Assets\terminal.ico"/>
-        <Content Include="Assets\terminal.ico">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-            <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-        </Content>
-    </ItemGroup>
+    <PackAsTool>True</PackAsTool>
+    <ToolCommandName>netloy</ToolCommandName>
+
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.0.0</Version>
+
+    <PackageId>Netloy</PackageId>
+    <Authors>Adel Bakhshi</Authors>
+    <Company>Adel Bakhshi</Company>
+
+    <Description>A cross-platform .NET application packaging and deployment tool for Windows, Linux, and macOS</Description>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <Copyright>Copyright (C) Adel Bakhshi 2025</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Assets\netloy.128x128.png" />
+    <None Remove="Assets\terminal.ico" />
+    <Resource Include="Assets\netloy.ico" />
+    <Content Include="Assets\terminal.ico">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\netloy.128x128.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </Resource>
+  </ItemGroup>
 </Project>

@@ -1,4 +1,5 @@
 ﻿using Netloy.ConsoleApp.Extensions;
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 
@@ -10,7 +11,7 @@ public static class Constants
 
     public const string NetloyConfigFileExt = ".netloy";
     public const string ProjectUrl = "https://github.com/adel-bakhshi/Netloy";
-    public const string ProjectLicense = "AGPL-3.0";
+    public const string ProjectLicense = "AGPL-3.0-or-later";
     public const string InnoSetupDownloadUrl = "https://jrsoftware.org/isdl.php";
     public const string WixDownloadUrl = "https://docs.firegiant.com/wix/using-wix/#command-line-net-tool";
 
@@ -30,9 +31,11 @@ public static class Constants
 
     static Constants()
     {
-        Copyright = $"Copyright © Adel Bakhshi 2025-{DateTime.Now:yy}";
-        Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+        var createdDate = DateTime.Parse("2025-01-01", CultureInfo.InvariantCulture);
+        var currentDate = DateTime.Now;
+        Copyright = $"Copyright © Adel Bakhshi {createdDate.Year}" + (currentDate.Year > createdDate.Year ? $"-{currentDate:yy}" : "");
 
+        Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
         NetloyAppDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? throw new InvalidOperationException("Netloy executable directory is not defined.");
     }
 }

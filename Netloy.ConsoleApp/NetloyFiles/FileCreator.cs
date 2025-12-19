@@ -38,6 +38,7 @@ public class FileCreator
                 : Path.Combine(currentDir, outputPath!);
 
             directoryPath = Path.GetDirectoryName(combinedPath) ?? throw new InvalidOperationException("Cannot detect directory from output path.");
+            directoryPath = Path.GetFullPath(directoryPath);
         }
         else
         {

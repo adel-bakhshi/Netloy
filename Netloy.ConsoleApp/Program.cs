@@ -15,48 +15,8 @@ internal class Program
     {
         try
         {
-#if DEBUG
-            //const string command = "netloy -t exe -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t exe -r win-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t msi -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t msi -r win-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t exe -r win-x64 --config-path \"D:\\Programming\\Projects\\MusicPlayerProject\\Deploy\\MusicPlayerProject.netloy\" -f netframework --verbose";
-            //const string command = "netloy -t msi -r win-x64 --config-path \"D:\\Programming\\Projects\\MusicPlayerProject\\Deploy\\MusicPlayerProject.netloy\" -f netframework --verbose";
-            //const string command = "netloy -t portable -r win-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t portable -r win-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t portable -r win-x64 --config-path \"D:\\Programming\\Projects\\MusicPlayerProject\\Deploy\\MusicPlayerProject.netloy\" -f netframework --verbose";
-            //const string command = "netloy -t app -r osx-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t app -r osx-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t dmg -r osx-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t dmg -r osx-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t prtable -r osx-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t prtable -r osx-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t appimage -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t appimage -r linux-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t deb -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t deb -r linux-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t rpm -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t rpm -r linux-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t flatpak -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t flatpak -r linux-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t pacman -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t pacman -r linux-arm64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t portable -r linux-x64 --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            //const string command = "netloy -t portable -r win-x64 --config-path \"D:\\Programming\\Projects\\MusicPlayerProject\\Deploy\\MusicPlayerProject.netloy\" -f netframework --verbose";
-            //const string command = "netloy -n all -o ../../../../NetloyDemo.App/Deploy/ --verbose";
-            //const string command = "netloy --upgrade-config --config-path ../../../../NetloyDemo.App/Deploy/NetloyDemo.App.netloy --verbose";
-            const string command = "netloy --help --verbose";
-            //const string command = "netloy --help conf --verbose";
-            //const string command = "netloy --help macro --verbose";
-            args = command.Split(" ");
-
-            Console.WriteLine("Application Arguments: {0}", string.Join(", ", args));
-#endif
-
             var argumentParser = new ArgumentParser(args);
             var arguments = argumentParser.Parse();
-
-            Logger.LogInfo("Netloy started successfully");
 
             if (argumentParser.Errors?.Count > 0)
             {
@@ -103,6 +63,8 @@ internal class Program
 
                 return 0;
             }
+
+            Logger.LogInfo("Netloy started successfully");
 
             if (arguments.NewType != null)
             {

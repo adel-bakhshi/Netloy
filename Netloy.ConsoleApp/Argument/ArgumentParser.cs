@@ -270,10 +270,10 @@ public class ArgumentParser
         {
             arguments.ShowHelp = _appArgs.Contains("-h") || _appArgs.Contains("--help");
 
-            ValidateArguments(arguments);
-
             if (arguments is { ShowHelp: false, ShowVersion: false })
                 CheckPathFormat(arguments);
+
+            ValidateArguments(arguments);
         }
         catch (Exception ex)
         {
@@ -309,8 +309,19 @@ public class ArgumentParser
         arguments.OutputPath = GetNormalizedArgumentPath(arguments.OutputPath, nameof(arguments.OutputPath));
         // Normalize project path
         arguments.ProjectPath = GetNormalizedArgumentPath(arguments.ProjectPath, nameof(arguments.ProjectPath));
+
         // Normalize config path
-        arguments.ConfigPath = GetNormalizedArgumentPath(arguments.ConfigPath, nameof(arguments.ConfigPath));
+        if (!arguments.ConfigPath.IsStringNullOrEmpty())
+        {
+            arguments.ConfigPath = GetNormalizedArgumentPath(arguments.ConfigPath, nameof(arguments.ConfigPath));
+        }
+        else
+        {
+            var currentDir = Directory.GetCurrentDirectory();
+            var netloyFiles = Directory.GetFiles(currentDir, $"*{Constants.NetloyConfigFileExt}", SearchOption.TopDirectoryOnly);
+            if (netloyFiles.Length == 1)
+                arguments.ConfigPath = netloyFiles[0];
+        }
 
         // Normalize binary path
         if (!arguments.BinaryPath.IsStringNullOrEmpty())
@@ -321,7 +332,7 @@ public class ArgumentParser
 
             var binaryFiles = Directory.GetFiles(binaryPath, "*", SearchOption.AllDirectories);
             if (binaryFiles.Length == 0)
-                throw new FileNotFoundException($"No .config files found in '{binaryPath}'. Checked all subdirectories. Add config files or check your build output.");
+                throw new FileNotFoundException($"No files found in '{binaryPath}'. Make sure your binary path is correct and contains your built files.");
 
             Logger.LogDebug("Binary path set: '{0}' (skipping publish, using pre-built files)", binaryPath);
             arguments.BinaryPath = binaryPath;

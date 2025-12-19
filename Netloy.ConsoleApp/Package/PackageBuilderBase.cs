@@ -83,6 +83,8 @@ public class PackageBuilderBase
         // Set primary icon in macros
         SetPrimaryIconInMacros();
 
+        // Check if binary path is specified.
+        // If not, publish with dotnet cli or msbuild.
         if (Arguments.BinaryPath.IsStringNullOrEmpty())
         {
             switch (Arguments.Framework)
@@ -101,6 +103,7 @@ public class PackageBuilderBase
                 }
             }
         }
+        // Otherwise, copy binaries to output directory.
         else
         {
             CopyBinaries(outputDir);
@@ -619,7 +622,11 @@ public class PackageBuilderBase
                 return path;
         }
 
-        return Path.GetDirectoryName(path) ?? Configurations.OutputDirectory;
+        path = Path.GetDirectoryName(path) ?? Configurations.OutputDirectory;
+        if (!path.IsStringNullOrEmpty())
+            return path;
+
+        return Constants.ConfigFileDirectory;
     }
 
     private string GetOutputName()
@@ -645,7 +652,7 @@ public class PackageBuilderBase
             _ => throw new InvalidOperationException("Invalid package type.")
         };
 
-        name = Configurations.PackageName;
+        name = Configurations.PackageName.IsStringNullOrEmpty() ? Configurations.AppBaseName : Configurations.PackageName;
         name += $".{AppVersion}-{PackageRelease}";
         name += $".{Arguments.Runtime}";
         name += $"{ext}";
@@ -683,6 +690,10 @@ public class PackageBuilderBase
 
     private string GetProjectPath()
     {
+        // Check if binary path is specified
+        if (!Arguments.BinaryPath.IsStringNullOrEmpty())
+            return string.Empty;
+
         // Get dotnet project path
         var projectPath = Arguments.ProjectPath.IsStringNullOrEmpty()
             ? Configurations.DotnetProjectPath

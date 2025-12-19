@@ -573,6 +573,12 @@ public class ConfigurationParser
 
     private void ValidateDotnetProjectPath(Configurations config)
     {
+        // Check if binary path is specified in the arguments.
+        // If binary path is specified, then it's not required to specify the project path.
+        // Because we don't need to build the project, we can just use the specified binary.
+        if (!_arguments.BinaryPath.IsStringNullOrEmpty())
+            return;
+
         var projectPath = config.DotnetProjectPath.NormalizePath();
         if (!projectPath.IsAbsolutePath())
             projectPath = Path.Combine(Constants.ConfigFileDirectory, projectPath);
@@ -1539,7 +1545,7 @@ public class ConfigurationParser
             AppendComment(sb, "'netloy --upgrade-config'");
         }
 
-        AppendKeyValue(sb, "ConfigVersion", Constants.Version);
+        AppendKeyValue(sb, nameof(Configurations.ConfigVersion), Constants.Version);
         sb.AppendLine();
     }
 

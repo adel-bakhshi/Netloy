@@ -1,11 +1,15 @@
 <div align="center">
 
+<img src="assets/netloy.1024x1024.png" alt="Netloy Logo" width="200"/>
+
 # 🚀 Netloy
 
 **Cross-Platform .NET Application Packaging Tool**
 
 [![License](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://github.com/adel-bakhshi/Netloy/blob/main/LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-8.0+-512BD4.svg)](https://dotnet.microsoft.com/)
+[![NuGet Version](https://img.shields.io/nuget/v/Netloy.svg)](https://www.nuget.org/packages/Netloy/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/Netloy.svg)](https://www.nuget.org/packages/Netloy/)
 [![GitHub Release](https://img.shields.io/github/v/release/adel-bakhshi/Netloy)](https://github.com/adel-bakhshi/Netloy/releases)
 
 _Build once, deploy everywhere_
@@ -36,7 +40,7 @@ Say goodbye to complex build scripts and manual packaging. Netloy handles icon g
 ### ⚙️ Powerful Configuration
 
 - Single `.netloy` configuration file for all platforms
-- Macro system for dynamic templating (`<APP_VERSION>`, `<PUBLISH_OUTPUT_DIRECTORY>`, etc.)
+- Macro system for dynamic templating (`${APP_VERSION}`, `${PUBLISH_OUTPUT_DIRECTORY}`, etc.)
 - Post-publish scripts (Bash, PowerShell, Batch)
 - Configuration upgrade tool for version compatibility
 

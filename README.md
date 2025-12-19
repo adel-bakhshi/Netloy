@@ -214,7 +214,7 @@ netloy --new desktop
 ## 📚 Documentation
 
 - **[Wiki Home](https://github.com/adel-bakhshi/Netloy/wiki)**: Comprehensive documentation
-- **[Getting Started Guide](https://github.com/adel-bakhshi/Netloy/Netloy/wiki/Getting-Started)**: Step-by-step tutorial
+- **[Getting Started Guide](https://github.com/adel-bakhshi/Netloy/wiki/Getting-Started)**: Step-by-step tutorial
 - **[Configuration Reference](https://github.com/adel-bakhshi/Netloy/wiki/Configuration-Reference)**: All config options explained
 - **[Macro System](https://github.com/adel-bakhshi/Netloy/wiki/Macro-System)**: Template variables and usage
 - **[Command Line Reference](https://github.com/adel-bakhshi/Netloy/wiki/Command-Line-Reference)**: CLI arguments
@@ -235,7 +235,7 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 ## 📄 License
 
-This project is licensed under the **AGPL-3.0 License** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **AGPL-3.0 License** - see the [LICENSE](LICENSE.txt) file for details.
 
 ---
 

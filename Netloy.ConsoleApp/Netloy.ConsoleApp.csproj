@@ -36,8 +36,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Assets\netloy.1024x1024.png" />
     <None Remove="Assets\netloy.128x128.png" />
     <None Remove="Assets\terminal.ico" />
+    <Resource Include="Assets\netloy.1024x1024.png" />
     <Resource Include="Assets\netloy.ico" />
     <Content Include="Assets\terminal.ico">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

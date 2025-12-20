@@ -74,11 +74,15 @@ Say goodbye to complex build scripts and manual packaging. Netloy handles icon g
 
 ### Install via .NET Tool
 
+```
 dotnet tool install --global Netloy
+```
 
 ### Verify Installation
 
+```
 netloy --version
+```
 
 ---
 
@@ -88,7 +92,9 @@ netloy --version
 
 Navigate to your .NET project directory and create a new configuration:
 
+```
 netloy --new conf
+```
 
 This generates a `.netloy` file with default settings. Edit it to customize your application metadata, packaging options, and platform-specific settings.
 
@@ -96,15 +102,21 @@ This generates a `.netloy` file with default settings. Edit it to customize your
 
 #### Windows Installer (MSI)
 
+```
 netloy -t msi -r win-x64 --config-path MyApp.netloy
+```
 
 #### Linux DEB Package
 
+```
 netloy -t deb -r linux-x64 --config-path MyApp.netloy
+```
 
 #### macOS DMG
 
+```
 netloy -t dmg -r osx-arm64 --config-path MyApp.netloy
+```
 
 ### 3. Find Your Package
 
@@ -195,19 +207,27 @@ OutputDirectory = ./output
 
 ### Build with Custom Version
 
+```
 netloy -t msi -r win-x64 --app-version 2.1.0 --config-path MyApp.netloy
+```
 
 ### Build for ARM64 Architecture
 
+```
 netloy -t deb -r linux-arm64 --config-path MyApp.netloy --verbose
+```
 
 ### Skip Build (Use Existing Binaries)
 
+```
 netloy -t appimage -r linux-x64 --binary-path ./bin/Release/net8.0/linux-x64/publish
+```
 
 ### Create New Desktop File Template
 
+```
 netloy --new desktop
+```
 
 ---
 

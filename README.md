@@ -1,5 +1,3 @@
-<div align="center">
-
 <img src="assets/netloy.1024x1024.png" alt="Netloy Logo" width="200"/>
 
 # 🚀 Netloy
@@ -14,9 +12,7 @@
 
 _Build once, deploy everywhere_
 
-[Features](#-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Documentation](https://github.com/adel-bakhshi/Netloy/wiki) • [Contributing](#-contributing)
-
-</div>
+[Features](#-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Documentation](https://github.com/adel-bakhshi/Netloy/wiki) • [Changelog](CHANGELOG.md) • [Contributing](#-contributing)
 
 ---
 
@@ -241,6 +237,12 @@ netloy --new desktop
 
 ---
 
+## 📝 Changelog
+
+For a detailed list of changes, new features, and bug fixes in each version, see the [CHANGELOG.md](CHANGELOG.md).
+
+---
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
@@ -269,10 +271,6 @@ This project is licensed under the **AGPL-3.0 License** - see the [LICENSE](LICE
 
 ---
 
-<div align="center">
-
 **Made with ❤️ by [Adel Bakhshi](https://github.com/adel-bakhshi)**
 
 ⭐ If Netloy helps your project, consider giving it a star!
-
-</div>

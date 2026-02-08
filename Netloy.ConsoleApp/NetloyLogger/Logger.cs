@@ -4,7 +4,7 @@ namespace Netloy.ConsoleApp.NetloyLogger;
 
 public static class Logger
 {
-    private static readonly Lock Lock = new();
+    private static readonly object Lock = new();
 
     public static LogLevel CurrentLevel { get; set; } = LogLevel.Debug;
     public static bool ShowTimestamp { get; set; } = true;
